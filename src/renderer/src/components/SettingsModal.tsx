@@ -11,7 +11,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }): React.React
   const [settings, setSettings] = useState<AppSettings | null>(null)
   const [saving, setSaving] = useState(false)
   const [editingTheme, setEditingTheme] = useState(false)
-  const { theme, setTheme } = useTheme()
+  const { theme, setTheme, customTokens } = useTheme()
   const activeTheme = THEMES.find((t) => t.id === theme)
 
   useEffect(() => {
@@ -69,7 +69,17 @@ export function SettingsModal({ onClose }: { onClose: () => void }): React.React
                     className={`theme-chip ${t.id === theme ? 'active' : ''}`}
                     onClick={() => setTheme(t.id)}
                   >
-                    <span className="theme-swatch" data-swatch={t.id} />
+                    <span
+                      className="theme-swatch"
+                      data-swatch={t.id}
+                      style={
+                        t.id === 'custom'
+                          ? {
+                              background: `linear-gradient(135deg, ${customTokens.accent}, ${customTokens['accent-2']})`
+                            }
+                          : undefined
+                      }
+                    />
                     {t.label}
                   </button>
                 ))}

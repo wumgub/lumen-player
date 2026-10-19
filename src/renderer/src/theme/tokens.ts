@@ -118,7 +118,12 @@ function isDark(hex: string): boolean {
   return 0.299 * r + 0.587 * g + 0.114 * b < 128
 }
 
-const DERIVED = ['accent-soft', 'shadow', 'panel-blur', 'color-scheme']
+/** A readable text color to sit on top of the given background color. */
+function contrastOn(hex: string): string {
+  return isDark(hex) ? '#ffffff' : '#141414'
+}
+
+const DERIVED = ['accent-soft', 'on-accent', 'shadow', 'panel-blur', 'color-scheme']
 
 /** Apply a custom token map as inline CSS vars on the root element. */
 export function applyCustomTokens(root: HTMLElement, tokens: TokenMap): void {
@@ -128,6 +133,9 @@ export function applyCustomTokens(root: HTMLElement, tokens: TokenMap): void {
   }
   const accent = tokens.accent || '#22d3ee'
   root.style.setProperty('--accent-soft', rgba(accent, 0.16))
+  // Contrast color for text/icons that sit on an accent-filled surface, so any
+  // accent the user picks — pale or dark — keeps its label readable.
+  root.style.setProperty('--on-accent', contrastOn(accent))
   root.style.setProperty('--shadow', '0 8px 30px rgba(0, 0, 0, 0.5)')
   root.style.setProperty('--panel-blur', 'none')
   root.style.setProperty('color-scheme', isDark(tokens.bg || '#0a0a12') ? 'dark' : 'light')

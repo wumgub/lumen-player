@@ -472,7 +472,7 @@ input {
 }
 .edit-btn.active {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent, #fff);
   border-color: transparent;
 }
 
@@ -799,7 +799,7 @@ input {
 }
 .card-edit:hover {
   background: var(--accent);
-  color: #000;
+  color: var(--on-accent, #000);
 }
 .card-cover,
 .card-circle {
@@ -913,7 +913,7 @@ input {
 }
 .viz-tab.active {
   background: var(--accent);
-  color: #000;
+  color: var(--on-accent, #000);
   font-weight: 600;
 }
 .np-detail {
@@ -1209,7 +1209,7 @@ input[type='range']:hover::-webkit-slider-thumb {
   font-size: 13px;
   font-weight: 600;
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  color: #fff;
+  color: var(--on-accent, #fff);
 }
 .sel-btn.ghost {
   background: var(--bg-2);
@@ -1325,7 +1325,7 @@ input[type='range']:hover::-webkit-slider-thumb {
 }
 .modal-btn.primary {
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  color: #fff;
+  color: var(--on-accent, #fff);
 }
 .modal-btn.primary:hover {
   filter: brightness(1.08);
