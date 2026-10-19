@@ -124,9 +124,10 @@ export function SettingsModal({ onClose }: { onClose: () => void }): React.React
                     <strong>Application ID</strong> above.
                   </li>
                   <li>
-                    For album art: under <strong>OAuth2</strong>, copy the <strong>Client
-                    Secret</strong> into the field above. Saving pops a one-time{' '}
-                    <strong>Authorize</strong> prompt in Discord — accept it.
+                    For album art: under <strong>OAuth2</strong>, add the redirect URI{' '}
+                    <code>http://localhost</code>, then copy the <strong>Client Secret</strong>{' '}
+                    into the field above. Saving pops a one-time <strong>Authorize</strong>{' '}
+                    prompt in Discord — accept it.
                   </li>
                   <li>
                     Optional: under <strong>Rich Presence → Art Assets</strong>, upload an image

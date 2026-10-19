@@ -3,14 +3,14 @@ import type { PresencePayload } from '../shared/types'
 import { getCoverUrl } from './coverart'
 
 const ACTIVITY_LISTENING = 2 as SetActivity['type']
+const REDIRECT_URI = 'http://localhost'
+const API = 'https://discord.com/api/v10'
 
 function clamp(s: string, max = 128): string {
   const t = s.trim()
   if (t.length === 0) return ''
   return t.length > max ? t.slice(0, max - 1) + '…' : t
 }
-
-type RestClient = { rest: { post: (route: string, opts: { body: unknown }) => Promise<unknown> } }
 
 /**
  * Manages the connection to the local Discord client and mirrors playback as
@@ -35,6 +35,7 @@ class PresenceManager {
   private pending: PresencePayload | null = null
   private coverUrl: string | null = null
   private coverKey = ''
+  private accessToken: string | null = null
   private assetCache = new Map<string, string | null>()
 
   async configure(
@@ -97,14 +98,19 @@ class PresenceManager {
 
   /** Register an external image URL with Discord, returning its mp:external path. */
   private async externalAsset(url: string): Promise<string | null> {
-    if (!this.authed || !this.client) return null
+    if (!this.authed || !this.accessToken) return null
     if (this.assetCache.has(url)) return this.assetCache.get(url) ?? null
     try {
-      const rest = (this.client as unknown as RestClient).rest
-      const res = await rest.post(`/applications/${this.clientId}/external-assets`, {
-        body: { urls: [url] }
+      const res = await fetch(`${API}/applications/${this.clientId}/external-assets`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ urls: [url] })
       })
-      const arr = res as Array<{ external_asset_path?: string }>
+      if (!res.ok) throw new Error(`${res.status} ${await res.text()}`)
+      const arr = (await res.json()) as Array<{ external_asset_path?: string }>
       const path = Array.isArray(arr) ? arr[0]?.external_asset_path : undefined
       const mp = path ? `mp:${path}` : null
       this.assetCache.set(url, mp)
@@ -121,56 +127,76 @@ class PresenceManager {
     this.connecting = true
     try {
       const { Client } = await import('@xhayper/discord-rpc')
-      const make = (withSecret: boolean): Client => {
-        const c = new Client(
-          withSecret
-            ? { clientId: this.clientId, clientSecret: this.clientSecret }
-            : { clientId: this.clientId }
-        )
-        c.on('ready', () => {
-          this.ready = true
-          this.flush()
-        })
-        c.on('disconnected', () => {
-          this.ready = false
-          this.client = null
-          this.authed = false
-        })
-        return c
-      }
-
-      const wantOAuth = this.coverArt && !!this.clientSecret
-      let client = make(wantOAuth)
-      try {
-        if (wantOAuth) {
-          await client.login({ scopes: ['rpc'] })
-          this.authed = true
-          console.log('[presence] connected with cover-art authorization')
-        } else {
-          await client.login()
-        }
-      } catch (e) {
-        // Authorization failed — fall back to a basic (text + logo) connection.
+      const client = new Client({
+        clientId: this.clientId,
+        clientSecret: this.clientSecret || undefined
+      })
+      client.on('ready', () => {
+        this.ready = true
+        this.flush()
+      })
+      client.on('disconnected', () => {
+        this.ready = false
+        this.client = null
         this.authed = false
-        console.error(
-          '[presence] authorize failed, falling back to logo/text:',
-          (e as Error)?.message || e
-        )
-        try {
-          await client.destroy()
-        } catch {
-          /* ignore */
-        }
-        client = make(false)
-        await client.login()
-      }
+        this.accessToken = null
+      })
+      await client.login()
       this.client = client
+      // Authorize separately for cover art (xhayper's login omits redirect_uri,
+      // which Discord now rejects, so we run the OAuth exchange ourselves).
+      if (this.coverArt && this.clientSecret) await this.authorizeForAssets(client)
     } catch (e) {
       this.client = null
       this.ready = false
       console.error('[presence] connect failed:', (e as Error)?.message || e)
     } finally {
       this.connecting = false
+    }
+  }
+
+  /** Obtain an OAuth token (via the RPC AUTHORIZE command + code exchange) so we
+   *  can register external cover art. Silent after the first authorization. */
+  private async authorizeForAssets(client: Client): Promise<void> {
+    try {
+      const authorize = async (prompt: 'none' | 'consent'): Promise<string> => {
+        const res = await client.request('AUTHORIZE', {
+          client_id: this.clientId,
+          scopes: ['rpc'],
+          prompt
+        })
+        const code = (res as { data?: { code?: string } })?.data?.code
+        if (!code) throw new Error('no authorization code')
+        return code
+      }
+      // Try silently first; fall back to the consent prompt on the first run.
+      const code = await authorize('none').catch(() => authorize('consent'))
+
+      const body = new URLSearchParams({
+        client_id: this.clientId,
+        client_secret: this.clientSecret,
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: REDIRECT_URI
+      })
+      const res = await fetch(`${API}/oauth2/token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body
+      })
+      if (!res.ok) throw new Error(`token exchange ${res.status} ${await res.text()}`)
+      const tok = (await res.json()) as { access_token?: string }
+      if (!tok.access_token) throw new Error('no access_token in response')
+      this.accessToken = tok.access_token
+      this.authed = true
+      console.log('[presence] authorized for cover art')
+    } catch (e) {
+      this.authed = false
+      this.accessToken = null
+      console.error(
+        '[presence] authorize failed, using logo/text fallback:',
+        (e as Error)?.message || e
+      )
     }
   }
 
