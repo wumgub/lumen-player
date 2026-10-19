@@ -10,12 +10,14 @@ asarUnpack:
   - "**/*.node"
 mac:
   category: public.app-category.music
+  icon: build/icon.icns
   target:
     - dmg
     - zip
   darkModeSupport: true
 linux:
   category: AudioVideo
+  icon: build/icon.png
   target:
     - AppImage
     - deb

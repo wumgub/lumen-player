@@ -1,0 +1,53 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1b1140"/>
+      <stop offset="0.55" stop-color="#0d0b1f"/>
+      <stop offset="1" stop-color="#07070e"/>
+    </linearGradient>
+    <linearGradient id="bar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2ad8ff"/>
+      <stop offset="0.5" stop-color="#9b6bff"/>
+      <stop offset="1" stop-color="#ff72e2"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.52" r="0.5">
+      <stop offset="0" stop-color="#36d6ff" stop-opacity="0.5"/>
+      <stop offset="0.6" stop-color="#8a5cff" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#8a5cff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.10"/>
+      <stop offset="0.4" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="26"/>
+    </filter>
+  </defs>
+
+  <!-- tile -->
+  <rect x="64" y="64" width="896" height="896" rx="212" fill="url(#tile)"/>
+  <rect x="64" y="64" width="896" height="896" rx="212" fill="url(#sheen)"/>
+  <rect x="65.5" y="65.5" width="893" height="893" rx="210.5" fill="none"
+        stroke="#ffffff" stroke-opacity="0.08" stroke-width="3"/>
+
+  <!-- ambient glow behind bars -->
+  <ellipse cx="512" cy="540" rx="340" ry="340" fill="url(#glow)"/>
+
+  <!-- soft bloom copy of the bars -->
+  <g filter="url(#soft)" opacity="0.65" fill="#49c9ff">
+    <rect x="208" y="422" width="88" height="180" rx="44"/>
+    <rect x="338" y="302" width="88" height="420" rx="44"/>
+    <rect x="468" y="362" width="88" height="300" rx="44"/>
+    <rect x="598" y="277" width="88" height="470" rx="44"/>
+    <rect x="728" y="397" width="88" height="230" rx="44"/>
+  </g>
+
+  <!-- equalizer bars -->
+  <g fill="url(#bar)">
+    <rect x="208" y="422" width="88" height="180" rx="44"/>
+    <rect x="338" y="302" width="88" height="420" rx="44"/>
+    <rect x="468" y="362" width="88" height="300" rx="44"/>
+    <rect x="598" y="277" width="88" height="470" rx="44"/>
+    <rect x="728" y="397" width="88" height="230" rx="44"/>
+  </g>
+</svg>

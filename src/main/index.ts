@@ -1,5 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain, protocol, shell } from 'electron'
-import { createReadStream, promises as fs } from 'fs'
+import { createReadStream, existsSync, promises as fs } from 'fs'
 import { Readable } from 'stream'
 import { extname, join } from 'path'
 import { fileURLToPath } from 'url'
@@ -200,6 +200,14 @@ app.whenReady().then(() => {
   initDb()
   registerProtocols()
   registerIpc()
+
+  // Show the custom icon in the dock during development (packaged builds get it
+  // from the app bundle via electron-builder).
+  if (process.platform === 'darwin' && app.dock) {
+    const devIcon = join(process.cwd(), 'build', 'icon.png')
+    if (existsSync(devIcon)) app.dock.setIcon(devIcon)
+  }
+
   createWindow()
 
   // Restore Discord presence connection from saved settings.

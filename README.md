@@ -24,8 +24,8 @@ Presence is off by default. To enable it (⚙️ in the top-right → *Discord R
 
 1. Create an app in the [Discord Developer Portal](https://discord.com/developers/applications) and copy its **Application ID**.
 2. Paste that ID into Settings and toggle the feature on.
-3. (Optional) Under **Rich Presence → Art Assets**, upload an image named `lumen`
-   for the large cover art shown next to the track.
+3. Under **Rich Presence → Art Assets**, upload [`build/discord/lumen.png`](./build/discord/lumen.png)
+   and name the asset `lumen` — that's the large cover art shown next to the track.
 4. Keep the desktop Discord app running. Presence updates on track and play/pause
    changes (kept well under Discord's rate limit); the progress bar animates from
    start/end timestamps. If Discord isn't running or isn't configured, the app
