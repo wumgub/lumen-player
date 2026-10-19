@@ -1,0 +1,22 @@
+appId: com.lumen.player
+productName: Lumen
+directories:
+  output: dist
+  buildResources: build
+files:
+  - out/**/*
+  - package.json
+asarUnpack:
+  - "**/*.node"
+mac:
+  category: public.app-category.music
+  target:
+    - dmg
+    - zip
+  darkModeSupport: true
+linux:
+  category: AudioVideo
+  target:
+    - AppImage
+    - deb
+npmRebuild: true

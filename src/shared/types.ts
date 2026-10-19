@@ -1,0 +1,62 @@
+export interface Track {
+  id: number
+  path: string
+  title: string
+  artist: string
+  albumArtist: string
+  album: string
+  genre: string
+  year: number | null
+  trackNo: number | null
+  discNo: number | null
+  duration: number // seconds
+  hasArt: number // 0 | 1 (sqlite boolean)
+  addedAt: number // epoch ms
+}
+
+export interface ScanProgress {
+  phase: 'discovering' | 'parsing' | 'done'
+  processed: number
+  total: number
+  current?: string
+}
+
+export interface ScanResult {
+  added: number
+  updated: number
+  total: number
+}
+
+export interface LibraryQuery {
+  search?: string
+  artist?: string
+  album?: string
+  genre?: string
+  sort?: 'title' | 'artist' | 'album' | 'addedAt' | 'year' | 'duration' | 'custom'
+  dir?: 'asc' | 'desc'
+  limit?: number
+  offset?: number
+}
+
+export interface Playlist {
+  id: number
+  name: string
+  createdAt: number
+}
+
+export interface PlaylistWithCount extends Playlist {
+  count: number
+}
+
+export const AUDIO_EXTENSIONS = [
+  '.mp3',
+  '.flac',
+  '.wav',
+  '.aif',
+  '.aiff',
+  '.m4a',
+  '.aac',
+  '.ogg',
+  '.oga',
+  '.opus'
+] as const

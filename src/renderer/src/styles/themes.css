@@ -1,0 +1,95 @@
+:root {
+  --radius: 10px;
+  --radius-sm: 6px;
+  --sidebar-w: 240px;
+  --nowplaying-w: 300px;
+  --transport-h: 84px;
+  --titlebar-h: 52px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ---------- NEON (default) ---------- */
+:root,
+:root[data-theme='neon'] {
+  --bg: #0a0a12;
+  --bg-2: #11111d;
+  --bg-3: #1a1a2b;
+  --bg-hover: #20203400;
+  --fg: #f0f0ff;
+  --fg-dim: #8a8aa8;
+  --border: #23233a;
+  --accent: #22d3ee;
+  --accent-2: #c026d3;
+  --accent-soft: rgba(34, 211, 238, 0.15);
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  --panel-blur: none;
+  --viz-accent: #22d3ee;
+  --viz-accent-2: #e879f9;
+  --viz-bg: #0a0a12;
+  --viz-fg: #ffffff;
+}
+
+/* ---------- MINIMAL ---------- */
+:root[data-theme='minimal'] {
+  --bg: #f7f7f9;
+  --bg-2: #ffffff;
+  --bg-3: #eeeef2;
+  --fg: #16161a;
+  --fg-dim: #70707c;
+  --border: #e2e2e8;
+  --accent: #5b6ccf;
+  --accent-2: #e0607e;
+  --accent-soft: rgba(91, 108, 207, 0.12);
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --panel-blur: none;
+  --viz-accent: #5b6ccf;
+  --viz-accent-2: #e0607e;
+  --viz-bg: #ffffff;
+  --viz-fg: #16161a;
+}
+
+/* ---------- RETRO (winamp) ---------- */
+:root[data-theme='retro'] {
+  --bg: #10140f;
+  --bg-2: #1a2016;
+  --bg-3: #242b1e;
+  --fg: #c7f270;
+  --fg-dim: #7f8f5a;
+  --border: #39421f;
+  --accent: #a3e635;
+  --accent-2: #f59e0b;
+  --accent-soft: rgba(163, 230, 53, 0.15);
+  --shadow: inset 0 0 0 1px #39421f, 0 6px 20px rgba(0, 0, 0, 0.6);
+  --panel-blur: none;
+  --font: 'Courier New', ui-monospace, monospace;
+  --viz-accent: #a3e635;
+  --viz-accent-2: #f59e0b;
+  --viz-bg: #10140f;
+  --viz-fg: #c7f270;
+}
+
+/* ---------- GLASS (art-tinted) ---------- */
+:root[data-theme='glass'] {
+  --bg: #0c1018;
+  --bg-2: rgba(255, 255, 255, 0.06);
+  --bg-3: rgba(255, 255, 255, 0.1);
+  --fg: #eef2f8;
+  --fg-dim: #9fb0c3;
+  --border: rgba(255, 255, 255, 0.12);
+  --accent: var(--dynamic-accent, #7dd3fc);
+  --accent-2: var(--dynamic-accent-2, #f0abfc);
+  --accent-soft: rgba(255, 255, 255, 0.1);
+  --shadow: 0 8px 40px rgba(0, 0, 0, 0.45);
+  --panel-blur: saturate(160%) blur(18px);
+  --viz-accent: var(--dynamic-accent, #7dd3fc);
+  --viz-accent-2: var(--dynamic-accent-2, #f0abfc);
+  --viz-bg: #0c1018;
+  --viz-fg: #eef2f8;
+}
+:root[data-theme='glass'] body {
+  background:
+    radial-gradient(1200px 600px at 80% -10%, color-mix(in srgb, var(--accent) 30%, transparent), transparent),
+    radial-gradient(900px 500px at -10% 110%, color-mix(in srgb, var(--accent-2) 24%, transparent), transparent),
+    var(--bg);
+  background-attachment: fixed;
+}
