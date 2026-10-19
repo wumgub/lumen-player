@@ -160,6 +160,8 @@ class PresenceManager {
   private async authorizeForAssets(client: Client): Promise<void> {
     try {
       const authorize = async (prompt: 'none' | 'consent'): Promise<string> => {
+        // The RPC AUTHORIZE command must NOT include a redirect_uri (Discord
+        // rejects it); the redirect_uri is only sent later in the token exchange.
         const res = await client.request('AUTHORIZE', {
           client_id: this.clientId,
           scopes: ['rpc'],
