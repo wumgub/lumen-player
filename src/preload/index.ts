@@ -1,8 +1,10 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type {
+  AppSettings,
   LibraryQuery,
   Playlist,
   PlaylistWithCount,
+  PresencePayload,
   ScanProgress,
   ScanResult,
   Track
@@ -51,6 +53,12 @@ const api = {
   removeFromPlaylist: (id: number, trackId: number): Promise<void> =>
     ipcRenderer.invoke('playlist:remove', id, trackId),
   playlistTracks: (id: number): Promise<Track[]> => ipcRenderer.invoke('playlist:tracks', id),
+
+  getSettings: (): Promise<AppSettings> => ipcRenderer.invoke('settings:get'),
+  setSettings: (patch: Partial<AppSettings>): Promise<AppSettings> =>
+    ipcRenderer.invoke('settings:set', patch),
+  setPresence: (payload: PresencePayload | null): Promise<void> =>
+    ipcRenderer.invoke('presence:set', payload),
 
   mediaUrl: (trackId: number): string => `lumen-media://t/${trackId}`,
   artUrl: (trackId: number): string => `lumen-art://t/${trackId}`

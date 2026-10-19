@@ -6,8 +6,9 @@ import { LibraryView } from './components/LibraryView'
 import { NowPlaying } from './components/NowPlaying'
 import { TransportBar } from './components/TransportBar'
 import { ThemeSelector } from './components/ThemeSelector'
+import { SettingsModal } from './components/SettingsModal'
 import { VisualizerHost } from './components/VisualizerHost'
-import { Collapse, Pause, Play, Next, Prev, Search } from './components/icons'
+import { Collapse, Gear, Pause, Play, Next, Prev, Search } from './components/icons'
 import type { VisualizerId } from './visualizers'
 import type { View } from './types'
 
@@ -28,9 +29,11 @@ function Shell(): React.ReactElement {
     () => (localStorage.getItem('lumen.viz') as VisualizerId) || 'bars'
   )
   const [immersive, setImmersive] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const [libraryVersion, setLibraryVersion] = useState(0)
 
-  const { current } = usePlayer()
+  const player = usePlayer()
+  const { current } = player
   const { setArtwork } = useTheme()
 
   const chooseViz = (v: VisualizerId): void => {
@@ -43,8 +46,26 @@ function Shell(): React.ReactElement {
     setArtwork(current && current.hasArt ? window.lumen.artUrl(current.id) : null)
   }, [current, setArtwork])
 
+  // Mirror playback to Discord presence. Only fires on track / play-state /
+  // duration changes (not the per-second tick) to stay under Discord's rate limit;
+  // the progress bar animates itself from the start/end timestamps.
+  useEffect(() => {
+    if (!current) {
+      void window.lumen.setPresence(null)
+      return
+    }
+    void window.lumen.setPresence({
+      title: current.title,
+      artist: current.artist,
+      album: current.album,
+      isPlaying: player.isPlaying,
+      position: player.engine.currentTime,
+      duration: player.engine.duration
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current?.id, player.isPlaying, player.duration])
+
   // Keyboard shortcuts.
-  const player = usePlayer()
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       const tag = (e.target as HTMLElement)?.tagName
@@ -77,6 +98,13 @@ function Shell(): React.ReactElement {
           />
         </div>
         <ThemeSelector />
+        <button
+          className="titlebar-btn"
+          onClick={() => setShowSettings(true)}
+          title="Settings"
+        >
+          <Gear size={18} />
+        </button>
       </div>
 
       <div className="body">
@@ -103,6 +131,8 @@ function Shell(): React.ReactElement {
       {immersive && (
         <ImmersiveMode vizId={vizId} setVizId={chooseViz} onExit={() => setImmersive(false)} />
       )}
+
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </div>
   )
 }

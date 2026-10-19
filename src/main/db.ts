@@ -1,7 +1,13 @@
 import { app } from 'electron'
 import { join } from 'path'
 import Database from 'better-sqlite3'
-import type { LibraryQuery, Playlist, PlaylistWithCount, Track } from '../shared/types'
+import type {
+  AppSettings,
+  LibraryQuery,
+  Playlist,
+  PlaylistWithCount,
+  Track
+} from '../shared/types'
 
 let db: Database.Database
 
@@ -52,6 +58,11 @@ export function initDb(): void {
 
     CREATE TABLE IF NOT EXISTS folders (
       path TEXT PRIMARY KEY
+    );
+
+    CREATE TABLE IF NOT EXISTS settings (
+      key   TEXT PRIMARY KEY,
+      value TEXT NOT NULL
     );
   `)
 
@@ -286,6 +297,33 @@ export function removeMissing(existingPaths: Set<string>): number {
   })
   txn()
   return removed
+}
+
+// ---- settings ----
+export function getSetting(key: string, fallback = ''): string {
+  const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key) as
+    | { value: string }
+    | undefined
+  return row?.value ?? fallback
+}
+export function setSetting(key: string, value: string): void {
+  db.prepare(
+    'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value'
+  ).run(key, value)
+}
+export function getAppSettings(): AppSettings {
+  return {
+    discordEnabled: getSetting('discordEnabled', 'false') === 'true',
+    discordClientId: getSetting('discordClientId', ''),
+    discordLargeImageKey: getSetting('discordLargeImageKey', 'lumen')
+  }
+}
+export function setAppSettings(p: Partial<AppSettings>): AppSettings {
+  if (p.discordEnabled !== undefined) setSetting('discordEnabled', String(p.discordEnabled))
+  if (p.discordClientId !== undefined) setSetting('discordClientId', p.discordClientId.trim())
+  if (p.discordLargeImageKey !== undefined)
+    setSetting('discordLargeImageKey', p.discordLargeImageKey.trim())
+  return getAppSettings()
 }
 
 // ---- folders ----

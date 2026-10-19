@@ -8,6 +8,7 @@ import {
   addToPlaylist,
   createPlaylist,
   deletePlaylist,
+  getAppSettings,
   getArt,
   getTrack,
   initDb,
@@ -24,11 +25,13 @@ import {
   renamePlaylist,
   renameTrack,
   reorderAlbum,
+  setAppSettings,
   setTrackAlbum,
   stats
 } from './db'
 import { scanFolders } from './scanner'
-import type { LibraryQuery } from '../shared/types'
+import { presence } from './presence'
+import type { AppSettings, LibraryQuery, PresencePayload } from '../shared/types'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
@@ -182,6 +185,15 @@ function registerIpc(): void {
     removeFromPlaylist(id, trackId)
   )
   ipcMain.handle('playlist:tracks', (_e, id: number) => playlistTracks(id))
+
+  ipcMain.handle('settings:get', () => getAppSettings())
+  ipcMain.handle('settings:set', async (_e, patch: Partial<AppSettings>) => {
+    const next = setAppSettings(patch)
+    await presence.configure(next.discordEnabled, next.discordClientId, next.discordLargeImageKey)
+    return next
+  })
+
+  ipcMain.handle('presence:set', (_e, payload: PresencePayload | null) => presence.update(payload))
 }
 
 app.whenReady().then(() => {
@@ -190,9 +202,21 @@ app.whenReady().then(() => {
   registerIpc()
   createWindow()
 
+  // Restore Discord presence connection from saved settings.
+  const settings = getAppSettings()
+  void presence.configure(
+    settings.discordEnabled,
+    settings.discordClientId,
+    settings.discordLargeImageKey
+  )
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+})
+
+app.on('before-quit', () => {
+  void presence.shutdown()
 })
 
 app.on('window-all-closed', () => {

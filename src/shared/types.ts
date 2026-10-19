@@ -48,6 +48,23 @@ export interface PlaylistWithCount extends Playlist {
   count: number
 }
 
+export interface AppSettings {
+  discordEnabled: boolean
+  discordClientId: string
+  /** Asset key uploaded to your Discord app for the large cover image. */
+  discordLargeImageKey: string
+}
+
+/** Playback info the renderer sends to the main process for Discord presence. */
+export interface PresencePayload {
+  title: string
+  artist: string
+  album: string
+  isPlaying: boolean
+  position: number // seconds
+  duration: number // seconds
+}
+
 export const AUDIO_EXTENSIONS = [
   '.mp3',
   '.flac',
