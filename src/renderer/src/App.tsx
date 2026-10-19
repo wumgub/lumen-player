@@ -9,7 +9,7 @@ import { ThemeSelector } from './components/ThemeSelector'
 import { SettingsModal } from './components/SettingsModal'
 import { VisualizerHost } from './components/VisualizerHost'
 import { Collapse, Gear, Pause, Play, Next, Prev, Search } from './components/icons'
-import type { VisualizerId } from './visualizers'
+import { VISUALIZER_LIST, isVisualizerId, type VisualizerId } from './visualizers'
 import type { View } from './types'
 
 export default function App(): React.ReactElement {
@@ -25,9 +25,10 @@ export default function App(): React.ReactElement {
 function Shell(): React.ReactElement {
   const [view, setView] = useState<View>({ kind: 'songs' })
   const [search, setSearch] = useState('')
-  const [vizId, setVizId] = useState<VisualizerId>(
-    () => (localStorage.getItem('lumen.viz') as VisualizerId) || 'bars'
-  )
+  const [vizId, setVizId] = useState<VisualizerId>(() => {
+    const saved = localStorage.getItem('lumen.viz')
+    return saved && isVisualizerId(saved) ? saved : 'bars'
+  })
   const [immersive, setImmersive] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [libraryVersion, setLibraryVersion] = useState(0)
@@ -170,13 +171,13 @@ function ImmersiveMode({
           </button>
         </div>
         <div className="immersive-viz-tabs">
-          {(['bars', 'waveform', 'radial', 'particles'] as VisualizerId[]).map((v) => (
+          {VISUALIZER_LIST.map((v) => (
             <button
-              key={v}
-              className={`viz-tab ${v === vizId ? 'active' : ''}`}
-              onClick={() => setVizId(v)}
+              key={v.id}
+              className={`viz-tab ${v.id === vizId ? 'active' : ''}`}
+              onClick={() => setVizId(v.id)}
             >
-              {v}
+              {v.label}
             </button>
           ))}
         </div>

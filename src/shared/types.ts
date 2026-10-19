@@ -53,6 +53,8 @@ export interface AppSettings {
   discordClientId: string
   /** Asset key uploaded to your Discord app for the large cover image. */
   discordLargeImageKey: string
+  /** Fetch public per-track cover art online (iTunes) for the presence image. */
+  discordCoverArt: boolean
 }
 
 /** Playback info the renderer sends to the main process for Discord presence. */

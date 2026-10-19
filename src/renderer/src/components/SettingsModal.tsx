@@ -65,9 +65,28 @@ export function SettingsModal({ onClose }: { onClose: () => void }): React.React
                     onChange={(e) => patch({ discordClientId: e.target.value })}
                   />
                 </label>
+                <div className="settings-row inline">
+                  <div>
+                    <div className="settings-subheading">Fetch album art online</div>
+                    <div className="settings-desc">
+                      Looks up each track’s cover on iTunes so it shows in Discord. Sends the
+                      artist &amp; album name to Apple’s public search API.
+                    </div>
+                  </div>
+                  <label className="switch">
+                    <input
+                      type="checkbox"
+                      checked={settings.discordCoverArt}
+                      disabled={!settings.discordEnabled}
+                      onChange={(e) => patch({ discordCoverArt: e.target.checked })}
+                    />
+                    <span className="switch-track" />
+                  </label>
+                </div>
+
                 <label className="field">
                   <span className="field-label">
-                    Large image asset key <span className="field-opt">(optional)</span>
+                    Fallback image asset key <span className="field-opt">(optional)</span>
                   </span>
                   <input
                     className="modal-input"

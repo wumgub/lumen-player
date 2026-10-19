@@ -189,7 +189,12 @@ function registerIpc(): void {
   ipcMain.handle('settings:get', () => getAppSettings())
   ipcMain.handle('settings:set', async (_e, patch: Partial<AppSettings>) => {
     const next = setAppSettings(patch)
-    await presence.configure(next.discordEnabled, next.discordClientId, next.discordLargeImageKey)
+    await presence.configure(
+      next.discordEnabled,
+      next.discordClientId,
+      next.discordLargeImageKey,
+      next.discordCoverArt
+    )
     return next
   })
 
@@ -215,7 +220,8 @@ app.whenReady().then(() => {
   void presence.configure(
     settings.discordEnabled,
     settings.discordClientId,
-    settings.discordLargeImageKey
+    settings.discordLargeImageKey,
+    settings.discordCoverArt
   )
 
   app.on('activate', () => {

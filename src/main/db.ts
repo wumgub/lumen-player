@@ -315,7 +315,8 @@ export function getAppSettings(): AppSettings {
   return {
     discordEnabled: getSetting('discordEnabled', 'false') === 'true',
     discordClientId: getSetting('discordClientId', ''),
-    discordLargeImageKey: getSetting('discordLargeImageKey', 'lumen')
+    discordLargeImageKey: getSetting('discordLargeImageKey', 'lumen'),
+    discordCoverArt: getSetting('discordCoverArt', 'true') === 'true'
   }
 }
 export function setAppSettings(p: Partial<AppSettings>): AppSettings {
@@ -323,6 +324,7 @@ export function setAppSettings(p: Partial<AppSettings>): AppSettings {
   if (p.discordClientId !== undefined) setSetting('discordClientId', p.discordClientId.trim())
   if (p.discordLargeImageKey !== undefined)
     setSetting('discordLargeImageKey', p.discordLargeImageKey.trim())
+  if (p.discordCoverArt !== undefined) setSetting('discordCoverArt', String(p.discordCoverArt))
   return getAppSettings()
 }
 

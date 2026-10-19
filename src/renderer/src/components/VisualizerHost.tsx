@@ -64,11 +64,8 @@ export function VisualizerHost({
       const dpr = Math.min(window.devicePixelRatio || 1, 2)
       const frame = engine.sample() ?? IDLE
 
-      // Clear (particles manages its own fade, so only hard-clear others).
-      if (viz.id !== 'particles') {
-        ctx.fillStyle = colors.bg
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
-      }
+      ctx.fillStyle = colors.bg
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
       ctx.save()
       ctx.scale(dpr, dpr)
       viz.draw({

@@ -1,5 +1,6 @@
 import type { Client, SetActivity } from '@xhayper/discord-rpc'
 import type { PresencePayload } from '../shared/types'
+import { getCoverUrl } from './coverart'
 
 const ACTIVITY_LISTENING = 2 as SetActivity['type']
 
@@ -19,16 +20,21 @@ class PresenceManager {
   private clientId = ''
   private largeImageKey = 'lumen'
   private enabled = false
+  private coverArt = true
   private ready = false
   private connecting = false
   private pending: PresencePayload | null = null
+  private coverUrl: string | null = null
+  private coverKey = ''
 
   async configure(
     enabled: boolean,
     clientId: string,
-    largeImageKey: string
+    largeImageKey: string,
+    coverArt: boolean
   ): Promise<void> {
     this.largeImageKey = largeImageKey || 'lumen'
+    this.coverArt = coverArt
     const idChanged = clientId !== this.clientId
     this.clientId = clientId
     this.enabled = enabled
@@ -39,6 +45,7 @@ class PresenceManager {
     }
     if (idChanged) await this.teardown()
     await this.ensureConnected()
+    await this.resolveCover()
     this.flush()
   }
 
@@ -46,7 +53,25 @@ class PresenceManager {
     this.pending = payload
     if (!this.enabled || !this.clientId) return
     if (!this.client) await this.ensureConnected()
+    await this.resolveCover()
     this.flush()
+  }
+
+  /** Look up public cover art for the current track (cached), if enabled. */
+  private async resolveCover(): Promise<void> {
+    const p = this.pending
+    if (!p || !this.coverArt) {
+      this.coverUrl = null
+      this.coverKey = ''
+      return
+    }
+    const key = `${p.artist}|${p.album || p.title}`
+    if (key === this.coverKey) return // same track — reuse resolved art
+    this.coverKey = key
+    this.coverUrl = null
+    const url = await getCoverUrl(p.artist, p.album, p.title)
+    // Only apply if the track hasn't changed while we were fetching.
+    if (this.pending === p) this.coverUrl = url
   }
 
   private async ensureConnected(): Promise<void> {
@@ -87,12 +112,14 @@ class PresenceManager {
         type: ACTIVITY_LISTENING,
         details: clamp(p.title) || 'Unknown track',
         state: stateText,
-        largeImageKey: this.largeImageKey,
-        largeImageText: clamp(p.album || 'Lumen'),
+        largeImageText: clamp(p.album || p.title || 'Lumen'),
         smallImageKey: p.isPlaying ? 'play' : 'pause',
         smallImageText: p.isPlaying ? 'Playing' : 'Paused',
         instance: false
       }
+      // Prefer fetched per-track cover art; fall back to the uploaded app asset.
+      if (this.coverUrl) activity.largeImageUrl = this.coverUrl
+      else activity.largeImageKey = this.largeImageKey
       if (p.isPlaying && p.duration > 0) {
         const start = Date.now() - Math.floor(p.position * 1000)
         activity.startTimestamp = start
