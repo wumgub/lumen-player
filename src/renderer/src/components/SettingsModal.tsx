@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { AppSettings } from '@shared/types'
+import { THEMES, useTheme } from '../context/ThemeContext'
+import { ThemeEditor } from './ThemeEditor'
+import { Pencil } from './icons'
 
 const DISCORD_DEV_URL = 'https://discord.com/developers/applications'
 
 export function SettingsModal({ onClose }: { onClose: () => void }): React.ReactElement {
   const [settings, setSettings] = useState<AppSettings | null>(null)
   const [saving, setSaving] = useState(false)
+  const [editingTheme, setEditingTheme] = useState(false)
+  const { theme, setTheme } = useTheme()
+  const activeTheme = THEMES.find((t) => t.id === theme)
 
   useEffect(() => {
     void window.lumen.getSettings().then(setSettings)
@@ -36,6 +42,40 @@ export function SettingsModal({ onClose }: { onClose: () => void }): React.React
           <div className="modal-label">Loading…</div>
         ) : (
           <>
+            <section className="settings-section">
+              <div className="settings-row">
+                <div>
+                  <div className="settings-heading">Appearance</div>
+                  <div className="settings-desc">
+                    Theme: <strong>{activeTheme?.label ?? theme}</strong>. Edit every colour and
+                    the font to make your own.
+                  </div>
+                </div>
+                <button
+                  className="theme-edit-btn"
+                  title="Customize theme"
+                  onClick={() => {
+                    setTheme('custom')
+                    setEditingTheme(true)
+                  }}
+                >
+                  <Pencil size={16} />
+                </button>
+              </div>
+              <div className="theme-chips">
+                {THEMES.map((t) => (
+                  <button
+                    key={t.id}
+                    className={`theme-chip ${t.id === theme ? 'active' : ''}`}
+                    onClick={() => setTheme(t.id)}
+                  >
+                    <span className="theme-swatch" data-swatch={t.id} />
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </section>
+
             <section className="settings-section">
               <div className="settings-row">
                 <div>
@@ -149,6 +189,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }): React.React
           </>
         )}
       </div>
+      {editingTheme && <ThemeEditor onClose={() => setEditingTheme(false)} />}
     </div>,
     document.body
   )

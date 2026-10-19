@@ -1,13 +1,21 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
+import {
+  applyCustomTokens,
+  clearCustomTokens,
+  defaultCustom,
+  BASE_THEMES,
+  type TokenMap
+} from '../theme/tokens'
 
-export type ThemeId = 'neon' | 'minimal' | 'minimal-dark' | 'retro' | 'glass'
+export type ThemeId = 'neon' | 'minimal' | 'minimal-dark' | 'retro' | 'glass' | 'custom'
 
 export const THEMES: { id: ThemeId; label: string; hint: string }[] = [
   { id: 'neon', label: 'Neon', hint: 'Dark cyberpunk glow' },
   { id: 'minimal', label: 'Minimal', hint: 'Clean & muted' },
   { id: 'minimal-dark', label: 'Minimal Dark', hint: 'Clean & muted, dark' },
   { id: 'retro', label: 'Retro', hint: 'Classic winamp VU' },
-  { id: 'glass', label: 'Glass', hint: 'Frosted, art-tinted' }
+  { id: 'glass', label: 'Glass', hint: 'Frosted, art-tinted' },
+  { id: 'custom', label: 'Custom', hint: 'Your own palette' }
 ]
 
 interface ThemeState {
@@ -17,6 +25,11 @@ interface ThemeState {
   setArtwork: (url: string | null) => void
   adaptive: boolean
   setAdaptive: (v: boolean) => void
+  /** The editable custom-theme token map (colors + font). */
+  customTokens: TokenMap
+  setCustomToken: (key: string, value: string) => void
+  /** Replace the whole custom map from a built-in theme's preset. */
+  resetCustomFrom: (baseId: string) => void
 }
 
 const Ctx = createContext<ThemeState | null>(null)
@@ -29,11 +42,27 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
     () => localStorage.getItem('lumen.adaptive') !== 'false'
   )
   const [artwork, setArtwork] = useState<string | null>(null)
+  const [customTokens, setCustomTokens] = useState<TokenMap>(() => {
+    try {
+      const saved = localStorage.getItem('lumen.custom')
+      if (saved) return { ...defaultCustom(), ...JSON.parse(saved) }
+    } catch {
+      /* ignore */
+    }
+    return defaultCustom()
+  })
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
     localStorage.setItem('lumen.theme', theme)
   }, [theme])
+
+  // Apply the custom palette as inline CSS vars when the Custom theme is active.
+  useEffect(() => {
+    const root = document.documentElement
+    if (theme === 'custom') applyCustomTokens(root, customTokens)
+    else clearCustomTokens(root)
+  }, [theme, customTokens])
 
   // Derive a dominant accent from the current artwork and expose it as a CSS var.
   useEffect(() => {
@@ -65,7 +94,28 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
         setAdaptive: (v) => {
           setAdaptiveState(v)
           localStorage.setItem('lumen.adaptive', String(v))
-        }
+        },
+        customTokens,
+        setCustomToken: (key, value) =>
+          setCustomTokens((prev) => {
+            const next = { ...prev, [key]: value }
+            try {
+              localStorage.setItem('lumen.custom', JSON.stringify(next))
+            } catch {
+              /* ignore */
+            }
+            return next
+          }),
+        resetCustomFrom: (baseId) =>
+          setCustomTokens(() => {
+            const next = { ...(BASE_THEMES[baseId] ?? defaultCustom()) }
+            try {
+              localStorage.setItem('lumen.custom', JSON.stringify(next))
+            } catch {
+              /* ignore */
+            }
+            return next
+          })
       }}
     >
       {children}

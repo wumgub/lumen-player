@@ -1467,6 +1467,165 @@ input[type='range']:hover::-webkit-slider-thumb {
   background: #fff;
 }
 
+/* ---------- Appearance / theme chips ---------- */
+.theme-edit-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--fg-dim);
+  transition: background 0.15s, color 0.15s;
+}
+.theme-edit-btn:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.theme-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+.theme-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  transition: background 0.15s, border-color 0.15s;
+}
+.theme-chip:hover {
+  background: var(--accent-soft);
+}
+.theme-chip.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.theme-swatch[data-swatch='custom'] {
+  background: conic-gradient(from 180deg, #22d3ee, #a855f7, #f0879f, #a3e635, #22d3ee);
+}
+
+/* ---------- Theme editor ---------- */
+.theme-editor {
+  width: 560px;
+  max-width: 92vw;
+}
+.te-startfrom {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0 6px;
+}
+.te-startfrom-label {
+  font-size: 12px;
+  color: var(--fg-dim);
+  margin-right: 2px;
+}
+.te-base {
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--fg);
+}
+.te-base:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.te-groups {
+  max-height: 52vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-right: 4px;
+  margin-top: 8px;
+}
+.te-group-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--fg-dim);
+  margin-bottom: 4px;
+}
+.te-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 0;
+}
+.te-label {
+  font-size: 13px;
+}
+.te-color {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.te-swatch {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+}
+.te-swatch::-webkit-color-swatch {
+  border: none;
+  border-radius: 6px;
+}
+.te-swatch::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+.te-hex {
+  width: 112px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-family: ui-monospace, 'SF Mono', monospace;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--fg);
+  outline: none;
+}
+.te-hex:focus {
+  border-color: var(--accent);
+}
+.te-row-font {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+.te-font {
+  display: flex;
+  gap: 8px;
+}
+.te-select {
+  padding: 7px 10px;
+  font-size: 13px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--fg);
+}
+.te-fontinput {
+  flex: 1;
+  width: auto;
+  font-family: inherit;
+}
+
 /* ---------- Immersive mode ---------- */
 .immersive {
   position: fixed;
