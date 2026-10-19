@@ -3,6 +3,7 @@ import type { PlaylistWithCount, ScanProgress } from '@shared/types'
 import type { View } from '../types'
 import { pluralize } from '../lib/format'
 import { Disc, Folder, ListIcon, MusicNote, Plus, Users } from './icons'
+import { PromptDialog } from './PromptDialog'
 
 export function Sidebar({
   view,
@@ -20,6 +21,7 @@ export function Sidebar({
   const [stats, setStats] = useState({ tracks: 0, artists: 0, albums: 0 })
   const [scanning, setScanning] = useState(false)
   const [progress, setProgress] = useState<ScanProgress | null>(null)
+  const [newPlaylistOpen, setNewPlaylistOpen] = useState(false)
 
   const refresh = useCallback(async () => {
     const [f, p, s] = await Promise.all([
@@ -65,9 +67,7 @@ export function Sidebar({
     await refresh()
   }
 
-  const addPlaylist = async (): Promise<void> => {
-    const name = prompt('Playlist name')?.trim()
-    if (!name) return
+  const createPlaylist = async (name: string): Promise<void> => {
     await window.lumen.createPlaylist(name)
     await refresh()
   }
@@ -112,7 +112,7 @@ export function Sidebar({
       <div className="nav-section">
         <div className="nav-head">
           <span>Playlists</span>
-          <button className="mini-btn" onClick={addPlaylist} title="New playlist">
+          <button className="mini-btn" onClick={() => setNewPlaylistOpen(true)} title="New playlist">
             <Plus size={14} />
           </button>
         </div>
@@ -190,6 +190,16 @@ export function Sidebar({
           </>
         )}
       </div>
+
+      <PromptDialog
+        open={newPlaylistOpen}
+        title="New playlist"
+        label="Give your playlist a name"
+        placeholder="e.g. Late night coding"
+        submitLabel="Create"
+        onSubmit={createPlaylist}
+        onClose={() => setNewPlaylistOpen(false)}
+      />
     </nav>
   )
 }
