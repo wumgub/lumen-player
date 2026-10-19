@@ -13,6 +13,25 @@ const IDLE: AudioFrame = {
   level: 0
 }
 
+// Synthetic frame for demo/screenshot captures (enabled via window.__lumenVizDemo),
+// so the visualizer looks alive without live audio.
+function demoFrame(t: number): AudioFrame {
+  const n = 1024
+  const freq = new Uint8Array(n)
+  for (let i = 0; i < n; i++) {
+    const f = i / n
+    const osc = Math.sin(t * 0.004 + i * 0.07) * 0.5 + 0.5
+    const env = Math.pow(1 - f, 1.4)
+    freq[i] = Math.max(0, Math.min(255, osc * env * 320))
+  }
+  const wave = new Uint8Array(n)
+  for (let i = 0; i < n; i++) {
+    const v = Math.sin(t * 0.006 + i * 0.09) * Math.sin(t * 0.0013 + i * 0.013)
+    wave[i] = Math.max(0, Math.min(255, 128 + v * 90))
+  }
+  return { freq, wave, bass: Math.sin(t * 0.003) * 0.4 + 0.5, mid: 0.4, treble: 0.35, level: 0.35 }
+}
+
 function readColors(): VizColors {
   const s = getComputedStyle(document.documentElement)
   const get = (name: string, fallback: string): string => s.getPropertyValue(name).trim() || fallback
@@ -62,7 +81,8 @@ export function VisualizerHost({
         colorTick = ts
       }
       const dpr = Math.min(window.devicePixelRatio || 1, 2)
-      const frame = engine.sample() ?? IDLE
+      const demo = (window as unknown as { __lumenVizDemo?: boolean }).__lumenVizDemo
+      const frame = (demo ? demoFrame(t) : engine.sample()) ?? IDLE
 
       ctx.fillStyle = colors.bg
       ctx.fillRect(0, 0, canvas.width, canvas.height)

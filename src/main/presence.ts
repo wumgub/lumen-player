@@ -117,9 +117,10 @@ class PresenceManager {
         smallImageText: p.isPlaying ? 'Playing' : 'Paused',
         instance: false
       }
-      // Prefer fetched per-track cover art; fall back to the uploaded app asset.
-      if (this.coverUrl) activity.largeImageUrl = this.coverUrl
-      else activity.largeImageKey = this.largeImageKey
+      // The image comes from large_image (Discord proxies a raw https URL there);
+      // large_url is only the click-through link. Prefer the fetched cover,
+      // falling back to the uploaded app asset key.
+      activity.largeImageKey = this.coverUrl || this.largeImageKey
       if (p.isPlaying && p.duration > 0) {
         const start = Date.now() - Math.floor(p.position * 1000)
         activity.startTimestamp = start

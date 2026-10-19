@@ -1,18 +1,25 @@
 # Lumen 🎧
 
 An Electron music player with reactive audio visualizers, a scanned SQLite library,
-and four swappable themes.
+and swappable themes.
+
+![Lumen library view with spectrum visualizer](docs/screenshots/library.png)
+
+<p align="center">
+  <img src="docs/screenshots/albums.png" width="49%" alt="Albums grid in the Glass theme with a radial visualizer" />
+  <img src="docs/screenshots/album.png" width="49%" alt="Album view in the Minimal Dark theme with a waveform visualizer" />
+</p>
 
 ## Features
 
 - **Full library** — point it at folders, it recursively scans and indexes your audio
   (MP3, FLAC, WAV/AIFF, M4A/AAC, OGG/Opus) into SQLite, reading ID3 tags + embedded art.
 - **Browse** by Songs, Artists, Albums, or custom Playlists, with instant search.
-- **4 visualizers** — Spectrum Bars, Waveform, Radial, and a reactive Particle field,
-  driven by a Web Audio `AnalyserNode`. Toggle between a docked panel and an immersive
-  full-window mode (press `f`, or the expand icon).
-- **4 themes** — Neon, Minimal, Retro, and Glass (which tints its accents from the
-  current album art). Switch live from the top-right selector.
+- **3 visualizers** — Spectrum Bars, Waveform, and Radial, driven by a Web Audio
+  `AnalyserNode`. Toggle between a docked panel and an immersive full-window mode
+  (press `f`, or the expand icon).
+- **5 themes** — Neon, Minimal, Minimal Dark, Retro, and Glass (which tints its accents
+  from the current album art). Switch live from the top-right selector.
 - Gapless-ish queue with shuffle / repeat-all / repeat-one, seeking, volume, and
   keyboard shortcuts (`Space` play/pause, `⌘←/⌘→` prev/next, `f` immersive, `Esc` exit).
 - **Discord Rich Presence** — optionally show the current track (with a live
