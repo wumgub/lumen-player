@@ -1,5 +1,6 @@
 {
   "name": "lumen-player",
+  "productName": "Lumen",
   "version": "0.1.0",
   "description": "An Electron MP3 player with reactive audio visualizers",
   "main": "./out/main/index.js",
