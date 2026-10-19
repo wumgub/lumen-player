@@ -51,7 +51,9 @@ export interface PlaylistWithCount extends Playlist {
 export interface AppSettings {
   discordEnabled: boolean
   discordClientId: string
-  /** Asset key uploaded to your Discord app for the large cover image. */
+  /** App Client Secret — needed only to register external cover art with Discord. */
+  discordClientSecret: string
+  /** Asset key uploaded to your Discord app, used as the fallback large image. */
   discordLargeImageKey: string
   /** Fetch public per-track cover art online (iTunes) for the presence image. */
   discordCoverArt: boolean

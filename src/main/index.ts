@@ -192,6 +192,7 @@ function registerIpc(): void {
     await presence.configure(
       next.discordEnabled,
       next.discordClientId,
+      next.discordClientSecret,
       next.discordLargeImageKey,
       next.discordCoverArt
     )
@@ -220,6 +221,7 @@ app.whenReady().then(() => {
   void presence.configure(
     settings.discordEnabled,
     settings.discordClientId,
+    settings.discordClientSecret,
     settings.discordLargeImageKey,
     settings.discordCoverArt
   )

@@ -67,10 +67,11 @@ export function SettingsModal({ onClose }: { onClose: () => void }): React.React
                 </label>
                 <div className="settings-row inline">
                   <div>
-                    <div className="settings-subheading">Fetch album art online</div>
+                    <div className="settings-subheading">Per-track album art</div>
                     <div className="settings-desc">
-                      Looks up each track’s cover on iTunes so it shows in Discord. Sends the
-                      artist &amp; album name to Apple’s public search API.
+                      Shows each track’s real cover (looked up on iTunes). Requires the Client
+                      Secret below and a one-time authorization. Sends the artist &amp; album
+                      name to Apple’s public search API.
                     </div>
                   </div>
                   <label className="switch">
@@ -83,6 +84,22 @@ export function SettingsModal({ onClose }: { onClose: () => void }): React.React
                     <span className="switch-track" />
                   </label>
                 </div>
+
+                {settings.discordCoverArt && (
+                  <label className="field">
+                    <span className="field-label">
+                      Client Secret <span className="field-opt">(for album art only)</span>
+                    </span>
+                    <input
+                      className="modal-input"
+                      type="password"
+                      placeholder="from OAuth2 → Client Secret"
+                      value={settings.discordClientSecret}
+                      disabled={!settings.discordEnabled}
+                      onChange={(e) => patch({ discordClientSecret: e.target.value })}
+                    />
+                  </label>
+                )}
 
                 <label className="field">
                   <span className="field-label">
@@ -99,20 +116,23 @@ export function SettingsModal({ onClose }: { onClose: () => void }): React.React
 
                 <ol className="settings-help">
                   <li>
-                    Open the{' '}
+                    In the{' '}
                     <a href={DISCORD_DEV_URL} target="_blank" rel="noreferrer">
                       Discord Developer Portal
-                    </a>{' '}
-                    and create a <strong>New Application</strong>.
+                    </a>
+                    , create a <strong>New Application</strong> and copy its{' '}
+                    <strong>Application ID</strong> above.
                   </li>
                   <li>
-                    Copy its <strong>Application ID</strong> into the field above.
+                    For album art: under <strong>OAuth2</strong>, copy the <strong>Client
+                    Secret</strong> into the field above. Saving pops a one-time{' '}
+                    <strong>Authorize</strong> prompt in Discord — accept it.
                   </li>
                   <li>
-                    Under <strong>Rich Presence → Art Assets</strong>, upload an image named{' '}
-                    <code>lumen</code> (or whatever key you set) for the big cover art.
+                    Optional: under <strong>Rich Presence → Art Assets</strong>, upload an image
+                    named <code>lumen</code> as the fallback when a cover isn’t found.
                   </li>
-                  <li>Make sure the desktop Discord app is running on this machine.</li>
+                  <li>Keep the desktop Discord app running on this machine.</li>
                 </ol>
               </div>
             </section>
