@@ -8,6 +8,7 @@ import { Disc, Pencil, Play } from './icons'
 import { RenameDialog, type RenameRequest } from './RenameDialog'
 import { SortControl } from './SortControl'
 import { AlbumPickerDialog, type AlbumPickRequest } from './AlbumPickerDialog'
+import { TrackContextMenu, type ContextMenuState } from './TrackContextMenu'
 
 export function LibraryView({
   view,
@@ -122,18 +123,21 @@ function TrackList({
   const player = usePlayer()
   const [tracks, setTracks] = useState<Track[]>([])
   const [playlists, setPlaylists] = useState<PlaylistWithCount[]>([])
-  const [menuFor, setMenuFor] = useState<number | null>(null)
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [sort, setSort] = useState<SortState>(() => defaultSort(view))
+  const [editMode, setEditMode] = useState(false)
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const [overIndex, setOverIndex] = useState<number | null>(null)
 
   const viewKey = viewKeyOf(view)
 
-  // Reset sort + selection whenever the view identity changes.
+  // Reset interaction state whenever the view identity changes.
   useEffect(() => {
     setSort(defaultSort(view))
     setSelected(new Set())
+    setEditMode(false)
+    setContextMenu(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewKey])
 
@@ -160,27 +164,35 @@ function TrackList({
 
   useEffect(() => {
     void window.lumen.playlists().then(setPlaylists)
-  }, [libraryVersion, menuFor])
+  }, [libraryVersion, contextMenu])
 
   const header = headerFor(view)
   const totalDuration = useMemo(() => tracks.reduce((a, t) => a + t.duration, 0), [tracks])
 
-  const dragEnabled = view.kind === 'album' && sort.key === 'custom' && !search
+  // Reordering only happens in edit mode, on an album sorted by Track order.
+  const reorderable = editMode && view.kind === 'album' && sort.key === 'custom' && !search
+  // Elsewhere, edit mode enables multi-select for bulk actions.
+  const selectable = editMode && !reorderable
 
-  const addTo = async (playlistId: number, trackId: number): Promise<void> => {
-    await window.lumen.addToPlaylist(playlistId, [trackId])
-    setMenuFor(null)
-    onLibraryChanged()
-  }
-  const removeFrom = async (trackId: number): Promise<void> => {
-    if (view.kind !== 'playlist') return
-    await window.lumen.removeFromPlaylist(view.id, trackId)
-    setMenuFor(null)
-    onLibraryChanged()
-  }
+  const toggleEdit = (): void =>
+    setEditMode((on) => {
+      const next = !on
+      if (!next) setSelected(new Set())
+      // Entering edit on an album defaults to Track order so dragging works.
+      if (next && view.kind === 'album' && sort.key !== 'custom')
+        setSort({ key: 'custom', dir: 'asc' })
+      return next
+    })
 
-  const renameSong = (t: Track): void => {
-    setMenuFor(null)
+  const toggleSelect = (id: number): void =>
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+
+  const renameSong = (t: Track): void =>
     requestRename({
       kind: 'song',
       label: 'Display name for this track',
@@ -190,10 +202,8 @@ function TrackList({
         onLibraryChanged()
       }
     })
-  }
 
-  const openAlbumPick = (ids: number[]): void => {
-    setMenuFor(null)
+  const openAlbumPick = (ids: number[]): void =>
     requestAlbumPick({
       trackIds: ids,
       onDone: () => {
@@ -201,6 +211,19 @@ function TrackList({
         onLibraryChanged()
       }
     })
+
+  const addToPlaylist = async (playlistId: number, trackId: number): Promise<void> => {
+    await window.lumen.addToPlaylist(playlistId, [trackId])
+    onLibraryChanged()
+  }
+  const removeFromAlbum = async (trackId: number): Promise<void> => {
+    await window.lumen.setTrackAlbum([trackId], '')
+    onLibraryChanged()
+  }
+  const removeFromPlaylist = async (trackId: number): Promise<void> => {
+    if (view.kind !== 'playlist') return
+    await window.lumen.removeFromPlaylist(view.id, trackId)
+    onLibraryChanged()
   }
 
   const renameHeader = (): void => {
@@ -228,14 +251,6 @@ function TrackList({
       })
   }
 
-  const toggleSelect = (id: number): void =>
-    setSelected((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-
   const onDrop = (to: number): void => {
     if (dragIndex === null || dragIndex === to) {
       setDragIndex(null)
@@ -251,6 +266,17 @@ function TrackList({
         view.name,
         next.map((t) => t.id)
       )
+  }
+
+  const openMenu = (e: React.MouseEvent, t: Track): void => {
+    e.preventDefault()
+    e.stopPropagation()
+    setContextMenu({ x: e.clientX, y: e.clientY, track: t })
+  }
+
+  const onRowClick = (i: number, t: Track): void => {
+    if (!editMode) player.playQueue(tracks, i)
+    else if (selectable) toggleSelect(t.id)
   }
 
   const canRenameHeader = view.kind === 'artist' || view.kind === 'album'
@@ -271,11 +297,12 @@ function TrackList({
             {header.sub ? header.sub + ' · ' : ''}
             {pluralize(tracks.length, 'song')}
             {totalDuration > 0 && ` · ${formatTime(totalDuration)}`}
-            {dragEnabled && tracks.length > 1 && ' · drag to reorder'}
+            {reorderable && tracks.length > 1 && ' · drag to reorder'}
+            {selectable && ' · click to select'}
           </div>
         </div>
         <div className="header-actions">
-          {view.kind !== 'playlist' && (
+          {view.kind !== 'playlist' && !editMode && (
             <SortControl
               sort={sort}
               options={view.kind === 'album' ? ['custom', ...SORT_OPTIONS] : SORT_OPTIONS}
@@ -283,6 +310,15 @@ function TrackList({
             />
           )}
           {tracks.length > 0 && (
+            <button
+              className={`edit-btn ${editMode ? 'active' : ''}`}
+              onClick={toggleEdit}
+              title={editMode ? 'Finish editing' : 'Reorder / select tracks'}
+            >
+              {editMode ? 'Done' : 'Edit'}
+            </button>
+          )}
+          {tracks.length > 0 && !editMode && (
             <button className="play-all" onClick={() => player.playQueue(tracks, 0)}>
               <Play size={14} />
               Play all
@@ -297,7 +333,7 @@ function TrackList({
           <p>{search ? 'No matches' : 'Nothing here yet — add a folder and scan.'}</p>
         </div>
       ) : (
-        <div className="track-rows">
+        <div className={`track-rows ${editMode ? 'editing' : ''}`}>
           {tracks.map((t, i) => {
             const isCurrent = player.current?.id === t.id
             const isSelected = selected.has(t.id)
@@ -305,32 +341,33 @@ function TrackList({
               <div
                 key={`${t.id}-${i}`}
                 className={`track-row ${isCurrent ? 'current' : ''} ${
-                  isSelected ? 'selected' : ''
+                  selectable && isSelected ? 'selected' : ''
                 } ${overIndex === i && dragIndex !== null ? 'drop-target' : ''} ${
-                  dragEnabled ? 'draggable' : ''
+                  reorderable ? 'draggable' : ''
                 }`}
-                draggable={dragEnabled}
-                onDragStart={() => dragEnabled && setDragIndex(i)}
+                draggable={reorderable}
+                onDragStart={() => reorderable && setDragIndex(i)}
                 onDragOver={(e) => {
-                  if (dragEnabled && dragIndex !== null) {
+                  if (reorderable && dragIndex !== null) {
                     e.preventDefault()
                     setOverIndex(i)
                   }
                 }}
-                onDrop={() => dragEnabled && onDrop(i)}
+                onDrop={() => reorderable && onDrop(i)}
                 onDragEnd={() => {
                   setDragIndex(null)
                   setOverIndex(null)
                 }}
                 onClick={(e) => {
-                  // Clicking the row body toggles selection; buttons stop propagation.
                   if ((e.target as HTMLElement).closest('button')) return
-                  toggleSelect(t.id)
+                  onRowClick(i, t)
                 }}
-                onDoubleClick={() => player.playQueue(tracks, i)}
+                onContextMenu={(e) => openMenu(e, t)}
               >
                 <div className="tr-index">
-                  {dragEnabled ? (
+                  {selectable ? (
+                    <span className={`tr-check ${isSelected ? 'checked' : ''}`} />
+                  ) : reorderable ? (
                     <span className="tr-grip" title="Drag to reorder">
                       ⠿
                     </span>
@@ -343,11 +380,13 @@ function TrackList({
                   ) : (
                     <span className="tr-num">{i + 1}</span>
                   )}
-                  <button
-                    className="tr-play"
-                    onClick={() => player.playQueue(tracks, i)}
-                    aria-label="Play"
-                  />
+                  {!editMode && (
+                    <button
+                      className="tr-play"
+                      onClick={() => player.playQueue(tracks, i)}
+                      aria-label="Play"
+                    />
+                  )}
                 </div>
                 <Artwork trackId={t.id} hasArt={!!t.hasArt} className="tr-art" size={16} />
                 <div className="tr-main">
@@ -357,30 +396,9 @@ function TrackList({
                 <div className="tr-album">{t.album}</div>
                 <div className="tr-time">{formatTime(t.duration)}</div>
                 <div className="tr-actions">
-                  <button
-                    className="tr-more"
-                    onClick={() => setMenuFor(menuFor === t.id ? null : t.id)}
-                  >
+                  <button className="tr-more" onClick={(e) => openMenu(e, t)} title="More…">
                     ⋯
                   </button>
-                  {menuFor === t.id && (
-                    <div className="row-menu" onMouseLeave={() => setMenuFor(null)}>
-                      <button onClick={() => renameSong(t)}>Rename song…</button>
-                      <button onClick={() => openAlbumPick([t.id])}>Add to album…</button>
-                      <div className="row-menu-label">Add to playlist</div>
-                      {playlists.length === 0 && <div className="row-menu-empty">No playlists</div>}
-                      {playlists.map((pl) => (
-                        <button key={pl.id} onClick={() => addTo(pl.id, t.id)}>
-                          {pl.name}
-                        </button>
-                      ))}
-                      {view.kind === 'playlist' && (
-                        <button className="danger" onClick={() => removeFrom(t.id)}>
-                          Remove from this playlist
-                        </button>
-                      )}
-                    </div>
-                  )}
                 </div>
               </div>
             )
@@ -388,7 +406,7 @@ function TrackList({
         </div>
       )}
 
-      {selected.size > 0 && (
+      {selectable && selected.size > 0 && (
         <div className="selection-bar">
           <span className="sel-count">{pluralize(selected.size, 'song')} selected</span>
           <button className="sel-btn" onClick={() => openAlbumPick([...selected])}>
@@ -398,6 +416,26 @@ function TrackList({
             Clear
           </button>
         </div>
+      )}
+
+      {contextMenu && (
+        <TrackContextMenu
+          menu={contextMenu}
+          playlists={playlists}
+          actions={{
+            rename: () => renameSong(contextMenu.track),
+            addToPlaylist: (plId) => void addToPlaylist(plId, contextMenu.track.id),
+            addToAlbum: () => openAlbumPick([contextMenu.track.id]),
+            removeFromAlbum: contextMenu.track.album
+              ? () => void removeFromAlbum(contextMenu.track.id)
+              : undefined,
+            removeFromPlaylist:
+              view.kind === 'playlist'
+                ? () => void removeFromPlaylist(contextMenu.track.id)
+                : undefined
+          }}
+          onClose={() => setContextMenu(null)}
+        />
       )}
     </div>
   )

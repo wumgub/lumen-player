@@ -447,6 +447,24 @@ input {
 .play-all svg {
   color: var(--accent);
 }
+.edit-btn {
+  padding: 9px 18px;
+  border-radius: 999px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+  transition: background 0.15s, color 0.15s;
+}
+.edit-btn:hover {
+  background: var(--accent-soft);
+}
+.edit-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: transparent;
+}
 
 /* ---------- Track rows ---------- */
 .track-rows {
@@ -489,6 +507,88 @@ input {
   font-size: 14px;
   letter-spacing: -1px;
   cursor: grab;
+}
+.track-rows.editing .track-row {
+  cursor: pointer;
+}
+.tr-check {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 2px solid var(--fg-dim);
+  box-sizing: border-box;
+  transition: background 0.12s, border-color 0.12s;
+}
+.tr-check.checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.tr-check.checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 0.5px;
+  width: 5px;
+  height: 9px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* ---------- Track context menu ---------- */
+.context-menu {
+  position: fixed;
+  z-index: 300;
+  min-width: 200px;
+  max-width: 260px;
+  background: var(--popover-bg);
+  backdrop-filter: var(--panel-blur);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ctx-item {
+  text-align: left;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--fg);
+}
+.ctx-item:hover {
+  background: var(--accent-soft);
+}
+.ctx-item.danger {
+  color: #f87171;
+}
+.ctx-sep {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 2px;
+}
+.ctx-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--fg-dim);
+  padding: 6px 10px 2px;
+}
+.ctx-empty {
+  font-size: 12px;
+  color: var(--fg-dim);
+  padding: 4px 10px;
+}
+.ctx-scroll {
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 .tr-index {
   position: relative;
