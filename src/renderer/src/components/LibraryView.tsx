@@ -4,7 +4,7 @@ import type { SortKey, SortState, View } from '../types'
 import { usePlayer } from '../context/PlayerContext'
 import { formatTime, pluralize } from '../lib/format'
 import { Artwork } from './Artwork'
-import { Disc, Pencil } from './icons'
+import { Disc, Pencil, Play } from './icons'
 import { RenameDialog, type RenameRequest } from './RenameDialog'
 import { SortControl } from './SortControl'
 import { AlbumPickerDialog, type AlbumPickRequest } from './AlbumPickerDialog'
@@ -284,6 +284,7 @@ function TrackList({
           )}
           {tracks.length > 0 && (
             <button className="play-all" onClick={() => player.playQueue(tracks, 0)}>
+              <Play size={14} />
               Play all
             </button>
           )}
