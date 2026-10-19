@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { AppSettings } from '@shared/types'
 
 const DISCORD_DEV_URL = 'https://discord.com/developers/applications'
@@ -26,7 +27,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }): React.React
     }
   }
 
-  return (
+  return createPortal(
     <div className="modal-backdrop" onMouseDown={onClose}>
       <div className="modal settings-modal" onMouseDown={(e) => e.stopPropagation()}>
         <div className="modal-title">Settings</div>
@@ -108,6 +109,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }): React.React
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

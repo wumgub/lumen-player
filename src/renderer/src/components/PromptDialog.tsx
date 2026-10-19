@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 /** A simple one-field text prompt modal (Electron doesn't support window.prompt). */
 export function PromptDialog({
@@ -41,7 +42,7 @@ export function PromptDialog({
     onClose()
   }
 
-  return (
+  return createPortal(
     <div className="modal-backdrop" onMouseDown={onClose}>
       <div className="modal" onMouseDown={(e) => e.stopPropagation()}>
         <div className="modal-title">{title}</div>
@@ -66,6 +67,7 @@ export function PromptDialog({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

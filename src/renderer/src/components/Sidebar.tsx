@@ -2,8 +2,10 @@ import React, { useCallback, useEffect, useState } from 'react'
 import type { PlaylistWithCount, ScanProgress } from '@shared/types'
 import type { View } from '../types'
 import { pluralize } from '../lib/format'
-import { Disc, Folder, ListIcon, MusicNote, Plus, Users } from './icons'
+import { Disc, Folder, ListIcon, MusicNote, Pencil, Plus, Users } from './icons'
 import { PromptDialog } from './PromptDialog'
+
+type PlaylistDialog = { mode: 'new' } | { mode: 'rename'; id: number; name: string } | null
 
 export function Sidebar({
   view,
@@ -21,7 +23,7 @@ export function Sidebar({
   const [stats, setStats] = useState({ tracks: 0, artists: 0, albums: 0 })
   const [scanning, setScanning] = useState(false)
   const [progress, setProgress] = useState<ScanProgress | null>(null)
-  const [newPlaylistOpen, setNewPlaylistOpen] = useState(false)
+  const [playlistDialog, setPlaylistDialog] = useState<PlaylistDialog>(null)
 
   const refresh = useCallback(async () => {
     const [f, p, s] = await Promise.all([
@@ -67,8 +69,14 @@ export function Sidebar({
     await refresh()
   }
 
-  const createPlaylist = async (name: string): Promise<void> => {
-    await window.lumen.createPlaylist(name)
+  const submitPlaylistDialog = async (name: string): Promise<void> => {
+    if (playlistDialog?.mode === 'rename') {
+      await window.lumen.renamePlaylist(playlistDialog.id, name)
+      if (view.kind === 'playlist' && view.id === playlistDialog.id)
+        setView({ kind: 'playlist', id: playlistDialog.id, name })
+    } else {
+      await window.lumen.createPlaylist(name)
+    }
     await refresh()
   }
 
@@ -112,28 +120,51 @@ export function Sidebar({
       <div className="nav-section">
         <div className="nav-head">
           <span>Playlists</span>
-          <button className="mini-btn" onClick={() => setNewPlaylistOpen(true)} title="New playlist">
+          <button
+            className="mini-btn"
+            onClick={() => setPlaylistDialog({ mode: 'new' })}
+            title="New playlist"
+          >
             <Plus size={14} />
           </button>
         </div>
         <div className="playlist-list">
           {playlists.map((pl) => (
-            <button
+            <div
               key={pl.id}
-              className={`nav-item ${
+              className={`nav-item playlist-item ${
                 view.kind === 'playlist' && view.id === pl.id ? 'active' : ''
               }`}
+              role="button"
+              tabIndex={0}
               onClick={() => setView({ kind: 'playlist', id: pl.id, name: pl.name })}
-              onContextMenu={(e) => {
-                e.preventDefault()
-                void deletePlaylist(pl.id)
-              }}
-              title="Right-click to delete"
             >
               <ListIcon size={16} />
               <span className="pl-name">{pl.name}</span>
               <span className="pl-count">{pl.count}</span>
-            </button>
+              <div className="pl-actions">
+                <button
+                  className="mini-btn ghost"
+                  title="Rename playlist"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setPlaylistDialog({ mode: 'rename', id: pl.id, name: pl.name })
+                  }}
+                >
+                  <Pencil size={13} />
+                </button>
+                <button
+                  className="mini-btn ghost"
+                  title="Delete playlist"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    void deletePlaylist(pl.id)
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            </div>
           ))}
           {playlists.length === 0 && <div className="empty-hint">No playlists yet</div>}
         </div>
@@ -192,13 +223,18 @@ export function Sidebar({
       </div>
 
       <PromptDialog
-        open={newPlaylistOpen}
-        title="New playlist"
-        label="Give your playlist a name"
+        open={!!playlistDialog}
+        title={playlistDialog?.mode === 'rename' ? 'Rename playlist' : 'New playlist'}
+        label={
+          playlistDialog?.mode === 'rename'
+            ? 'Choose a new name'
+            : 'Give your playlist a name'
+        }
         placeholder="e.g. Late night coding"
-        submitLabel="Create"
-        onSubmit={createPlaylist}
-        onClose={() => setNewPlaylistOpen(false)}
+        initial={playlistDialog?.mode === 'rename' ? playlistDialog.name : ''}
+        submitLabel={playlistDialog?.mode === 'rename' ? 'Rename' : 'Create'}
+        onSubmit={submitPlaylistDialog}
+        onClose={() => setPlaylistDialog(null)}
       />
     </nav>
   )

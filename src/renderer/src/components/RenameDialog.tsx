@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 export interface RenameRequest {
   kind: 'song' | 'artist' | 'album'
@@ -36,7 +37,7 @@ export function RenameDialog({
     onClose()
   }
 
-  return (
+  return createPortal(
     <div className="modal-backdrop" onMouseDown={onClose}>
       <div className="modal" onMouseDown={(e) => e.stopPropagation()}>
         <div className="modal-title">Rename {request.kind}</div>
@@ -60,6 +61,7 @@ export function RenameDialog({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

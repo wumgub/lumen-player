@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 
-export type ThemeId = 'neon' | 'minimal' | 'retro' | 'glass'
+export type ThemeId = 'neon' | 'minimal' | 'minimal-dark' | 'retro' | 'glass'
 
 export const THEMES: { id: ThemeId; label: string; hint: string }[] = [
   { id: 'neon', label: 'Neon', hint: 'Dark cyberpunk glow' },
   { id: 'minimal', label: 'Minimal', hint: 'Clean & muted' },
+  { id: 'minimal-dark', label: 'Minimal Dark', hint: 'Clean & muted, dark' },
   { id: 'retro', label: 'Retro', hint: 'Classic winamp VU' },
   { id: 'glass', label: 'Glass', hint: 'Frosted, art-tinted' }
 ]

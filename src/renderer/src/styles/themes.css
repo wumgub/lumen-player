@@ -23,6 +23,8 @@
   --accent-soft: rgba(34, 211, 238, 0.15);
   --shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
   --panel-blur: none;
+  /* Background for floating menus/modals; opaque by default, frosted in Glass. */
+  --popover-bg: var(--bg-2);
   --viz-accent: #22d3ee;
   --viz-accent-2: #e879f9;
   --viz-bg: #0a0a12;
@@ -46,6 +48,25 @@
   --viz-accent-2: #e0607e;
   --viz-bg: #ffffff;
   --viz-fg: #16161a;
+}
+
+/* ---------- MINIMAL DARK ---------- */
+:root[data-theme='minimal-dark'] {
+  --bg: #121316;
+  --bg-2: #191b1f;
+  --bg-3: #24272c;
+  --fg: #e8eaed;
+  --fg-dim: #898f98;
+  --border: #2b2f35;
+  --accent: #7c8cff;
+  --accent-2: #f0879f;
+  --accent-soft: rgba(124, 140, 255, 0.16);
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.55);
+  --panel-blur: none;
+  --viz-accent: #7c8cff;
+  --viz-accent-2: #f0879f;
+  --viz-bg: #121316;
+  --viz-fg: #e8eaed;
 }
 
 /* ---------- RETRO (winamp) ---------- */
@@ -81,6 +102,8 @@
   --accent-soft: rgba(255, 255, 255, 0.1);
   --shadow: 0 8px 40px rgba(0, 0, 0, 0.45);
   --panel-blur: saturate(160%) blur(18px);
+  /* Dark frosted backing so menus/modals stay readable over busy content. */
+  --popover-bg: rgba(16, 20, 30, 0.82);
   --viz-accent: var(--dynamic-accent, #7dd3fc);
   --viz-accent-2: var(--dynamic-accent-2, #f0abfc);
   --viz-bg: #0c1018;

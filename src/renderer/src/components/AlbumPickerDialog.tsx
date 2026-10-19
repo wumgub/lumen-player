@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Disc, Plus } from './icons'
 
 export interface AlbumPickRequest {
@@ -44,7 +45,7 @@ export function AlbumPickerDialog({
 
   const n = request.trackIds.length
 
-  return (
+  return createPortal(
     <div className="modal-backdrop" onMouseDown={onClose}>
       <div className="modal album-picker" onMouseDown={(e) => e.stopPropagation()}>
         <div className="modal-title">Add {n === 1 ? 'song' : `${n} songs`} to album</div>
@@ -88,6 +89,7 @@ export function AlbumPickerDialog({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
