@@ -179,10 +179,24 @@ export function Sidebar({
         </div>
         <div className="folder-list">
           {folders.map((f) => (
-            <div key={f} className="folder-row" title={f}>
+            <div
+              key={f}
+              className={`folder-row ${view.kind === 'folder' && view.path === f ? 'active' : ''}`}
+              title={f}
+              role="button"
+              tabIndex={0}
+              onClick={() => setView({ kind: 'folder', path: f })}
+            >
               <Folder size={14} />
               <span className="folder-path">{f.split('/').pop() || f}</span>
-              <button className="mini-btn ghost" onClick={() => removeFolder(f)}>
+              <button
+                className="mini-btn ghost"
+                title="Remove folder"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  void removeFolder(f)
+                }}
+              >
                 ×
               </button>
             </div>

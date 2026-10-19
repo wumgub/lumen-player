@@ -249,8 +249,18 @@ input {
   color: var(--fg-dim);
   border-radius: var(--radius-sm);
 }
+.folder-row {
+  cursor: pointer;
+}
 .folder-row:hover {
   background: var(--bg-3);
+}
+.folder-row.active {
+  background: var(--accent-soft);
+  color: var(--fg);
+}
+.folder-row.active svg {
+  color: var(--accent);
 }
 .folder-path {
   flex: 1;

@@ -77,6 +77,8 @@ function headerFor(view: View): { title: string; sub?: string } {
       return { title: view.name }
     case 'playlist':
       return { title: view.name, sub: 'Playlist' }
+    case 'folder':
+      return { title: view.path.split('/').pop() || view.path, sub: 'Folder' }
     default:
       return { title: '' }
   }
@@ -84,6 +86,7 @@ function headerFor(view: View): { title: string; sub?: string } {
 
 function viewKeyOf(v: View): string {
   if (v.kind === 'album' || v.kind === 'artist') return `${v.kind}:${v.name}`
+  if (v.kind === 'folder') return `folder:${v.path}`
   if (v.kind === 'playlist') return `playlist:${v.id}`
   return v.kind
 }
@@ -151,6 +154,7 @@ function TrackList({
           search: search || undefined,
           artist: view.kind === 'artist' ? view.name : undefined,
           album: view.kind === 'album' ? view.name : undefined,
+          folder: view.kind === 'folder' ? view.path : undefined,
           sort: sort.key,
           dir: sort.dir
         })

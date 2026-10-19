@@ -226,6 +226,10 @@ export function queryTracks(q: LibraryQuery): Track[] {
     where.push('genre = @genre')
     params.genre = q.genre
   }
+  if (q.folder) {
+    where.push('path LIKE @folderPrefix')
+    params.folderPrefix = (q.folder.endsWith('/') ? q.folder : q.folder + '/') + '%'
+  }
   const dir = q.dir === 'desc' ? 'DESC' : 'ASC'
   let orderBy: string
   if (q.sort === 'custom') {

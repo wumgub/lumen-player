@@ -32,6 +32,8 @@ export interface LibraryQuery {
   artist?: string
   album?: string
   genre?: string
+  /** Match tracks whose file path is under this folder. */
+  folder?: string
   sort?: 'title' | 'artist' | 'album' | 'addedAt' | 'year' | 'duration' | 'custom'
   dir?: 'asc' | 'desc'
   limit?: number

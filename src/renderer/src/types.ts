@@ -4,6 +4,7 @@ export type View =
   | { kind: 'albums' }
   | { kind: 'artist'; name: string }
   | { kind: 'album'; name: string }
+  | { kind: 'folder'; path: string }
   | { kind: 'playlist'; id: number; name: string }
 
 export type SortKey = 'custom' | 'title' | 'artist' | 'album' | 'addedAt' | 'duration'
