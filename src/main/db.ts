@@ -85,6 +85,20 @@ export function initDb(): void {
   if (!cols.some((c) => c.name === 'isVideo')) {
     db.exec('ALTER TABLE tracks ADD COLUMN isVideo INTEGER NOT NULL DEFAULT 0')
   }
+
+  // `position` is the user's manual order of playlists in the sidebar. Backfill
+  // existing rows by their current (name) order so nothing visibly jumps.
+  const plCols = db.prepare('PRAGMA table_info(playlists)').all() as { name: string }[]
+  if (!plCols.some((c) => c.name === 'position')) {
+    db.exec('ALTER TABLE playlists ADD COLUMN position INTEGER')
+    db.exec(
+      `UPDATE playlists SET position = (
+         SELECT COUNT(*) FROM playlists p2
+         WHERE p2.name < playlists.name COLLATE NOCASE
+            OR (p2.name = playlists.name AND p2.id < playlists.id)
+       ) WHERE position IS NULL`
+    )
+  }
 }
 
 // Lock bits for user-edited fields.
@@ -368,10 +382,22 @@ export function removeFolder(path: string): void {
 
 // ---- playlists ----
 export function createPlaylist(name: string): Playlist {
+  // Append new playlists after the existing ones.
   const info = db
-    .prepare('INSERT INTO playlists (name, createdAt) VALUES (?, ?)')
+    .prepare(
+      `INSERT INTO playlists (name, createdAt, position)
+       VALUES (?, ?, (SELECT COALESCE(MAX(position), -1) + 1 FROM playlists))`
+    )
     .run(name, Date.now())
   return getPlaylist(Number(info.lastInsertRowid))!
+}
+/** Persist the user's manual sidebar order of playlists. */
+export function reorderPlaylists(orderedIds: number[]): void {
+  const upd = db.prepare('UPDATE playlists SET position = ? WHERE id = ?')
+  const txn = db.transaction(() => {
+    orderedIds.forEach((id, i) => upd.run(i, id))
+  })
+  txn()
 }
 export function getPlaylist(id: number): Playlist | null {
   return (db.prepare('SELECT * FROM playlists WHERE id = ?').get(id) as Playlist) ?? null
@@ -381,7 +407,7 @@ export function listPlaylists(): PlaylistWithCount[] {
     .prepare(
       `SELECT p.*, COUNT(pt.track_id) AS count FROM playlists p
        LEFT JOIN playlist_tracks pt ON pt.playlist_id = p.id
-       GROUP BY p.id ORDER BY p.name COLLATE NOCASE`
+       GROUP BY p.id ORDER BY p.position ASC, p.name COLLATE NOCASE`
     )
     .all() as PlaylistWithCount[]
 }

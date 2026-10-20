@@ -23,6 +23,7 @@ import {
   renameAlbum,
   renameArtist,
   renamePlaylist,
+  reorderPlaylists,
   renameTrack,
   reorderAlbum,
   setAppSettings,
@@ -229,6 +230,7 @@ function registerIpc(): void {
   ipcMain.handle('playlist:create', (_e, name: string) => createPlaylist(name))
   ipcMain.handle('playlist:delete', (_e, id: number) => deletePlaylist(id))
   ipcMain.handle('playlist:rename', (_e, id: number, name: string) => renamePlaylist(id, name))
+  ipcMain.handle('playlist:reorder', (_e, orderedIds: number[]) => reorderPlaylists(orderedIds))
   ipcMain.handle('playlist:add', (_e, id: number, trackIds: number[]) => addToPlaylist(id, trackIds))
   ipcMain.handle('playlist:remove', (_e, id: number, trackId: number) =>
     removeFromPlaylist(id, trackId)

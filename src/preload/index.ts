@@ -58,6 +58,8 @@ const api = {
   deletePlaylist: (id: number): Promise<void> => ipcRenderer.invoke('playlist:delete', id),
   renamePlaylist: (id: number, name: string): Promise<void> =>
     ipcRenderer.invoke('playlist:rename', id, name),
+  reorderPlaylists: (orderedIds: number[]): Promise<void> =>
+    ipcRenderer.invoke('playlist:reorder', orderedIds),
   addToPlaylist: (id: number, trackIds: number[]): Promise<void> =>
     ipcRenderer.invoke('playlist:add', id, trackIds),
   removeFromPlaylist: (id: number, trackId: number): Promise<void> =>

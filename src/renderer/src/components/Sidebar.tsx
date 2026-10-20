@@ -25,6 +25,8 @@ export function Sidebar({
   const [scanning, setScanning] = useState(false)
   const [progress, setProgress] = useState<ScanProgress | null>(null)
   const [playlistDialog, setPlaylistDialog] = useState<PlaylistDialog>(null)
+  const [dragPl, setDragPl] = useState<number | null>(null)
+  const [overPl, setOverPl] = useState<number | null>(null)
   // Re-roll a random example name each time the "New playlist" dialog opens
   // (playlistDialog is a fresh object per open, so this recomputes then, but
   // stays stable while the dialog is open).
@@ -92,6 +94,19 @@ export function Sidebar({
     await refresh()
   }
 
+  const dropPlaylist = async (targetId: number): Promise<void> => {
+    const from = playlists.findIndex((p) => p.id === dragPl)
+    const to = playlists.findIndex((p) => p.id === targetId)
+    setDragPl(null)
+    setOverPl(null)
+    if (from < 0 || to < 0 || from === to) return
+    const next = playlists.slice()
+    const [moved] = next.splice(from, 1)
+    next.splice(to, 0, moved)
+    setPlaylists(next) // optimistic
+    await window.lumen.reorderPlaylists(next.map((p) => p.id))
+  }
+
   const navActive = (kind: View['kind']): string => (view.kind === kind ? 'active' : '')
 
   const pct =
@@ -134,9 +149,27 @@ export function Sidebar({
               key={pl.id}
               className={`nav-item playlist-item ${
                 view.kind === 'playlist' && view.id === pl.id ? 'active' : ''
+              } ${overPl === pl.id && dragPl !== null && dragPl !== pl.id ? 'drop-target' : ''} ${
+                dragPl === pl.id ? 'dragging' : ''
               }`}
               role="button"
               tabIndex={0}
+              draggable
+              onDragStart={(e) => {
+                setDragPl(pl.id)
+                e.dataTransfer.effectAllowed = 'move'
+              }}
+              onDragOver={(e) => {
+                if (dragPl !== null) {
+                  e.preventDefault()
+                  setOverPl(pl.id)
+                }
+              }}
+              onDrop={() => void dropPlaylist(pl.id)}
+              onDragEnd={() => {
+                setDragPl(null)
+                setOverPl(null)
+              }}
               onClick={() => setView({ kind: 'playlist', id: pl.id, name: pl.name })}
             >
               <ListIcon size={16} />

@@ -104,6 +104,7 @@ const api = {
   createPlaylist: async (name) => ({ id: 9, name, createdAt: 0 }),
   deletePlaylist: async () => {},
   renamePlaylist: async () => {},
+  reorderPlaylists: async () => {},
   addToPlaylist: async () => {},
   removeFromPlaylist: async () => {},
   playlistTracks: async () => songs.slice(0, 8),
