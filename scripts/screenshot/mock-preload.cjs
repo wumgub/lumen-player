@@ -1,7 +1,7 @@
 // Mock window.lumen for screenshot captures of the real renderer.
 const { contextBridge } = require('electron')
 
-const mk = (id, title, artist, album, year, trackNo, duration) => ({
+const mk = (id, title, artist, album, year, trackNo, duration, note = '') => ({
   id,
   path: `/Music/${artist}/${album}/${title}.mp3`,
   title,
@@ -14,11 +14,12 @@ const mk = (id, title, artist, album, year, trackNo, duration) => ({
   discNo: 1,
   duration,
   hasArt: 1,
-  addedAt: Date.now() - id * 86400000
+  addedAt: Date.now() - id * 86400000,
+  note
 })
 
 const songs = [
-  mk(1, 'Судно', 'Molchat Doma', 'Этажи', 2018, 1, 171),
+  mk(1, 'Судно', 'Molchat Doma', 'Этажи', 2018, 1, 171, 'sudno — molchat doma'),
   mk(2, 'Танцевать', 'Molchat Doma', 'Этажи', 2018, 2, 268),
   mk(3, 'Клетка', 'Molchat Doma', 'Этажи', 2018, 3, 214),
   mk(4, 'Люди надоели', 'Molchat Doma', 'Этажи', 2018, 4, 199),
@@ -55,7 +56,7 @@ const api = {
     if (q.album) r = r.filter((s) => s.album === q.album)
     if (q.search) {
       const t = q.search.toLowerCase()
-      r = r.filter((s) => (s.title + s.artist + s.album).toLowerCase().includes(t))
+      r = r.filter((s) => (s.title + s.artist + s.album + (s.note || '')).toLowerCase().includes(t))
     }
     return r
   },
@@ -80,6 +81,7 @@ const api = {
   renameArtist: async () => {},
   renameAlbum: async () => {},
   setTrackAlbum: async () => {},
+  setTrackNote: async () => {},
   reorderAlbum: async () => {},
   playlists: async () => [
     { id: 1, name: 'Late Night Drive', count: 14, createdAt: 0 },

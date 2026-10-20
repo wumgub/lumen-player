@@ -27,6 +27,7 @@ import {
   reorderAlbum,
   setAppSettings,
   setTrackAlbum,
+  setTrackNote,
   stats
 } from './db'
 import { scanFolders } from './scanner'
@@ -172,6 +173,7 @@ function registerIpc(): void {
   ipcMain.handle('meta:setTrackAlbum', (_e, trackIds: number[], album: string) =>
     setTrackAlbum(trackIds, album)
   )
+  ipcMain.handle('meta:setTrackNote', (_e, id: number, note: string) => setTrackNote(id, note))
   ipcMain.handle('album:reorder', (_e, album: string, orderedTrackIds: number[]) =>
     reorderAlbum(album, orderedTrackIds)
   )

@@ -12,6 +12,7 @@ export interface Track {
   duration: number // seconds
   hasArt: number // 0 | 1 (sqlite boolean)
   addedAt: number // epoch ms
+  note: string // user's free-text note; also matched by search
 }
 
 export interface ScanProgress {

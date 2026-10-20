@@ -40,6 +40,8 @@ const api = {
     ipcRenderer.invoke('meta:renameAlbum', oldName, newName),
   setTrackAlbum: (trackIds: number[], album: string): Promise<void> =>
     ipcRenderer.invoke('meta:setTrackAlbum', trackIds, album),
+  setTrackNote: (id: number, note: string): Promise<void> =>
+    ipcRenderer.invoke('meta:setTrackNote', id, note),
   reorderAlbum: (album: string, orderedTrackIds: number[]): Promise<void> =>
     ipcRenderer.invoke('album:reorder', album, orderedTrackIds),
 

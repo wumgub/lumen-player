@@ -644,6 +644,20 @@ input {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.tr-note {
+  font-size: 11px;
+  color: var(--accent);
+  opacity: 0.85;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tr-note::before {
+  /* small pencil glyph to signal it's a user note */
+  content: '✎ ';
+  opacity: 0.7;
+}
 .tr-album {
   font-size: 13px;
   color: var(--fg-dim);
@@ -1289,6 +1303,27 @@ input[type='range']:hover::-webkit-slider-thumb {
 .sel-btn.ghost:hover {
   color: var(--fg);
 }
+.sel-menu-wrap {
+  position: relative;
+  display: inline-flex;
+}
+/* Playlist picker for the bulk selection; opens upward above the pill bar. */
+.sel-menu {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(100% + 10px);
+  min-width: 180px;
+  max-height: 260px;
+  overflow: hidden;
+  padding: 6px;
+  background: var(--popover-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+}
 
 /* ---------- Album picker ---------- */
 .album-picker .album-options {
@@ -1374,6 +1409,12 @@ input[type='range']:hover::-webkit-slider-thumb {
 .modal-input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.modal-textarea {
+  resize: vertical;
+  min-height: 64px;
+  line-height: 1.5;
+  font-family: inherit;
 }
 .modal-actions {
   display: flex;

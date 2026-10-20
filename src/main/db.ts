@@ -76,6 +76,11 @@ export function initDb(): void {
   if (!cols.some((c) => c.name === 'albumPos')) {
     db.exec('ALTER TABLE tracks ADD COLUMN albumPos INTEGER')
   }
+  // `note` is a free-text note the user attaches to a track; also searched, so a
+  // Cyrillic/CJK title can be found by typing a romanized alias into search.
+  if (!cols.some((c) => c.name === 'note')) {
+    db.exec("ALTER TABLE tracks ADD COLUMN note TEXT NOT NULL DEFAULT ''")
+  }
 }
 
 // Lock bits for user-edited fields.
@@ -98,7 +103,7 @@ export interface UpsertTrack {
 }
 
 const COLS =
-  'id, path, title, artist, albumArtist, album, genre, year, trackNo, discNo, duration, hasArt, addedAt'
+  'id, path, title, artist, albumArtist, album, genre, year, trackNo, discNo, duration, hasArt, addedAt, note'
 
 export function upsertTrack(t: UpsertTrack): { id: number; isNew: boolean } {
   const existing = db
@@ -167,6 +172,12 @@ export function renameTrack(id: number, title: string): void {
   )
 }
 
+/** Attach/replace a track's free-text note (empty string clears it). Scanning
+ * never touches `note`, so no lock bit is needed. */
+export function setTrackNote(id: number, note: string): void {
+  db.prepare('UPDATE tracks SET note = ? WHERE id = ?').run(note, id)
+}
+
 export function renameArtist(oldName: string, newName: string): void {
   // Rewrite the effective artist (albumArtist when set, else artist) for the whole group.
   db.prepare(
@@ -210,7 +221,7 @@ export function queryTracks(q: LibraryQuery): Track[] {
   const where: string[] = []
   const params: Record<string, unknown> = {}
   if (q.search) {
-    where.push('(title LIKE @s OR artist LIKE @s OR album LIKE @s)')
+    where.push('(title LIKE @s OR artist LIKE @s OR album LIKE @s OR note LIKE @s)')
     params.s = `%${q.search}%`
   }
   if (q.artist) {

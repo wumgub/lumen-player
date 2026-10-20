@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import type { PlaylistWithCount, Track } from '@shared/types'
 import type { SortKey, SortState, View } from '../types'
 import { usePlayer } from '../context/PlayerContext'
@@ -6,6 +6,7 @@ import { formatTime, pluralize } from '../lib/format'
 import { Artwork } from './Artwork'
 import { Disc, Pencil, Play } from './icons'
 import { RenameDialog, type RenameRequest } from './RenameDialog'
+import { NoteDialog, type NoteRequest } from './NoteDialog'
 import { SortControl } from './SortControl'
 import { AlbumPickerDialog, type AlbumPickRequest } from './AlbumPickerDialog'
 import { TrackContextMenu, type ContextMenuState } from './TrackContextMenu'
@@ -24,6 +25,7 @@ export function LibraryView({
   onLibraryChanged: () => void
 }): React.ReactElement {
   const [rename, setRename] = useState<RenameRequest | null>(null)
+  const [note, setNote] = useState<NoteRequest | null>(null)
   const [albumPick, setAlbumPick] = useState<AlbumPickRequest | null>(null)
 
   let body: React.ReactElement
@@ -54,6 +56,7 @@ export function LibraryView({
         libraryVersion={libraryVersion}
         onLibraryChanged={onLibraryChanged}
         requestRename={setRename}
+        requestNote={setNote}
         requestAlbumPick={setAlbumPick}
       />
     )
@@ -62,6 +65,7 @@ export function LibraryView({
     <>
       {body}
       <RenameDialog request={rename} onClose={() => setRename(null)} />
+      <NoteDialog request={note} onClose={() => setNote(null)} />
       <AlbumPickerDialog request={albumPick} onClose={() => setAlbumPick(null)} />
     </>
   )
@@ -113,6 +117,7 @@ function TrackList({
   libraryVersion,
   onLibraryChanged,
   requestRename,
+  requestNote,
   requestAlbumPick
 }: {
   view: View
@@ -121,6 +126,7 @@ function TrackList({
   libraryVersion: number
   onLibraryChanged: () => void
   requestRename: (r: RenameRequest) => void
+  requestNote: (r: NoteRequest) => void
   requestAlbumPick: (r: AlbumPickRequest) => void
 }): React.ReactElement {
   const player = usePlayer()
@@ -132,6 +138,8 @@ function TrackList({
   const [editMode, setEditMode] = useState(false)
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const [overIndex, setOverIndex] = useState<number | null>(null)
+  const [playlistPicker, setPlaylistPicker] = useState(false)
+  const playlistPickerRef = useRef<HTMLDivElement>(null)
 
   const viewKey = viewKeyOf(view)
 
@@ -141,8 +149,20 @@ function TrackList({
     setSelected(new Set())
     setEditMode(false)
     setContextMenu(null)
+    setPlaylistPicker(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewKey])
+
+  // Close the bulk playlist picker on an outside click.
+  useEffect(() => {
+    if (!playlistPicker) return
+    const onDown = (e: MouseEvent): void => {
+      if (playlistPickerRef.current && !playlistPickerRef.current.contains(e.target as Node))
+        setPlaylistPicker(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [playlistPicker])
 
   useEffect(() => {
     let active = true
@@ -207,6 +227,16 @@ function TrackList({
       }
     })
 
+  const editNote = (t: Track): void =>
+    requestNote({
+      title: t.title,
+      initial: t.note ?? '',
+      onSubmit: async (v) => {
+        await window.lumen.setTrackNote(t.id, v)
+        onLibraryChanged()
+      }
+    })
+
   const openAlbumPick = (ids: number[]): void =>
     requestAlbumPick({
       trackIds: ids,
@@ -218,6 +248,12 @@ function TrackList({
 
   const addToPlaylist = async (playlistId: number, trackId: number): Promise<void> => {
     await window.lumen.addToPlaylist(playlistId, [trackId])
+    onLibraryChanged()
+  }
+  const bulkAddToPlaylist = async (playlistId: number): Promise<void> => {
+    await window.lumen.addToPlaylist(playlistId, [...selected])
+    setPlaylistPicker(false)
+    setSelected(new Set())
     onLibraryChanged()
   }
   const removeFromAlbum = async (trackId: number): Promise<void> => {
@@ -396,6 +432,11 @@ function TrackList({
                 <div className="tr-main">
                   <div className="tr-title">{t.title}</div>
                   <div className="tr-artist">{t.artist}</div>
+                  {t.note && (
+                    <div className="tr-note" title={t.note}>
+                      {t.note}
+                    </div>
+                  )}
                 </div>
                 <div className="tr-album">{t.album}</div>
                 <div className="tr-time">{formatTime(t.duration)}</div>
@@ -413,6 +454,30 @@ function TrackList({
       {selectable && selected.size > 0 && (
         <div className="selection-bar">
           <span className="sel-count">{pluralize(selected.size, 'song')} selected</span>
+          <div className="sel-menu-wrap" ref={playlistPickerRef}>
+            <button className="sel-btn" onClick={() => setPlaylistPicker((v) => !v)}>
+              Add to playlist…
+            </button>
+            {playlistPicker && (
+              <div className="sel-menu">
+                {playlists.length === 0 ? (
+                  <div className="ctx-empty">No playlists yet</div>
+                ) : (
+                  <div className="ctx-scroll">
+                    {playlists.map((pl) => (
+                      <button
+                        key={pl.id}
+                        className="ctx-item"
+                        onClick={() => void bulkAddToPlaylist(pl.id)}
+                      >
+                        {pl.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           <button className="sel-btn" onClick={() => openAlbumPick([...selected])}>
             Add to album…
           </button>
@@ -428,6 +493,7 @@ function TrackList({
           playlists={playlists}
           actions={{
             rename: () => renameSong(contextMenu.track),
+            editNote: () => editNote(contextMenu.track),
             addToPlaylist: (plId) => void addToPlaylist(plId, contextMenu.track.id),
             addToAlbum: () => openAlbumPick([contextMenu.track.id]),
             removeFromAlbum: contextMenu.track.album
