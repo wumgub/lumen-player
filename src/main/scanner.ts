@@ -1,5 +1,5 @@
 import { readdir, stat } from 'fs/promises'
-import type { Dirent } from 'fs'
+import { existsSync, type Dirent } from 'fs'
 import { basename, extname, join } from 'path'
 import { parseFile } from 'music-metadata'
 import {
@@ -109,14 +109,19 @@ export async function scanFolders(
     }
   }
 
-  // Prune DB rows whose files vanished — but only prune files that live under
-  // one of the folders we just scanned (leave other roots untouched).
-  const underScanned = (p: string): boolean => folders.some((f) => p.startsWith(f))
-  const survivors = new Set<string>()
-  for (const p of listAllPaths()) {
-    if (seen.has(p) || !underScanned(p)) survivors.add(p)
+  // Prune DB rows whose files no longer exist on disk. Checking real existence
+  // (instead of "was it under a scanned folder") also clears stale rows left
+  // behind when a folder is moved or re-added under a different path — the usual
+  // source of unplayable duplicates in All Songs. Guard: if this scan discovered
+  // nothing at all, skip pruning so a temporarily-unreadable/unmounted folder
+  // can't wipe the library.
+  if (files.length > 0) {
+    const survivors = new Set<string>(seen)
+    for (const p of listAllPaths()) {
+      if (!seen.has(p) && existsSync(p)) survivors.add(p)
+    }
+    removeMissing(survivors)
   }
-  removeMissing(survivors)
 
   onProgress({ phase: 'done', processed: total, total })
   return { added, updated, total }
