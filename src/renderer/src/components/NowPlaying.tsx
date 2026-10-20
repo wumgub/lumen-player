@@ -11,12 +11,14 @@ export function NowPlaying({
   setVizId,
   vizOn,
   setVizOn,
+  vizFps,
   onImmersive
 }: {
   vizId: VisualizerId
   setVizId: (v: VisualizerId) => void
   vizOn: boolean
   setVizOn: (on: boolean) => void
+  vizFps: number
   onImmersive: () => void
 }): React.ReactElement {
   const { current } = usePlayer()
@@ -25,7 +27,7 @@ export function NowPlaying({
     <aside className="now-playing">
       <div className="viz-panel">
         {vizOn ? (
-          <VisualizerHost vizId={vizId} className="viz-canvas" />
+          <VisualizerHost vizId={vizId} fps={vizFps} className="viz-canvas" />
         ) : (
           <div className="viz-canvas viz-off">Visualizer off</div>
         )}

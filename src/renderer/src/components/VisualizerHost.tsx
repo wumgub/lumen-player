@@ -45,13 +45,19 @@ function readColors(): VizColors {
 
 export function VisualizerHost({
   vizId,
+  fps = 0,
   className
 }: {
   vizId: VisualizerId
+  fps?: number // max frames/sec while playing & visible; 0 = uncapped (native)
   className?: string
 }): React.ReactElement {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const { engine } = usePlayer()
+
+  // Keep the latest cap reachable from the render loop without restarting it.
+  const fpsRef = useRef(fps)
+  fpsRef.current = fps
 
   useEffect(() => {
     const canvas = canvasRef.current!
@@ -74,15 +80,17 @@ export function VisualizerHost({
 
     let lastDraw = -Infinity
 
-    // How often to actually redraw. Full native rate while a track is playing
-    // and the window is on screen, so multitaskers keep a smooth visualizer;
-    // much slower when paused (nothing is moving) or when the window is hidden
-    // (nobody can see it) — which is where the idle CPU was going.
+    // How often to actually redraw. While a track is playing and the window is
+    // on screen it honours the user's frame-rate cap (uncapped by default), so
+    // multitaskers keep a smooth visualizer; it drops much lower when paused
+    // (nothing is moving) or when the window is hidden (nobody can see it) —
+    // which is where the idle CPU was going.
     const minInterval = (demo: boolean): number => {
       if (demo) return 0
       if (document.hidden) return 1000 / 4
       if (engine.paused) return 1000 / 15
-      return 0
+      const cap = fpsRef.current
+      return cap > 0 ? 1000 / cap : 0
     }
 
     const loop = (ts: number): void => {

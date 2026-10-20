@@ -1557,6 +1557,35 @@ input[type='range']:hover::-webkit-slider-thumb {
   gap: 8px;
   margin-top: 14px;
 }
+/* Segmented control (e.g. visualizer frame-rate cap). */
+.settings-row.inline + .settings-row.inline,
+.theme-chips + .settings-row.inline {
+  margin-top: 16px;
+}
+.seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.seg-btn {
+  padding: 5px 12px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg-dim);
+  transition: background 0.15s, color 0.15s;
+}
+.seg-btn:hover:not(.active) {
+  color: var(--fg);
+}
+.seg-btn.active {
+  background: var(--accent);
+  color: var(--on-accent, #fff);
+}
 .theme-chip {
   display: inline-flex;
   align-items: center;

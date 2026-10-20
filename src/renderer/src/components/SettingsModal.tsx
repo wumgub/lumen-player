@@ -7,7 +7,21 @@ import { Pencil } from './icons'
 
 const DISCORD_DEV_URL = 'https://discord.com/developers/applications'
 
-export function SettingsModal({ onClose }: { onClose: () => void }): React.ReactElement {
+const FPS_OPTIONS: { value: number; label: string }[] = [
+  { value: 0, label: 'Full' },
+  { value: 30, label: '30 fps' },
+  { value: 15, label: '15 fps' }
+]
+
+export function SettingsModal({
+  vizFps,
+  setVizFps,
+  onClose
+}: {
+  vizFps: number
+  setVizFps: (n: number) => void
+  onClose: () => void
+}): React.ReactElement {
   const [settings, setSettings] = useState<AppSettings | null>(null)
   const [saving, setSaving] = useState(false)
   const [editingTheme, setEditingTheme] = useState(false)
@@ -83,6 +97,26 @@ export function SettingsModal({ onClose }: { onClose: () => void }): React.React
                     {t.label}
                   </button>
                 ))}
+              </div>
+
+              <div className="settings-row inline">
+                <div>
+                  <div className="settings-subheading">Visualizer frame rate</div>
+                  <div className="settings-desc">
+                    Cap the visualizer to save CPU and battery. Lower is lighter.
+                  </div>
+                </div>
+                <div className="seg">
+                  {FPS_OPTIONS.map((o) => (
+                    <button
+                      key={o.value}
+                      className={`seg-btn ${vizFps === o.value ? 'active' : ''}`}
+                      onClick={() => setVizFps(o.value)}
+                    >
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </section>
 

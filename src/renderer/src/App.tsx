@@ -31,6 +31,10 @@ function Shell(): React.ReactElement {
     return saved && isVisualizerId(saved) ? saved : 'bars'
   })
   const [vizOn, setVizOn] = useState<boolean>(() => localStorage.getItem('lumen.viz-off') !== '1')
+  const [vizFps, setVizFps] = useState<number>(() => {
+    const n = Number(localStorage.getItem('lumen.viz-fps'))
+    return n === 30 || n === 15 ? n : 0 // 0 = uncapped (native refresh rate)
+  })
   const [immersive, setImmersive] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [libraryVersion, setLibraryVersion] = useState(0)
@@ -46,6 +50,10 @@ function Shell(): React.ReactElement {
   const toggleViz = (on: boolean): void => {
     setVizOn(on)
     localStorage.setItem('lumen.viz-off', on ? '0' : '1')
+  }
+  const chooseVizFps = (n: number): void => {
+    setVizFps(n)
+    localStorage.setItem('lumen.viz-fps', String(n))
   }
 
   // Feed artwork to the theme engine for adaptive tinting.
@@ -135,6 +143,7 @@ function Shell(): React.ReactElement {
           setVizId={chooseViz}
           vizOn={vizOn}
           setVizOn={toggleViz}
+          vizFps={vizFps}
           onImmersive={() => setImmersive(true)}
         />
       </div>
@@ -147,11 +156,18 @@ function Shell(): React.ReactElement {
           setVizId={chooseViz}
           vizOn={vizOn}
           setVizOn={toggleViz}
+          vizFps={vizFps}
           onExit={() => setImmersive(false)}
         />
       )}
 
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {showSettings && (
+        <SettingsModal
+          vizFps={vizFps}
+          setVizFps={chooseVizFps}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
     </div>
   )
 }
@@ -161,19 +177,21 @@ function ImmersiveMode({
   setVizId,
   vizOn,
   setVizOn,
+  vizFps,
   onExit
 }: {
   vizId: VisualizerId
   setVizId: (v: VisualizerId) => void
   vizOn: boolean
   setVizOn: (on: boolean) => void
+  vizFps: number
   onExit: () => void
 }): React.ReactElement {
   const p = usePlayer()
   return (
     <div className="immersive">
       {vizOn ? (
-        <VisualizerHost vizId={vizId} className="immersive-canvas" />
+        <VisualizerHost vizId={vizId} fps={vizFps} className="immersive-canvas" />
       ) : (
         <div className="immersive-canvas viz-off">Visualizer off</div>
       )}
