@@ -11,6 +11,9 @@ import type {
 } from '../shared/types'
 
 const api = {
+  /** Host OS, so the UI can adapt chrome (e.g. macOS traffic-light spacing). */
+  platform: process.platform,
+
   pickFolder: (): Promise<string[]> => ipcRenderer.invoke('dialog:pickFolder'),
 
   folders: (): Promise<string[]> => ipcRenderer.invoke('library:folders'),
@@ -31,6 +34,7 @@ const api = {
   stats: (): Promise<{ tracks: number; artists: number; albums: number }> =>
     ipcRenderer.invoke('library:stats'),
   getTrack: (id: number): Promise<Track | null> => ipcRenderer.invoke('track:get', id),
+  revealTrack: (id: number): Promise<void> => ipcRenderer.invoke('track:reveal', id),
 
   renameTrack: (id: number, title: string): Promise<void> =>
     ipcRenderer.invoke('meta:renameTrack', id, title),

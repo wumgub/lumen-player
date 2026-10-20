@@ -43,6 +43,11 @@ function Shell(): React.ReactElement {
   const { current } = player
   const { setArtwork } = useTheme()
 
+  // Expose the host OS so CSS can reserve traffic-light space only on macOS.
+  useEffect(() => {
+    document.documentElement.dataset.os = window.lumen.platform
+  }, [])
+
   const chooseViz = (v: VisualizerId): void => {
     setVizId(v)
     localStorage.setItem('lumen.viz', v)
@@ -101,6 +106,10 @@ function Shell(): React.ReactElement {
     <div className="app">
       <div className="titlebar">
         <div className="titlebar-drag" />
+        <div className="titlebar-brand">
+          <span className="brand-dot" />
+          Lumen
+        </div>
         <div className="search-box">
           <Search size={16} />
           <input

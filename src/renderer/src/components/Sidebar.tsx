@@ -99,11 +99,6 @@ export function Sidebar({
 
   return (
     <nav className="sidebar">
-      <div className="brand">
-        <span className="brand-dot" />
-        Lumen
-      </div>
-
       <div className="nav-section">
         <button className={`nav-item ${navActive('songs')}`} onClick={() => setView({ kind: 'songs' })}>
           <MusicNote size={18} /> Songs

@@ -65,13 +65,18 @@ input {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 0 16px 0 90px;
+  padding: 0 16px;
   background: var(--bg-2);
   border-bottom: 1px solid var(--border);
   backdrop-filter: var(--panel-blur);
   -webkit-app-region: drag;
   position: relative;
   z-index: 5;
+}
+/* Reserve space for the macOS traffic lights only on macOS; elsewhere the
+   brand sits flush left so there's no empty gap. */
+:root[data-os='darwin'] .titlebar {
+  padding-left: 90px;
 }
 .titlebar-drag {
   position: absolute;
@@ -122,14 +127,17 @@ input {
   overflow-y: auto;
   backdrop-filter: var(--panel-blur);
 }
-.brand {
+.titlebar-brand {
+  -webkit-app-region: drag;
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 18px;
+  gap: 9px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: 0.5px;
-  padding: 2px 8px 6px;
+  white-space: nowrap;
+  padding-right: 6px;
+  z-index: 1;
 }
 .brand-dot {
   width: 12px;

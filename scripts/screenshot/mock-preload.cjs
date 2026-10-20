@@ -45,6 +45,7 @@ const groupBy = (arr, key) => {
 }
 
 const api = {
+  platform: process.platform,
   pickFolder: async () => [],
   folders: async () => ['/Users/evan/Music'],
   addFolder: async () => {},
@@ -78,6 +79,7 @@ const api = {
     albums: groupBy(songs, 'album').size
   }),
   getTrack: async (id) => songs.find((s) => s.id === id) || null,
+  revealTrack: async () => {},
   renameTrack: async () => {},
   renameArtist: async () => {},
   renameAlbum: async () => {},

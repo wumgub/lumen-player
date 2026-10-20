@@ -5,6 +5,7 @@ import type { PlaylistWithCount, Track } from '@shared/types'
 export interface TrackMenuActions {
   rename: () => void
   editNote: () => void
+  showFile: () => void
   playNext: () => void
   addToQueue: () => void
   addToPlaylist: (playlistId: number) => void
@@ -83,6 +84,9 @@ export function TrackContextMenu({
       </button>
       <button className="ctx-item" onClick={() => run(actions.editNote)}>
         {menu.track.note ? 'Edit note…' : 'Add note…'}
+      </button>
+      <button className="ctx-item" onClick={() => run(actions.showFile)}>
+        Show file
       </button>
       <button className="ctx-item" onClick={() => run(actions.addToAlbum)}>
         Add to album…

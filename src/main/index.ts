@@ -166,6 +166,10 @@ function registerIpc(): void {
   ipcMain.handle('library:albums', () => listAlbums())
   ipcMain.handle('library:stats', () => stats())
   ipcMain.handle('track:get', (_e, id: number) => getTrack(id))
+  ipcMain.handle('track:reveal', (_e, id: number) => {
+    const t = getTrack(id)
+    if (t) shell.showItemInFolder(t.path)
+  })
 
   ipcMain.handle('meta:renameTrack', (_e, id: number, title: string) => renameTrack(id, title))
   ipcMain.handle('meta:renameArtist', (_e, oldName: string, newName: string) =>

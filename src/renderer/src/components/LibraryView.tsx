@@ -503,6 +503,7 @@ function TrackList({
           actions={{
             rename: () => renameSong(contextMenu.track),
             editNote: () => editNote(contextMenu.track),
+            showFile: () => void window.lumen.revealTrack(contextMenu.track.id),
             playNext: () => player.playNext([contextMenu.track]),
             addToQueue: () => player.addToQueue([contextMenu.track]),
             addToPlaylist: (plId) => void addToPlaylist(plId, contextMenu.track.id),
