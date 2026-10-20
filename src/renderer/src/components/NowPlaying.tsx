@@ -1,6 +1,6 @@
 import React from 'react'
 import { usePlayer } from '../context/PlayerContext'
-import { VISUALIZER_LIST, type VisualizerId } from '../visualizers'
+import { VIZ_TABS, type VizSelection } from '../visualizers'
 import { VisualizerHost } from './VisualizerHost'
 import { Artwork } from './Artwork'
 import { Expand } from './icons'
@@ -10,8 +10,8 @@ export function NowPlaying({
   setVizId,
   onImmersive
 }: {
-  vizId: VisualizerId
-  setVizId: (v: VisualizerId) => void
+  vizId: VizSelection
+  setVizId: (v: VizSelection) => void
   onImmersive: () => void
 }): React.ReactElement {
   const { current } = usePlayer()
@@ -19,12 +19,16 @@ export function NowPlaying({
   return (
     <aside className="now-playing">
       <div className="viz-panel">
-        <VisualizerHost vizId={vizId} className="viz-canvas" />
+        {vizId === 'off' ? (
+          <div className="viz-canvas viz-off">Visualizer off</div>
+        ) : (
+          <VisualizerHost vizId={vizId} className="viz-canvas" />
+        )}
         <button className="viz-expand" onClick={onImmersive} title="Immersive mode">
           <Expand size={18} />
         </button>
         <div className="viz-tabs">
-          {VISUALIZER_LIST.map((v) => (
+          {VIZ_TABS.map((v) => (
             <button
               key={v.id}
               className={`viz-tab ${v.id === vizId ? 'active' : ''}`}

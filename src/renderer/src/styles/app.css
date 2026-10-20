@@ -878,6 +878,17 @@ input {
   height: 100%;
   display: block;
 }
+/* Placeholder shown in place of the canvas when the visualizer is off,
+   so no render loop runs. */
+.viz-off {
+  display: grid;
+  place-items: center;
+  background: var(--viz-bg);
+  color: var(--fg-dim);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 .viz-expand {
   position: absolute;
   top: 8px;

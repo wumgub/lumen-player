@@ -9,7 +9,7 @@ import { ThemeSelector } from './components/ThemeSelector'
 import { SettingsModal } from './components/SettingsModal'
 import { VisualizerHost } from './components/VisualizerHost'
 import { Collapse, Gear, Pause, Play, Next, Prev, Search } from './components/icons'
-import { VISUALIZER_LIST, isVisualizerId, type VisualizerId } from './visualizers'
+import { VIZ_TABS, isVizSelection, type VizSelection } from './visualizers'
 import type { View } from './types'
 
 export default function App(): React.ReactElement {
@@ -25,9 +25,9 @@ export default function App(): React.ReactElement {
 function Shell(): React.ReactElement {
   const [view, setView] = useState<View>({ kind: 'songs' })
   const [search, setSearch] = useState('')
-  const [vizId, setVizId] = useState<VisualizerId>(() => {
+  const [vizId, setVizId] = useState<VizSelection>(() => {
     const saved = localStorage.getItem('lumen.viz')
-    return saved && isVisualizerId(saved) ? saved : 'bars'
+    return saved && isVizSelection(saved) ? saved : 'bars'
   })
   const [immersive, setImmersive] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
@@ -37,7 +37,7 @@ function Shell(): React.ReactElement {
   const { current } = player
   const { setArtwork } = useTheme()
 
-  const chooseViz = (v: VisualizerId): void => {
+  const chooseViz = (v: VizSelection): void => {
     setVizId(v)
     localStorage.setItem('lumen.viz', v)
   }
@@ -143,14 +143,18 @@ function ImmersiveMode({
   setVizId,
   onExit
 }: {
-  vizId: VisualizerId
-  setVizId: (v: VisualizerId) => void
+  vizId: VizSelection
+  setVizId: (v: VizSelection) => void
   onExit: () => void
 }): React.ReactElement {
   const p = usePlayer()
   return (
     <div className="immersive">
-      <VisualizerHost vizId={vizId} className="immersive-canvas" />
+      {vizId === 'off' ? (
+        <div className="immersive-canvas viz-off">Visualizer off</div>
+      ) : (
+        <VisualizerHost vizId={vizId} className="immersive-canvas" />
+      )}
       <button className="immersive-exit" onClick={onExit} title="Exit (Esc)">
         <Collapse size={20} />
       </button>
@@ -171,7 +175,7 @@ function ImmersiveMode({
           </button>
         </div>
         <div className="immersive-viz-tabs">
-          {VISUALIZER_LIST.map((v) => (
+          {VIZ_TABS.map((v) => (
             <button
               key={v.id}
               className={`viz-tab ${v.id === vizId ? 'active' : ''}`}
