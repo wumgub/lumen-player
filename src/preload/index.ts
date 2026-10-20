@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type {
+  AppInfo,
   AppSettings,
   LibraryQuery,
   Playlist,
@@ -7,12 +8,15 @@ import type {
   PresencePayload,
   ScanProgress,
   ScanResult,
-  Track
+  Track,
+  UpdateCheck
 } from '../shared/types'
 
 const api = {
   /** Host OS, so the UI can adapt chrome (e.g. macOS traffic-light spacing). */
   platform: process.platform,
+  appInfo: (): Promise<AppInfo> => ipcRenderer.invoke('app:info'),
+  checkForUpdate: (): Promise<UpdateCheck> => ipcRenderer.invoke('app:checkForUpdate'),
 
   pickFolder: (): Promise<string[]> => ipcRenderer.invoke('dialog:pickFolder'),
 

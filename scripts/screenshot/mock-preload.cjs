@@ -46,6 +46,16 @@ const groupBy = (arr, key) => {
 
 const api = {
   platform: process.platform,
+  appInfo: async () => ({ version: '0.1.0', commit: 'abc1234', buildDate: new Date().toISOString() }),
+  checkForUpdate: async () => ({
+    ok: true,
+    current: 'abc1234',
+    latest: 'def5678',
+    date: new Date().toISOString(),
+    message: 'Add the update checker',
+    upToDate: false,
+    url: 'https://github.com/wumgub/lumen-player/commits/main'
+  }),
   pickFolder: async () => [],
   folders: async () => ['/Users/evan/Music'],
   addFolder: async () => {},

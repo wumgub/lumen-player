@@ -1521,6 +1521,8 @@ input[type='range']:hover::-webkit-slider-thumb {
 /* ---------- Album picker ---------- */
 .album-picker .album-options {
   margin-top: 12px;
+  flex: 1;
+  min-height: 0;
   max-height: 320px;
   overflow-y: auto;
   display: flex;
@@ -1571,12 +1573,49 @@ input[type='range']:hover::-webkit-slider-thumb {
 .modal {
   width: 420px;
   max-width: 90vw;
+  /* Never taller than the window; inner regions scroll instead of overflowing. */
+  max-height: calc(100dvh - 32px);
+  display: flex;
+  flex-direction: column;
   background: var(--popover-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 22px;
   backdrop-filter: var(--panel-blur);
+}
+/* Scrollable body for long modals (keeps title + action buttons pinned). */
+.settings-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0 -22px;
+  padding: 0 22px;
+}
+.update-line {
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+}
+.update-line.ok {
+  color: var(--fg-dim);
+}
+.update-line.err {
+  color: #ef6868;
+}
+.update-line.avail {
+  border-color: var(--accent);
+}
+.update-line a {
+  color: var(--accent);
+}
+.update-how {
+  margin-top: 4px;
+  color: var(--fg-dim);
 }
 .modal-title {
   font-size: 17px;
@@ -1936,6 +1975,8 @@ input[type='range']:hover::-webkit-slider-thumb {
   color: #ef6868;
 }
 .te-groups {
+  flex: 1;
+  min-height: 0;
   max-height: 52vh;
   overflow-y: auto;
   display: flex;

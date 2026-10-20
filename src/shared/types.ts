@@ -63,6 +63,25 @@ export interface AppSettings {
   discordCoverArt: boolean
 }
 
+export interface AppInfo {
+  version: string
+  commit: string // short git SHA the build was made from
+  buildDate: string // ISO timestamp
+}
+
+/** Result of checking GitHub for a newer build. */
+export type UpdateCheck =
+  | {
+      ok: true
+      current: string
+      latest: string
+      date: string | null
+      message: string
+      upToDate: boolean
+      url: string
+    }
+  | { ok: false; error: string; url: string }
+
 /** Playback info the renderer sends to the main process for Discord presence. */
 export interface PresencePayload {
   title: string

@@ -36,6 +36,11 @@ import type { AppSettings, LibraryQuery, PresencePayload } from '../shared/types
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
+// Injected at build time by electron.vite.config.ts.
+declare const __APP_COMMIT__: string
+declare const __APP_BUILD_DATE__: string
+const REPO = 'wumgub/lumen-player'
+
 const MIME: Record<string, string> = {
   '.mp3': 'audio/mpeg',
   '.flac': 'audio/flac',
@@ -169,6 +174,40 @@ function registerIpc(): void {
   ipcMain.handle('track:reveal', (_e, id: number) => {
     const t = getTrack(id)
     if (t) shell.showItemInFolder(t.path)
+  })
+
+  ipcMain.handle('app:info', () => ({
+    version: app.getVersion(),
+    commit: __APP_COMMIT__,
+    buildDate: __APP_BUILD_DATE__
+  }))
+  ipcMain.handle('app:checkForUpdate', async () => {
+    const url = `https://github.com/${REPO}`
+    try {
+      const res = await fetch(`https://api.github.com/repos/${REPO}/commits/main`, {
+        headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'lumen-player' }
+      })
+      if (!res.ok) throw new Error(`GitHub API ${res.status}`)
+      const data = (await res.json()) as {
+        sha?: string
+        commit?: { message?: string; committer?: { date?: string }; author?: { date?: string } }
+      }
+      const latest = (data.sha ?? '').slice(0, 7)
+      const message = (data.commit?.message ?? '').split('\n')[0]
+      const date = data.commit?.committer?.date ?? data.commit?.author?.date ?? null
+      const current = __APP_COMMIT__
+      return {
+        ok: true,
+        current,
+        latest,
+        date,
+        message,
+        upToDate: !!current && current !== 'unknown' && current === latest,
+        url: `${url}/commits/main`
+      }
+    } catch (e) {
+      return { ok: false, error: (e as Error)?.message || 'network error', url }
+    }
   })
 
   ipcMain.handle('meta:renameTrack', (_e, id: number, title: string) => renameTrack(id, title))
