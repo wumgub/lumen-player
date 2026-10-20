@@ -49,35 +49,93 @@ Presence is off by default. To enable it (⚙️ in the top-right → *Discord R
 
 ## Install
 
-> **Heads up:** this machine runs **Node 26**, which is newer than the prebuilt binaries
-> shipped by `better-sqlite3`, and Electron's own installer mis-extracted its binary here.
-> The two-step install below sidesteps both. On a machine with an LTS Node, a plain
-> `npm install` should just work.
+### Prerequisites
+
+- **[Git](https://git-scm.com/)** and **[Node.js](https://nodejs.org/) 18 or newer** —
+  **20 LTS is recommended**, because it matches the Node ABI that Electron 33 bundles
+  and avoids the rebuild workaround below. `npm` comes with Node. Check with
+  `node -v` and `npm -v`.
+- A **C/C++ build toolchain.** The library index uses `better-sqlite3`, a native
+  module that is compiled against Electron when you install, so a compiler must be
+  present on every platform:
+  - **macOS** — Xcode Command Line Tools: `xcode-select --install`
+  - **Debian / Ubuntu** — `sudo apt install build-essential python3` (and, to *run*
+    the app on a minimal install, the usual desktop libs: `libgtk-3-0 libnss3 libasound2`)
+  - **Windows** — the *“Desktop development with C++”* workload from the
+    [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+
+### 1. Clone the repo
 
 ```bash
-# 1. Install JS deps without running native build scripts (which target the wrong ABI)
+git clone https://github.com/wumgub/lumen-player.git
+cd lumen-player
+```
+
+### 2. Install dependencies
+
+On an LTS Node this is all you need — the `postinstall` step rebuilds
+`better-sqlite3` against Electron's ABI for you:
+
+```bash
+npm install
+```
+
+<details>
+<summary><strong>Install fails on a newer-than-LTS Node (e.g. 22+), or you see an ABI / <code>NODE_MODULE_VERSION</code> / "Electron uninstall" error → expand</strong></summary>
+
+A Node that's newer than Electron's bundled runtime ships an ABI that
+`better-sqlite3`'s prebuilt binary doesn't cover, and Electron's own installer can
+mis-extract its binary. Install in two steps instead:
+
+```bash
+# Install JS deps WITHOUT the native build scripts (they'd target the wrong ABI)
 npm install --ignore-scripts
 
-# 2. Build the native module (better-sqlite3) against Electron's ABI
+# Compile the native module (better-sqlite3) against Electron's ABI
 npm run rebuild
+```
 
-# 3. If `npm run dev` complains "Electron uninstall", the electron binary didn't extract.
-#    Extract it manually from the download cache:
-unzip -q ~/Library/Caches/electron/*/electron-v*-darwin-arm64.zip -d node_modules/electron/dist
+If `npm run dev` then still complains **"Electron uninstall"**, the Electron binary
+didn't extract. Pull it from the download cache by hand. Match the version
+(**33.4.11**, or whatever `npx electron --version` prints), your **platform**
+(`darwin` macOS / `linux` / `win32`) and **arch** (`arm64` Apple silicon / `x64`):
+
+```bash
+# Where the cache lives:
+#   macOS    ~/Library/Caches/electron
+#   Linux    ~/.cache/electron
+#   Windows  %LOCALAPPDATA%\electron\Cache
+
+# Example — macOS, Apple silicon:
+unzip -q ~/Library/Caches/electron/*/electron-v33.4.11-darwin-arm64.zip -d node_modules/electron/dist
 printf 'Electron.app/Contents/MacOS/Electron' > node_modules/electron/path.txt
 ```
 
-## Run
+The `path.txt` contents differ per platform: `Electron.app/Contents/MacOS/Electron`
+on macOS, `electron` on Linux, `electron.exe` on Windows.
+
+</details>
+
+### 3. Run it
 
 ```bash
-npm run dev          # dev with HMR
-npm run build        # bundle main/preload/renderer into out/
-npm run pack:mac     # package a .dmg/.zip (macOS)
-npm run pack:linux   # package an AppImage/.deb (Linux)
+npm run dev          # launch in dev mode with hot reload
 ```
 
-Launch it, click **＋** next to *Folders* in the sidebar, pick your music directory,
-and it'll scan. Double-click any track to play.
+Then click **＋** next to *Folders* in the sidebar, pick your music directory, and it
+scans. Double-click any track to play. (First launch indexes your library; large
+collections take a moment.)
+
+## Build & package
+
+```bash
+npm run build        # bundle main/preload/renderer into out/
+npm run pack:mac     # package a .dmg + .zip  (macOS)  → dist/
+npm run pack:linux   # package an AppImage + .deb (Linux) → dist/
+```
+
+`electron-builder` can only package for the OS you run it on, so build the macOS
+artifacts on macOS and the Linux ones on Linux.
 
 ## License
 
