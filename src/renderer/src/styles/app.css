@@ -880,7 +880,9 @@ input {
 }
 /* Placeholder shown in place of the canvas when the visualizer is off,
    so no render loop runs. */
-.viz-off {
+.viz-off,
+.viz-canvas.viz-off,
+.immersive-canvas.viz-off {
   display: grid;
   place-items: center;
   background: var(--viz-bg);
@@ -928,8 +930,10 @@ input {
   transform: translateX(15px);
 }
 .immersive-toggle {
+  /* Clear of the macOS traffic-light buttons, which sit at the window's
+     top-left under titleBarStyle: hiddenInset. */
   top: 20px;
-  left: 20px;
+  left: 88px;
   padding: 7px;
   z-index: 2;
   -webkit-app-region: no-drag;
