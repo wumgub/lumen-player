@@ -137,6 +137,88 @@ npm run pack:linux   # package an AppImage + .deb (Linux) → dist/
 `electron-builder` can only package for the OS you run it on, so build the macOS
 artifacts on macOS and the Linux ones on Linux.
 
+## Troubleshooting
+
+<details>
+<summary><strong>A folder scanned but some (or all) tracks are missing</strong></summary>
+
+Lumen only indexes these audio extensions:
+`.mp3 .flac .wav .aif .aiff .m4a .aac .ogg .oga .opus`. Anything else (`.wma`,
+DSD, video containers, …) is skipped, as are folders it doesn't have permission
+to read. Fix the files/permissions, then click **Rescan library** at the bottom
+of the sidebar.
+
+</details>
+
+<details>
+<summary><strong>A track is listed but plays silence</strong></summary>
+
+The library stores each track's file path. If a file was moved, renamed, or
+deleted after scanning, streaming it fails and you get silence. Re-scan the
+folder so the index matches what's on disk. (In dev, the terminal / DevTools
+console shows a `404` on a `lumen-media://` request when this happens.)
+
+</details>
+
+<details>
+<summary><strong>Start the library over from scratch</strong></summary>
+
+The index is a single SQLite file, `library.db`, in Electron's per-user
+app-data folder:
+
+| OS | Path |
+|----|------|
+| macOS | `~/Library/Application Support/<app>/library.db` |
+| Linux | `~/.config/<app>/library.db` |
+| Windows | `%APPDATA%\<app>\library.db` |
+
+Quit Lumen and delete that file for an empty library. `<app>` is the app's name
+(`lumen-player` when run from source).
+
+</details>
+
+<details>
+<summary><strong>Discord Rich Presence isn't showing</strong></summary>
+
+- The **desktop** Discord app must be running and signed in on the same machine
+  — presence talks to its local socket, so the browser version won't do.
+- In Discord, **Settings → Activity Privacy** must have sharing your detected
+  activity enabled, or nothing is shown.
+- In Lumen's ⚙️ settings, set the **Application ID** and toggle the feature on.
+  Note you often won't see your *own* status on your *own* profile — check from
+  another account or the profile pop-out.
+- **Per-track album art** additionally needs the Client Secret and a one-time
+  **Authorize** prompt (see [Discord Rich Presence](#discord-rich-presence)
+  above). If authorization fails it quietly falls back to the `lumen` logo/text
+  and logs `[presence] …` lines in the terminal.
+
+</details>
+
+<details>
+<summary><strong>The visualizer uses too much CPU</strong></summary>
+
+It draws to a canvas while a track plays. To lighten or stop it:
+
+- **⚙️ → Appearance → Visualizer frame rate** — cap it to **30** or **15 fps**.
+- The **toggle in the visualizer panel's top-left corner** turns it off
+  entirely, which stops the render loop.
+
+It already auto-throttles itself when playback is paused or the window is
+hidden, so the idle cost is low.
+
+</details>
+
+<details>
+<summary><strong><code>npm run dev</code> opens a blank window</strong></summary>
+
+Most often the native module failed to load — look for a `better-sqlite3` /
+`NODE_MODULE_VERSION` error in the terminal and re-run the
+[two-step install](#2-install-dependencies). Opening DevTools
+(<kbd>⌘⌥I</kbd> on macOS, <kbd>Ctrl+Shift+I</kbd> elsewhere) surfaces any
+renderer-side errors.
+
+</details>
+
 ## License
 
 [GPL-3.0-or-later](./LICENSE) © wumgub
