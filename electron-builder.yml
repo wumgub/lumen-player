@@ -8,6 +8,13 @@ files:
   - package.json
 asarUnpack:
   - "**/*.node"
+# Upload packaged installers to GitHub Releases with `electron-builder --publish always`
+# (the release workflow does this on a version tag). Downloads land on:
+#   https://github.com/wumgub/lumen-player/releases/latest
+publish:
+  provider: github
+  owner: wumgub
+  repo: lumen-player
 mac:
   category: public.app-category.music
   icon: build/icon.icns
@@ -15,10 +22,25 @@ mac:
     - dmg
     - zip
   darkModeSupport: true
+  artifactName: ${productName}-${version}-mac-${arch}.${ext}
+dmg:
+  artifactName: ${productName}-${version}-mac-${arch}.${ext}
+win:
+  icon: build/icon.png
+  target:
+    - nsis
+  artifactName: ${productName}-${version}-Setup.${ext}
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  artifactName: ${productName}-${version}-Setup.${ext}
 linux:
   category: AudioVideo
   icon: build/icon.png
+  synopsis: Music player with reactive audio visualizers
   target:
     - AppImage
     - deb
+  artifactName: ${productName}-${version}-linux-${arch}.${ext}
 npmRebuild: true

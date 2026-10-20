@@ -1,0 +1,62 @@
+name: Release
+
+# Push a version tag to build installers for macOS, Windows and Linux and attach
+# them to a GitHub Release, so non-technical users can just download and run:
+#
+#     npm version patch        # bumps package.json + creates the tag
+#     git push --follow-tags   # fires this workflow
+#
+# You can also run it by hand from the Actions tab (workflow_dispatch) to test a
+# build without publishing anything.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+          - os: windows-latest
+            platform: win
+          - os: ubuntu-latest
+            platform: linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # so the build can stamp itself with the commit SHA
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20 # matches Electron 33's bundled Node ABI
+          cache: npm
+
+      # Installs JS deps and rebuilds the native module (better-sqlite3) against
+      # Electron's ABI via the `postinstall` script.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build bundles
+        run: npm run build
+
+      # On a tag -> publish the installers to the GitHub Release for that tag.
+      # On a manual run -> just package them (no publish), as a build smoke-test.
+      - name: Package${{ startsWith(github.ref, 'refs/tags/v') && ' and publish' || '' }}
+        run: npx electron-builder --${{ matrix.platform }} --publish ${{ startsWith(github.ref, 'refs/tags/v') && 'always' || 'never' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # No paid signing certs in CI: ad-hoc sign on macOS instead of failing
+          # the build looking for a Developer ID. (Users get a one-time security
+          # prompt the README walks them through.)
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'

@@ -17,6 +17,7 @@
     "rebuild": "electron-builder install-app-deps",
     "postinstall": "electron-builder install-app-deps",
     "pack:mac": "electron-vite build && electron-builder --mac --publish never",
+    "pack:win": "electron-vite build && electron-builder --win --publish never",
     "pack:linux": "electron-vite build && electron-builder --linux --publish never"
   },
   "dependencies": {

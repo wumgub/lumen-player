@@ -58,6 +58,94 @@ Presence is off by default. To enable it (⚙️ in the top-right → *Discord R
 
 ## Install
 
+### Just want to listen? Download it — no setup needed
+
+**[⬇ Download the latest release](https://github.com/wumgub/lumen-player/releases/latest)**,
+grab the one file for your computer, and open it. No terminal, no installing Node,
+nothing to configure.
+
+| Your computer | Download this file |
+|---|---|
+| **Windows** | `Lumen-x.y.z-Setup.exe` |
+| **Mac** — Apple silicon (any Mac from ~2020 on: M1/M2/M3/M4) | `Lumen-x.y.z-mac-arm64.dmg` |
+| **Mac** — older Intel | `Lumen-x.y.z-mac-x64.dmg` |
+| **Linux** | `Lumen-x.y.z-linux-x64.AppImage` (or the `.deb`) |
+
+> _(Not sure which Mac you have? Click the Apple menu (top-left of the screen) →
+> **About This Mac**. If it says
+> "Apple M1/M2/M3/…" use the **arm64** file; if it says "Intel" use the **x64** one.)_
+
+Then open Lumen, click the **＋** next to **Folders** in the left sidebar, choose the
+folder your music is in, and it scans and sorts everything for you. Double-click a
+song to play.
+
+> [!IMPORTANT]
+> **The first time you open it, your computer will warn you** that the app is from an
+> "unknown"/"unidentified" developer, or try to block it. **This is expected** —
+> Lumen is free, open-source software that isn't signed with a paid Apple/Microsoft
+> developer certificate. It's safe to open; you just have to tell your computer to
+> allow it **once**. Pick your system below for the exact clicks.
+
+<details>
+<summary><strong>🪟 Windows — exactly what to click</strong></summary>
+
+1. Double-click the downloaded **`Lumen-x.y.z-Setup.exe`**.
+2. A blue box may appear: **"Windows protected your PC."** Click the small
+   **More info** link, then the **Run anyway** button that appears.
+3. The installer opens — click through it (Next → Install). Lumen then launches and
+   adds itself to your Start menu and desktop.
+
+</details>
+
+<details>
+<summary><strong>🍎 Mac — exactly what to click</strong></summary>
+
+1. Open the downloaded **`.dmg`**, then drag the **Lumen** icon onto the
+   **Applications** folder shown next to it.
+2. Open **Applications** and double-click **Lumen**. macOS will refuse the first time
+   ("Apple could not verify…" / "unidentified developer") — that's the expected
+   one-time prompt.
+3. Open the Apple menu (top-left of the screen) → **System Settings → Privacy &
+   Security**, scroll down to the
+   message about Lumen being blocked, and click **Open Anyway** → **Open**. Lumen
+   now opens normally every time after this.
+   - _Older macOS, or no "Open Anyway" button?_ **Right-click** (or Control-click)
+     the **Lumen** app → **Open** → **Open**.
+   - _If it says "Lumen is damaged and can't be opened"_ (can happen to downloaded
+     unsigned apps on Apple silicon): open **Terminal** (⌘-Space, type "Terminal")
+     and run this one line, then open Lumen normally:
+     ```bash
+     xattr -cr /Applications/Lumen.app
+     ```
+
+</details>
+
+<details>
+<summary><strong>🐧 Linux — exactly what to click</strong></summary>
+
+**AppImage** (works on any distro — nothing to install):
+
+1. Download **`Lumen-x.y.z-linux-x64.AppImage`**.
+2. Make it runnable — either right-click → **Properties → Permissions → "Allow
+   executing file as program"**, or in a terminal:
+   ```bash
+   chmod +x ~/Downloads/Lumen-*-linux-x64.AppImage
+   ```
+3. Double-click it (or run `./Lumen-*-linux-x64.AppImage`).
+   - If it won't start, you may need FUSE: `sudo apt install libfuse2`
+     (Debian/Ubuntu) or `sudo pacman -S fuse2` (Arch/omarchy).
+
+**Or the `.deb`** (Debian/Ubuntu/Mint): double-click it to install through your
+software centre, or `sudo apt install ./Lumen-*-linux-x64.deb`.
+
+</details>
+
+## Build it yourself
+
+> Only do this if you want to modify Lumen, or there isn't a pre-built download for
+> your platform yet. If you just want to listen, use the downloads above instead —
+> you don't need any of this.
+
 ### Prerequisites
 
 - **[Git](https://git-scm.com/)** and **[Node.js](https://nodejs.org/) 18 or newer** —
@@ -135,16 +223,34 @@ Then click **＋** next to *Folders* in the sidebar, pick your music directory, 
 scans. Double-click any track to play. (First launch indexes your library; large
 collections take a moment.)
 
-## Build & package
+### Build & package installers
 
 ```bash
 npm run build        # bundle main/preload/renderer into out/
-npm run pack:mac     # package a .dmg + .zip  (macOS)  → dist/
-npm run pack:linux   # package an AppImage + .deb (Linux) → dist/
+npm run pack:mac     # package a .dmg + .zip      (macOS)   → dist/
+npm run pack:win     # package a Setup.exe        (Windows) → dist/
+npm run pack:linux   # package an AppImage + .deb (Linux)   → dist/
 ```
 
 `electron-builder` can only package for the OS you run it on, so build the macOS
-artifacts on macOS and the Linux ones on Linux.
+artifacts on macOS, Windows on Windows, and Linux on Linux.
+
+### Cutting a release
+
+The downloads for every platform are built automatically by GitHub Actions
+([`.github/workflows/release.yml`](.github/workflows/release.yml)). Push a version
+tag and it builds the macOS, Windows and Linux installers and attaches them to a new
+GitHub Release:
+
+```bash
+npm version patch         # bumps package.json and creates the matching git tag
+git push --follow-tags    # pushing the tag starts the build + publish
+```
+
+A few minutes later the files appear on the
+[Releases page](https://github.com/wumgub/lumen-player/releases/latest) for everyone
+to download. (The apps are unsigned — see the one-time "unknown developer" note under
+[Install](#install).)
 
 ## Troubleshooting
 
