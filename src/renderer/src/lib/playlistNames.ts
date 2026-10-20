@@ -1,0 +1,60 @@
+// Example playlist names used as the placeholder in the "New playlist" dialog.
+// One is picked at random each time the dialog opens, so the hint feels fresh
+// and the average user rarely sees the same suggestion twice.
+export const PLAYLIST_NAME_EXAMPLES = [
+  'Late night coding',
+  'Rainy day melancholy',
+  'Sunday morning coffee',
+  'Gym beast mode',
+  'Deep focus',
+  'Road trip anthems',
+  '3am thoughts',
+  'Cleaning the apartment',
+  'Pre-game hype',
+  'Slow dance with the ghosts',
+  'Cold wave winter',
+  'Studying for finals',
+  'Heartbreak on repeat',
+  'Golden hour drive',
+  'Shower concert',
+  'Doomscrolling at midnight',
+  'Cooking dinner for one',
+  'Main character energy',
+  'Soft launch of spring',
+  'Existential dread (upbeat)',
+  'Running in the rain',
+  'Lo-fi homework grind',
+  'Friday night out',
+  'Hungover Sunday',
+  'Staring out the train window',
+  'Villain origin story',
+  'Dancing alone in the kitchen',
+  'Melancholy with a beat',
+  'Productivity sprint',
+  'Chill but make it sad',
+  'Neon city nights',
+  'Desert highway',
+  'First snow',
+  'Beach bonfire',
+  'Writing a novel that doesn’t exist',
+  'Overthinking everything',
+  'Monday morning dread',
+  'Weekend reset',
+  'Falling asleep slowly',
+  'Vibing in traffic',
+  'Breakup glow-up',
+  'Analog summer',
+  'Ghosts of the dancefloor',
+  'Indie coffee shop',
+  'Thunderstorm study',
+  'Driving nowhere at 2am',
+  'Pretending it’s the 80s',
+  'Lonely astronaut',
+  'Post-rock sunrise',
+  'Quiet confidence'
+] as const
+
+/** A random example playlist name for the create-playlist placeholder. */
+export function randomPlaylistName(): string {
+  return PLAYLIST_NAME_EXAMPLES[Math.floor(Math.random() * PLAYLIST_NAME_EXAMPLES.length)]
+}

@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import type { PlaylistWithCount, ScanProgress } from '@shared/types'
 import type { View } from '../types'
 import { pluralize } from '../lib/format'
+import { randomPlaylistName } from '../lib/playlistNames'
 import { Disc, Folder, ListIcon, MusicNote, Pencil, Plus, Users } from './icons'
 import { PromptDialog } from './PromptDialog'
 
@@ -24,6 +25,10 @@ export function Sidebar({
   const [scanning, setScanning] = useState(false)
   const [progress, setProgress] = useState<ScanProgress | null>(null)
   const [playlistDialog, setPlaylistDialog] = useState<PlaylistDialog>(null)
+  // Re-roll a random example name each time the "New playlist" dialog opens
+  // (playlistDialog is a fresh object per open, so this recomputes then, but
+  // stays stable while the dialog is open).
+  const playlistPlaceholder = useMemo(() => `e.g. ${randomPlaylistName()}`, [playlistDialog])
 
   const refresh = useCallback(async () => {
     const [f, p, s] = await Promise.all([
@@ -244,7 +249,7 @@ export function Sidebar({
             ? 'Choose a new name'
             : 'Give your playlist a name'
         }
-        placeholder="e.g. Late night coding"
+        placeholder={playlistPlaceholder}
         initial={playlistDialog?.mode === 'rename' ? playlistDialog.name : ''}
         submitLabel={playlistDialog?.mode === 'rename' ? 'Rename' : 'Create'}
         onSubmit={submitPlaylistDialog}
