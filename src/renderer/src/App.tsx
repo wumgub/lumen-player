@@ -8,8 +8,9 @@ import { TransportBar } from './components/TransportBar'
 import { ThemeSelector } from './components/ThemeSelector'
 import { SettingsModal } from './components/SettingsModal'
 import { VisualizerHost } from './components/VisualizerHost'
+import { VizToggle } from './components/VizToggle'
 import { Collapse, Gear, Pause, Play, Next, Prev, Search } from './components/icons'
-import { VIZ_TABS, isVizSelection, type VizSelection } from './visualizers'
+import { VISUALIZER_LIST, isVisualizerId, type VisualizerId } from './visualizers'
 import type { View } from './types'
 
 export default function App(): React.ReactElement {
@@ -25,10 +26,11 @@ export default function App(): React.ReactElement {
 function Shell(): React.ReactElement {
   const [view, setView] = useState<View>({ kind: 'songs' })
   const [search, setSearch] = useState('')
-  const [vizId, setVizId] = useState<VizSelection>(() => {
+  const [vizId, setVizId] = useState<VisualizerId>(() => {
     const saved = localStorage.getItem('lumen.viz')
-    return saved && isVizSelection(saved) ? saved : 'bars'
+    return saved && isVisualizerId(saved) ? saved : 'bars'
   })
+  const [vizOn, setVizOn] = useState<boolean>(() => localStorage.getItem('lumen.viz-off') !== '1')
   const [immersive, setImmersive] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [libraryVersion, setLibraryVersion] = useState(0)
@@ -37,9 +39,13 @@ function Shell(): React.ReactElement {
   const { current } = player
   const { setArtwork } = useTheme()
 
-  const chooseViz = (v: VizSelection): void => {
+  const chooseViz = (v: VisualizerId): void => {
     setVizId(v)
     localStorage.setItem('lumen.viz', v)
+  }
+  const toggleViz = (on: boolean): void => {
+    setVizOn(on)
+    localStorage.setItem('lumen.viz-off', on ? '0' : '1')
   }
 
   // Feed artwork to the theme engine for adaptive tinting.
@@ -124,13 +130,25 @@ function Shell(): React.ReactElement {
             onLibraryChanged={() => setLibraryVersion((v) => v + 1)}
           />
         </main>
-        <NowPlaying vizId={vizId} setVizId={chooseViz} onImmersive={() => setImmersive(true)} />
+        <NowPlaying
+          vizId={vizId}
+          setVizId={chooseViz}
+          vizOn={vizOn}
+          setVizOn={toggleViz}
+          onImmersive={() => setImmersive(true)}
+        />
       </div>
 
       <TransportBar />
 
       {immersive && (
-        <ImmersiveMode vizId={vizId} setVizId={chooseViz} onExit={() => setImmersive(false)} />
+        <ImmersiveMode
+          vizId={vizId}
+          setVizId={chooseViz}
+          vizOn={vizOn}
+          setVizOn={toggleViz}
+          onExit={() => setImmersive(false)}
+        />
       )}
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
@@ -141,20 +159,25 @@ function Shell(): React.ReactElement {
 function ImmersiveMode({
   vizId,
   setVizId,
+  vizOn,
+  setVizOn,
   onExit
 }: {
-  vizId: VizSelection
-  setVizId: (v: VizSelection) => void
+  vizId: VisualizerId
+  setVizId: (v: VisualizerId) => void
+  vizOn: boolean
+  setVizOn: (on: boolean) => void
   onExit: () => void
 }): React.ReactElement {
   const p = usePlayer()
   return (
     <div className="immersive">
-      {vizId === 'off' ? (
-        <div className="immersive-canvas viz-off">Visualizer off</div>
-      ) : (
+      {vizOn ? (
         <VisualizerHost vizId={vizId} className="immersive-canvas" />
+      ) : (
+        <div className="immersive-canvas viz-off">Visualizer off</div>
       )}
+      <VizToggle on={vizOn} onChange={setVizOn} className="immersive-toggle" />
       <button className="immersive-exit" onClick={onExit} title="Exit (Esc)">
         <Collapse size={20} />
       </button>
@@ -174,17 +197,19 @@ function ImmersiveMode({
             <Next size={26} />
           </button>
         </div>
-        <div className="immersive-viz-tabs">
-          {VIZ_TABS.map((v) => (
-            <button
-              key={v.id}
-              className={`viz-tab ${v.id === vizId ? 'active' : ''}`}
-              onClick={() => setVizId(v.id)}
-            >
-              {v.label}
-            </button>
-          ))}
-        </div>
+        {vizOn && (
+          <div className="immersive-viz-tabs">
+            {VISUALIZER_LIST.map((v) => (
+              <button
+                key={v.id}
+                className={`viz-tab ${v.id === vizId ? 'active' : ''}`}
+                onClick={() => setVizId(v.id)}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

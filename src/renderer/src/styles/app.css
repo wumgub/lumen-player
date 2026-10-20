@@ -889,6 +889,62 @@ input {
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
+/* On/off switch overlaid in the visualizer panel's top-left corner. */
+.viz-toggle {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  padding: 5px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+}
+.viz-toggle-track {
+  position: relative;
+  display: block;
+  width: 32px;
+  height: 17px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.28);
+  transition: background 0.15s ease;
+}
+.viz-toggle.on .viz-toggle-track {
+  background: var(--accent);
+}
+.viz-toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s ease;
+}
+.viz-toggle.on .viz-toggle-knob {
+  transform: translateX(15px);
+}
+.immersive-toggle {
+  top: 20px;
+  left: 20px;
+  padding: 7px;
+  z-index: 2;
+  -webkit-app-region: no-drag;
+}
+.immersive-toggle .viz-toggle-track {
+  width: 38px;
+  height: 20px;
+}
+.immersive-toggle .viz-toggle-knob {
+  width: 16px;
+  height: 16px;
+}
+.immersive-toggle.on .viz-toggle-knob {
+  transform: translateX(18px);
+}
 .viz-expand {
   position: absolute;
   top: 8px;

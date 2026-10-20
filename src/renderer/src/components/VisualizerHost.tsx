@@ -72,8 +72,25 @@ export function VisualizerHost({
     const ro = new ResizeObserver(resize)
     ro.observe(canvas)
 
+    let lastDraw = -Infinity
+
+    // How often to actually redraw. Full native rate while a track is playing
+    // and the window is on screen, so multitaskers keep a smooth visualizer;
+    // much slower when paused (nothing is moving) or when the window is hidden
+    // (nobody can see it) — which is where the idle CPU was going.
+    const minInterval = (demo: boolean): number => {
+      if (demo) return 0
+      if (document.hidden) return 1000 / 4
+      if (engine.paused) return 1000 / 15
+      return 0
+    }
+
     const loop = (ts: number): void => {
+      raf = requestAnimationFrame(loop)
       if (!startTs) startTs = ts
+      const demo = !!(window as unknown as { __lumenVizDemo?: boolean }).__lumenVizDemo
+      if (ts - lastDraw < minInterval(demo)) return
+      lastDraw = ts
       const t = ts - startTs
       // Refresh theme colors a few times per second rather than every frame.
       if (ts - colorTick > 300) {
@@ -81,7 +98,6 @@ export function VisualizerHost({
         colorTick = ts
       }
       const dpr = Math.min(window.devicePixelRatio || 1, 2)
-      const demo = (window as unknown as { __lumenVizDemo?: boolean }).__lumenVizDemo
       const frame = (demo ? demoFrame(t) : engine.sample()) ?? IDLE
 
       ctx.fillStyle = colors.bg
@@ -98,7 +114,6 @@ export function VisualizerHost({
         t
       })
       ctx.restore()
-      raf = requestAnimationFrame(loop)
     }
     raf = requestAnimationFrame(loop)
 
