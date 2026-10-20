@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import type { PlaylistWithCount, Track } from '@shared/types'
 import type { SortKey, SortState, View } from '../types'
 import { usePlayer } from '../context/PlayerContext'
-import { formatTime, pluralize } from '../lib/format'
+import { formatDuration, formatTime, pluralize } from '../lib/format'
 import { Artwork } from './Artwork'
 import { Disc, Pencil, Play } from './icons'
 import { RenameDialog, type RenameRequest } from './RenameDialog'
@@ -336,7 +336,7 @@ function TrackList({
           <div className="view-sub">
             {header.sub ? header.sub + ' · ' : ''}
             {pluralize(tracks.length, 'song')}
-            {totalDuration > 0 && ` · ${formatTime(totalDuration)}`}
+            {totalDuration > 0 && ` · ${formatDuration(totalDuration)}`}
             {reorderable && tracks.length > 1 && ' · drag to reorder'}
             {selectable && ' · click to select'}
           </div>
