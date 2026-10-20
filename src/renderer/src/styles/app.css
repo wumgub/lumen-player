@@ -376,42 +376,56 @@ input {
   gap: 12px;
 }
 
-/* Sort control */
+/* Sort control — one pill: a sort-key selector with a small circle that
+   toggles ascending/descending. */
 .sort-control {
   position: relative;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
-}
-.sort-trigger {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
   border-radius: 999px;
   background: var(--bg-3);
   border: 1px solid var(--border);
+  transition: border-color 0.15s;
+}
+.sort-control:hover {
+  border-color: var(--accent-soft);
+}
+.sort-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 7px 9px 15px;
   font-size: 13px;
   color: var(--fg);
+  border-radius: 999px 0 0 999px;
 }
-.sort-trigger:hover {
-  background: var(--accent-soft);
+.sort-main:hover {
+  color: var(--accent);
+}
+.sort-key {
+  font-weight: 600;
 }
 .sort-dim {
   color: var(--fg-dim);
+  font-weight: 400;
 }
 .sort-dir {
-  width: 34px;
-  height: 34px;
+  width: 26px;
+  height: 26px;
+  margin-right: 4px;
   border-radius: 50%;
-  background: var(--bg-3);
-  border: 1px solid var(--border);
+  display: grid;
+  place-items: center;
+  background: var(--bg-2);
   color: var(--fg-dim);
-  font-size: 11px;
+  font-size: 13px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
 }
 .sort-dir:hover {
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent, #fff);
 }
 .sort-menu {
   position: absolute;

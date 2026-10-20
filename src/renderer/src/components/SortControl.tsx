@@ -25,8 +25,9 @@ export function SortControl({
 
   return (
     <div className="sort-control" ref={ref}>
-      <button className="sort-trigger" onClick={() => setOpen((o) => !o)}>
-        <span className="sort-dim">Sort</span> {SORT_LABELS[sort.key]}
+      <button className="sort-main" onClick={() => setOpen((o) => !o)}>
+        <span className="sort-dim">Sort</span>
+        <span className="sort-key">{SORT_LABELS[sort.key]}</span>
         <span className="chevron">▾</span>
       </button>
       <button
@@ -34,7 +35,7 @@ export function SortControl({
         onClick={toggleDir}
         title={sort.dir === 'asc' ? 'Ascending' : 'Descending'}
       >
-        {sort.dir === 'asc' ? '▲' : '▼'}
+        {sort.dir === 'asc' ? '↑' : '↓'}
       </button>
       {open && (
         <div className="sort-menu">
