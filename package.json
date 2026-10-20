@@ -4,7 +4,10 @@
   "version": "0.1.0",
   "description": "An Electron MP3 player with reactive audio visualizers",
   "main": "./out/main/index.js",
-  "author": "wumgub",
+  "author": {
+    "name": "wumgub",
+    "email": "67914953+wumgub@users.noreply.github.com"
+  },
   "license": "GPL-3.0-or-later",
   "type": "module",
   "scripts": {

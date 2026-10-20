@@ -69,7 +69,7 @@ nothing to configure.
 | **Windows** | `Lumen-x.y.z-Setup.exe` |
 | **Mac** — Apple silicon (any Mac from ~2020 on: M1/M2/M3/M4) | `Lumen-x.y.z-mac-arm64.dmg` |
 | **Mac** — older Intel | `Lumen-x.y.z-mac-x64.dmg` |
-| **Linux** | `Lumen-x.y.z-linux-x64.AppImage` (or the `.deb`) |
+| **Linux** | `Lumen-x.y.z-linux-x86_64.AppImage` (or the `.deb`) |
 
 > _(Not sure which Mac you have? Click the Apple menu (top-left of the screen) →
 > **About This Mac**. If it says
@@ -125,18 +125,18 @@ song to play.
 
 **AppImage** (works on any distro — nothing to install):
 
-1. Download **`Lumen-x.y.z-linux-x64.AppImage`**.
+1. Download **`Lumen-x.y.z-linux-x86_64.AppImage`**.
 2. Make it runnable — either right-click → **Properties → Permissions → "Allow
    executing file as program"**, or in a terminal:
    ```bash
-   chmod +x ~/Downloads/Lumen-*-linux-x64.AppImage
+   chmod +x ~/Downloads/Lumen-*.AppImage
    ```
-3. Double-click it (or run `./Lumen-*-linux-x64.AppImage`).
+3. Double-click it (or run `./Lumen-*.AppImage`).
    - If it won't start, you may need FUSE: `sudo apt install libfuse2`
      (Debian/Ubuntu) or `sudo pacman -S fuse2` (Arch/omarchy).
 
 **Or the `.deb`** (Debian/Ubuntu/Mint): double-click it to install through your
-software centre, or `sudo apt install ./Lumen-*-linux-x64.deb`.
+software centre, or `sudo apt install ./Lumen-*.deb`.
 
 </details>
 
