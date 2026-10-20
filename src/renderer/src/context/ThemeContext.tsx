@@ -30,6 +30,8 @@ interface ThemeState {
   setCustomToken: (key: string, value: string) => void
   /** Replace the whole custom map from a built-in theme's preset. */
   resetCustomFrom: (baseId: string) => void
+  /** Replace the custom map from an imported token map (missing keys default). */
+  replaceCustom: (tokens: TokenMap) => void
 }
 
 const Ctx = createContext<ThemeState | null>(null)
@@ -109,6 +111,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
         resetCustomFrom: (baseId) =>
           setCustomTokens(() => {
             const next = { ...(BASE_THEMES[baseId] ?? defaultCustom()) }
+            try {
+              localStorage.setItem('lumen.custom', JSON.stringify(next))
+            } catch {
+              /* ignore */
+            }
+            return next
+          }),
+        replaceCustom: (tokens) =>
+          setCustomTokens(() => {
+            const next = { ...defaultCustom(), ...tokens }
             try {
               localStorage.setItem('lumen.custom', JSON.stringify(next))
             } catch {

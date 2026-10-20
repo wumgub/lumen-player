@@ -1638,6 +1638,65 @@ input[type='range']:hover::-webkit-slider-thumb {
   background: var(--accent-soft);
   color: var(--accent);
 }
+.te-base.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.te-base.primary-ish {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent, #fff);
+}
+.te-base.primary-ish:hover {
+  opacity: 0.9;
+  color: var(--on-accent, #fff);
+}
+.te-base:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+/* Theme sharing (export / import) */
+.te-share {
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+.te-share-buttons {
+  display: flex;
+  gap: 8px;
+}
+.te-share-panel {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.te-share-text {
+  width: 100%;
+  resize: vertical;
+  font-family: 'SF Mono', ui-monospace, 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--fg);
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.te-share-text:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.te-share-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.te-share-error {
+  font-size: 12px;
+  color: #ef6868;
+}
 .te-groups {
   max-height: 52vh;
   overflow-y: auto;

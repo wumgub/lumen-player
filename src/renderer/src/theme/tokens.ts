@@ -79,6 +79,47 @@ export function defaultCustom(): TokenMap {
   return { ...BASE_THEMES.neon }
 }
 
+// ---- Theme sharing (export / import) ----
+
+const SHARE_VERSION = 1
+
+/** Serialize a custom token map to a shareable, human-readable string. */
+export function exportTheme(tokens: TokenMap): string {
+  const clean: TokenMap = {}
+  for (const t of THEME_TOKENS) if (tokens[t.key]) clean[t.key] = tokens[t.key]
+  return JSON.stringify({ lumenTheme: SHARE_VERSION, tokens: clean }, null, 2)
+}
+
+/**
+ * Parse a shared theme string back into a token map. Accepts the wrapped
+ * `{ lumenTheme, tokens }` form or a bare token map, keeps only known tokens,
+ * and returns null if nothing usable is found.
+ */
+export function parseTheme(text: string): TokenMap | null {
+  let data: unknown
+  try {
+    data = JSON.parse(text)
+  } catch {
+    return null
+  }
+  if (!data || typeof data !== 'object') return null
+  const obj = data as Record<string, unknown>
+  const raw = (obj.tokens && typeof obj.tokens === 'object' ? obj.tokens : obj) as Record<
+    string,
+    unknown
+  >
+  const out: TokenMap = {}
+  let any = false
+  for (const t of THEME_TOKENS) {
+    const v = raw[t.key]
+    if (typeof v === 'string' && v.trim()) {
+      out[t.key] = v.trim()
+      any = true
+    }
+  }
+  return any ? out : null
+}
+
 /** Parse any CSS color (hex / rgb / rgba) to #rrggbb for a color input. */
 export function cssColorToHex(input: string): string {
   const s = input.trim()
