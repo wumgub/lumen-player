@@ -81,6 +81,10 @@ export function initDb(): void {
   if (!cols.some((c) => c.name === 'note')) {
     db.exec("ALTER TABLE tracks ADD COLUMN note TEXT NOT NULL DEFAULT ''")
   }
+  // `isVideo` marks tracks backed by a video container (e.g. an .mp4 music video).
+  if (!cols.some((c) => c.name === 'isVideo')) {
+    db.exec('ALTER TABLE tracks ADD COLUMN isVideo INTEGER NOT NULL DEFAULT 0')
+  }
 }
 
 // Lock bits for user-edited fields.
@@ -99,11 +103,12 @@ export interface UpsertTrack {
   trackNo: number | null
   discNo: number | null
   duration: number
+  isVideo: boolean
   art?: { mime: string; data: Buffer } | null
 }
 
 const COLS =
-  'id, path, title, artist, albumArtist, album, genre, year, trackNo, discNo, duration, hasArt, addedAt, note'
+  'id, path, title, artist, albumArtist, album, genre, year, trackNo, discNo, duration, hasArt, addedAt, note, isVideo'
 
 export function upsertTrack(t: UpsertTrack): { id: number; isNew: boolean } {
   const existing = db
@@ -112,6 +117,7 @@ export function upsertTrack(t: UpsertTrack): { id: number; isNew: boolean } {
     | { id: number; title: string; artist: string; albumArtist: string; album: string; locked: number }
     | undefined
   const hasArt = t.art ? 1 : 0
+  const isVideo = t.isVideo ? 1 : 0
 
   const txn = db.transaction(() => {
     let id: number
@@ -126,17 +132,18 @@ export function upsertTrack(t: UpsertTrack): { id: number; isNew: boolean } {
       }
       db.prepare(
         `UPDATE tracks SET title=@title, artist=@artist, albumArtist=@albumArtist, album=@album,
-         genre=@genre, year=@year, trackNo=@trackNo, discNo=@discNo, duration=@duration, hasArt=@hasArt
+         genre=@genre, year=@year, trackNo=@trackNo, discNo=@discNo, duration=@duration, hasArt=@hasArt,
+         isVideo=@isVideo
          WHERE path=@path`
-      ).run({ ...t, ...resolved, hasArt })
+      ).run({ ...t, ...resolved, hasArt, isVideo })
       id = existing.id
     } else {
       const info = db
         .prepare(
-          `INSERT INTO tracks (path, title, artist, albumArtist, album, genre, year, trackNo, discNo, duration, hasArt, addedAt)
-           VALUES (@path, @title, @artist, @albumArtist, @album, @genre, @year, @trackNo, @discNo, @duration, @hasArt, @addedAt)`
+          `INSERT INTO tracks (path, title, artist, albumArtist, album, genre, year, trackNo, discNo, duration, hasArt, addedAt, isVideo)
+           VALUES (@path, @title, @artist, @albumArtist, @album, @genre, @year, @trackNo, @discNo, @duration, @hasArt, @addedAt, @isVideo)`
         )
-        .run({ ...t, hasArt, addedAt: Date.now() })
+        .run({ ...t, hasArt, isVideo, addedAt: Date.now() })
       id = Number(info.lastInsertRowid)
     }
     if (t.art) {

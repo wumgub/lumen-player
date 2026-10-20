@@ -478,6 +478,15 @@ function TrackList({
               </div>
             )}
           </div>
+          <button
+            className="sel-btn"
+            onClick={() => {
+              player.addToQueue(tracks.filter((t) => selected.has(t.id)))
+              setSelected(new Set())
+            }}
+          >
+            Add to queue
+          </button>
           <button className="sel-btn" onClick={() => openAlbumPick([...selected])}>
             Add to album…
           </button>
@@ -494,6 +503,8 @@ function TrackList({
           actions={{
             rename: () => renameSong(contextMenu.track),
             editNote: () => editNote(contextMenu.track),
+            playNext: () => player.playNext([contextMenu.track]),
+            addToQueue: () => player.addToQueue([contextMenu.track]),
             addToPlaylist: (plId) => void addToPlaylist(plId, contextMenu.track.id),
             addToAlbum: () => openAlbumPick([contextMenu.track.id]),
             removeFromAlbum: contextMenu.track.album

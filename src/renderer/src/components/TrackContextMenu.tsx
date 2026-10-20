@@ -5,6 +5,8 @@ import type { PlaylistWithCount, Track } from '@shared/types'
 export interface TrackMenuActions {
   rename: () => void
   editNote: () => void
+  playNext: () => void
+  addToQueue: () => void
   addToPlaylist: (playlistId: number) => void
   addToAlbum: () => void
   removeFromAlbum?: () => void
@@ -69,6 +71,13 @@ export function TrackContextMenu({
       style={{ left: pos.left, top: pos.top }}
       onContextMenu={(e) => e.preventDefault()}
     >
+      <button className="ctx-item" onClick={() => run(actions.playNext)}>
+        Play next
+      </button>
+      <button className="ctx-item" onClick={() => run(actions.addToQueue)}>
+        Add to queue
+      </button>
+      <div className="ctx-sep" />
       <button className="ctx-item" onClick={() => run(actions.rename)}>
         Rename song…
       </button>

@@ -2,10 +2,15 @@ import { readdir, stat } from 'fs/promises'
 import type { Dirent } from 'fs'
 import { basename, extname, join } from 'path'
 import { parseFile } from 'music-metadata'
-import { AUDIO_EXTENSIONS, type ScanProgress, type ScanResult } from '../shared/types'
+import {
+  MEDIA_EXTENSIONS,
+  isVideoPath,
+  type ScanProgress,
+  type ScanResult
+} from '../shared/types'
 import { listAllPaths, removeMissing, upsertTrack } from './db'
 
-const AUDIO = new Set<string>(AUDIO_EXTENSIONS)
+const MEDIA = new Set<string>(MEDIA_EXTENSIONS)
 
 async function walk(dir: string, out: string[]): Promise<void> {
   let entries: Dirent<string>[]
@@ -19,7 +24,7 @@ async function walk(dir: string, out: string[]): Promise<void> {
     const full = join(dir, entry.name)
     if (entry.isDirectory()) {
       await walk(full, out)
-    } else if (entry.isFile() && AUDIO.has(extname(entry.name).toLowerCase())) {
+    } else if (entry.isFile() && MEDIA.has(extname(entry.name).toLowerCase())) {
       out.push(full)
     }
   }
@@ -71,6 +76,7 @@ export async function scanFolders(
         trackNo: c.track?.no ?? null,
         discNo: c.disk?.no ?? null,
         duration: meta.format.duration ?? 0,
+        isVideo: isVideoPath(file),
         art: pickArt(c.picture)
       })
       if (res.isNew) added++
@@ -89,6 +95,7 @@ export async function scanFolders(
           trackNo: null,
           discNo: null,
           duration: 0,
+          isVideo: isVideoPath(file),
           art: null
         })
         if (res.isNew) added++

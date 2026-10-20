@@ -1,9 +1,9 @@
 // Mock window.lumen for screenshot captures of the real renderer.
 const { contextBridge } = require('electron')
 
-const mk = (id, title, artist, album, year, trackNo, duration, note = '') => ({
+const mk = (id, title, artist, album, year, trackNo, duration, note = '', isVideo = 0) => ({
   id,
-  path: `/Music/${artist}/${album}/${title}.mp3`,
+  path: `/Music/${artist}/${album}/${title}.${isVideo ? 'mp4' : 'mp3'}`,
   title,
   artist,
   albumArtist: artist,
@@ -15,12 +15,13 @@ const mk = (id, title, artist, album, year, trackNo, duration, note = '') => ({
   duration,
   hasArt: 1,
   addedAt: Date.now() - id * 86400000,
-  note
+  note,
+  isVideo
 })
 
 const songs = [
   mk(1, 'Судно', 'Molchat Doma', 'Этажи', 2018, 1, 171, 'sudno — molchat doma'),
-  mk(2, 'Танцевать', 'Molchat Doma', 'Этажи', 2018, 2, 268),
+  mk(2, 'Танцевать', 'Molchat Doma', 'Этажи', 2018, 2, 268, '', 1),
   mk(3, 'Клетка', 'Molchat Doma', 'Этажи', 2018, 3, 214),
   mk(4, 'Люди надоели', 'Molchat Doma', 'Этажи', 2018, 4, 199),
   mk(5, 'Волны', 'Molchat Doma', 'Монумент', 2020, 1, 236),

@@ -46,7 +46,11 @@ const MIME: Record<string, string> = {
   '.aac': 'audio/aac',
   '.ogg': 'audio/ogg',
   '.oga': 'audio/ogg',
-  '.opus': 'audio/ogg'
+  '.opus': 'audio/ogg',
+  '.mp4': 'video/mp4',
+  '.m4v': 'video/mp4',
+  '.webm': 'video/webm',
+  '.mov': 'video/quicktime'
 }
 
 protocol.registerSchemesAsPrivileged([

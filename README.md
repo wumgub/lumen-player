@@ -12,16 +12,25 @@ and swappable themes.
 
 ## Features
 
-- **Full library** — point it at folders, it recursively scans and indexes your audio
-  (MP3, FLAC, WAV/AIFF, M4A/AAC, OGG/Opus) into SQLite, reading ID3 tags + embedded art.
-- **Browse** by Songs, Artists, Albums, or custom Playlists, with instant search.
+- **Full library** — point it at folders, it recursively scans and indexes your media
+  (MP3, FLAC, WAV/AIFF, M4A/AAC, OGG/Opus, plus MP4/M4V/WebM/MOV **music videos**)
+  into SQLite, reading ID3 tags + embedded art.
+- **Browse** by Songs, Artists, Albums, or custom Playlists, with instant search —
+  including per-track **notes**, so a song with a Cyrillic/CJK title is findable by a
+  romanized alias you add (right-click → *Add note…*).
+- **Music video** — `.mp4` tracks play like any song, with a little **Art / Video**
+  toggle in Now Playing to show the album art or the video.
+- **Queue** — *Play next* / *Add to queue* on any track (or a multi-select), with a
+  slide-over queue you can reorder-by-jumping and prune.
 - **3 visualizers** — Spectrum Bars, Waveform, and Radial, driven by a Web Audio
-  `AnalyserNode`. Toggle between a docked panel and an immersive full-window mode
-  (press `f`, or the expand icon).
-- **5 themes** — Neon, Minimal, Minimal Dark, Retro, and Glass (which tints its accents
-  from the current album art). Switch live from the top-right selector.
-- Gapless-ish queue with shuffle / repeat-all / repeat-one, seeking, volume, and
-  keyboard shortcuts (`Space` play/pause, `⌘←/⌘→` prev/next, `f` immersive, `Esc` exit).
+  `AnalyserNode`, with an on/off toggle and a frame-rate cap. Toggle between a docked
+  panel and an immersive full-window mode (press `f`, or the expand icon).
+- **Theme editor** — every colour and the font are customizable; import/export themes
+  as text. Plus five built-ins incl. Glass (tints its accents from the album art).
+- **Hardware media keys** — ⏯ / ⏭ / ⏮ on your keyboard, and rich OS “Now Playing”
+  metadata (title, artist, art, scrubber).
+- Shuffle / repeat-all / repeat-one, seeking, volume, and keyboard shortcuts
+  (`Space` play/pause, `⌘←/⌘→` prev/next, `f` immersive, `Esc` exit).
 - **Discord Rich Presence** — optionally show the current track (with a live
   progress bar) on your Discord profile.
 
@@ -142,11 +151,11 @@ artifacts on macOS and the Linux ones on Linux.
 <details>
 <summary><strong>A folder scanned but some (or all) tracks are missing</strong></summary>
 
-Lumen only indexes these audio extensions:
-`.mp3 .flac .wav .aif .aiff .m4a .aac .ogg .oga .opus`. Anything else (`.wma`,
-DSD, video containers, …) is skipped, as are folders it doesn't have permission
-to read. Fix the files/permissions, then click **Rescan library** at the bottom
-of the sidebar.
+Lumen only indexes these extensions:
+`.mp3 .flac .wav .aif .aiff .m4a .aac .ogg .oga .opus` and the video containers
+`.mp4 .m4v .webm .mov`. Anything else (`.wma`, DSD, …) is skipped, as are folders
+it doesn't have permission to read. Fix the files/permissions, then click
+**Rescan library** at the bottom of the sidebar.
 
 </details>
 

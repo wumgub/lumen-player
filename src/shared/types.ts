@@ -13,6 +13,7 @@ export interface Track {
   hasArt: number // 0 | 1 (sqlite boolean)
   addedAt: number // epoch ms
   note: string // user's free-text note; also matched by search
+  isVideo: number // 0 | 1 — has a video track (e.g. an .mp4 music video)
 }
 
 export interface ScanProgress {
@@ -84,3 +85,17 @@ export const AUDIO_EXTENSIONS = [
   '.oga',
   '.opus'
 ] as const
+
+// Video containers whose audio Chromium can play and whose picture we can show
+// (music videos). Parsed for tags/duration by music-metadata just like audio.
+export const VIDEO_EXTENSIONS = ['.mp4', '.m4v', '.webm', '.mov'] as const
+
+/** Everything the scanner indexes. */
+export const MEDIA_EXTENSIONS = [...AUDIO_EXTENSIONS, ...VIDEO_EXTENSIONS] as const
+
+/** True when a file path has a video-container extension. */
+export function isVideoPath(path: string): boolean {
+  const dot = path.lastIndexOf('.')
+  if (dot < 0) return false
+  return (VIDEO_EXTENSIONS as readonly string[]).includes(path.slice(dot).toLowerCase())
+}

@@ -1,8 +1,10 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { usePlayer } from '../context/PlayerContext'
 import { formatTime } from '../lib/format'
 import { Artwork } from './Artwork'
+import { QueuePanel } from './QueuePanel'
 import {
+  ListIcon,
   Next,
   Pause,
   Play,
@@ -17,6 +19,8 @@ import {
 export function TransportBar(): React.ReactElement {
   const p = usePlayer()
   const pct = p.duration > 0 ? (p.currentTime / p.duration) * 100 : 0
+  const [showQueue, setShowQueue] = useState(false)
+  const upNext = p.index >= 0 ? Math.max(0, p.queue.length - (p.index + 1)) : 0
 
   return (
     <div className="transport">
@@ -86,6 +90,14 @@ export function TransportBar(): React.ReactElement {
 
       <div className="transport-right">
         <button
+          className={`icon-btn queue-btn ${showQueue ? 'active' : ''}`}
+          onClick={() => setShowQueue((v) => !v)}
+          title="Queue"
+        >
+          <ListIcon size={18} />
+          {upNext > 0 && <span className="queue-badge">{upNext > 99 ? '99+' : upNext}</span>}
+        </button>
+        <button
           className="icon-btn"
           onClick={() => p.setVolume(p.volume > 0 ? 0 : 0.9)}
           title="Mute"
@@ -103,6 +115,8 @@ export function TransportBar(): React.ReactElement {
           onChange={(e) => p.setVolume(Number(e.target.value))}
         />
       </div>
+
+      {showQueue && <QueuePanel onClose={() => setShowQueue(false)} />}
     </div>
   )
 }

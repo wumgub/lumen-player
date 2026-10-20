@@ -14,7 +14,11 @@ type Listener = () => void
  * Single source of truth for playback; React just reads/sends commands.
  */
 export class AudioEngine {
-  readonly el: HTMLAudioElement
+  // A <video> element (not <audio>) so video-backed tracks (.mp4 music videos)
+  // can display their picture. It stays detached from the DOM for audio-only
+  // playback; VideoSurface re-parents it into the UI when video is shown. Moving
+  // a media element between DOM and detached does not interrupt playback.
+  readonly el: HTMLVideoElement
   private ctx: AudioContext | null = null
   private source: MediaElementAudioSourceNode | null = null
   private analyser: AnalyserNode | null = null
@@ -28,9 +32,10 @@ export class AudioEngine {
   private endedListeners = new Set<Listener>()
 
   constructor() {
-    this.el = new Audio()
+    this.el = document.createElement('video')
     this.el.crossOrigin = 'anonymous'
     this.el.preload = 'auto'
+    this.el.playsInline = true
 
     this.el.addEventListener('timeupdate', () => this.emitTime())
     this.el.addEventListener('durationchange', () => this.emitTime())
