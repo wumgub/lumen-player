@@ -73,7 +73,18 @@ const api = {
     ipcRenderer.invoke('presence:set', payload),
 
   mediaUrl: (trackId: number): string => `lumen-media://t/${trackId}`,
-  artUrl: (trackId: number): string => `lumen-art://t/${trackId}`
+  artUrl: (trackId: number): string => `lumen-art://t/${trackId}`,
+
+  albumArtUrl: (album: string): string => `lumen-art://album/${encodeURIComponent(album)}`,
+  setAlbumCoverFromTrack: (album: string, trackId: number): Promise<void> =>
+    ipcRenderer.invoke('album:coverFromTrack', album, trackId),
+  /** Opens a native image picker; resolves true if a cover was set, false if cancelled. */
+  setAlbumCoverCustom: (album: string): Promise<boolean> =>
+    ipcRenderer.invoke('album:coverCustom', album),
+  clearAlbumCover: (album: string): Promise<void> =>
+    ipcRenderer.invoke('album:clearCover', album),
+  albumHasCover: (album: string): Promise<boolean> =>
+    ipcRenderer.invoke('album:hasCover', album)
 }
 
 contextBridge.exposeInMainWorld('lumen', api)

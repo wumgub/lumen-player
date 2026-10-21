@@ -4,6 +4,7 @@ import type { SortKey, SortState, View } from '../types'
 import { usePlayer } from '../context/PlayerContext'
 import { formatDuration, formatTime, pluralize } from '../lib/format'
 import { Artwork } from './Artwork'
+import { AlbumCover } from './AlbumCover'
 import { Disc, Pencil, Play } from './icons'
 import { RenameDialog, type RenameRequest } from './RenameDialog'
 import { NoteDialog, type NoteRequest } from './NoteDialog'
@@ -324,21 +325,33 @@ function TrackList({
   return (
     <div className="track-view">
       <header className="view-header">
-        <div>
-          <h1 className="view-title">
-            {header.title}
-            {canRenameHeader && (
-              <button className="title-edit" onClick={renameHeader} title={`Rename ${view.kind}`}>
-                <Pencil size={16} />
-              </button>
-            )}
-          </h1>
+        <div className="header-main">
+          {view.kind === 'album' && (
+            <AlbumCover
+              album={view.name}
+              version={libraryVersion}
+              onChanged={onLibraryChanged}
+              className="album-header-cover"
+              iconSize={22}
+              editable
+            />
+          )}
+          <div>
+            <h1 className="view-title">
+              {header.title}
+              {canRenameHeader && (
+                <button className="title-edit" onClick={renameHeader} title={`Rename ${view.kind}`}>
+                  <Pencil size={16} />
+                </button>
+              )}
+            </h1>
           <div className="view-sub">
             {header.sub ? header.sub + ' · ' : ''}
             {pluralize(tracks.length, 'song')}
             {totalDuration > 0 && ` · ${formatDuration(totalDuration)}`}
             {reorderable && tracks.length > 1 && ' · drag to reorder'}
             {selectable && ' · click to select'}
+          </div>
           </div>
         </div>
         <div className="header-actions">
@@ -629,9 +642,14 @@ function AlbumGrid({
             tabIndex={0}
             onClick={() => setView({ kind: 'album', name: a.album })}
           >
-            <div className="card-cover" style={gradientFor(a.album)}>
-              <Disc size={28} />
-            </div>
+            <AlbumCover
+              album={a.album}
+              version={version}
+              onChanged={onLibraryChanged}
+              className="card-cover"
+              iconSize={28}
+              editable
+            />
             <div className="card-title">{a.album}</div>
             <div className="card-sub">{a.artist}</div>
             <button
