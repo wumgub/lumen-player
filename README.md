@@ -16,9 +16,9 @@ and swappable themes.
   (MP3, FLAC, WAV/AIFF, M4A/AAC, OGG/Opus, plus MP4/M4V/WebM/MOV **music videos**)
   into SQLite, reading ID3 tags + embedded art.
 - **Browse** by Songs, Artists, Albums, or custom Playlists, with instant search —
-  including per-track **notes**, so a song with a Cyrillic/CJK title is findable by a
-  romanized alias you add (right-click → *Add note…*).
-- **Music video** — `.mp4` tracks play like any song, with a little **Art / Video**
+  including per-track **notes**, so a song that has a weird name, or a name
+  in another language is easy to find directly from search! (right-click → *Add note…*).
+- **Music video** — `.mp4` tracks play like any song, with an **Art / Video**
   toggle in Now Playing to show the album art or the video.
 - **Queue** — *Play next* / *Add to queue* on any track (or a multi-select), with a
   slide-over queue you can reorder-by-jumping and prune.
@@ -33,6 +33,9 @@ and swappable themes.
   (`Space` play/pause, `⌘←/⌘→` prev/next, `f` immersive, `Esc` exit).
 - **Discord Rich Presence** — optionally show the current track (with a live
   progress bar) on your Discord profile.
+
+## DISCLAIMER!!
+This was made using the assistance of AI. However, this is not vibe-coded. AI was used as tool during the making of this, not as a 'code-all' god.
 
 ## Discord Rich Presence
 
@@ -61,8 +64,8 @@ Presence is off by default. To enable it (⚙️ in the top-right → *Discord R
 ### Just want to listen? Download it — no setup needed
 
 **[⬇ Download the latest release](https://github.com/wumgub/lumen-player/releases/latest)**,
-grab the one file for your computer, and open it. No terminal, no installing Node,
-nothing to configure.
+grab the one file for your computer, and open it. You can also build from source,
+if you're super cool :)
 
 | Your computer | Download this file |
 |---|---|
@@ -78,14 +81,14 @@ folder your music is in, and it scans and sorts everything for you. Double-click
 song to play.
 
 > [!IMPORTANT]
-> **The first time you open it, your computer will warn you** that the app is from an
+> **The first time you open it, your computer might warn you** that the app is from an
 > "unknown"/"unidentified" developer, or try to block it. **This is expected** —
-> Lumen is free, open-source software that isn't signed with a paid Apple/Microsoft
+> Lumen is free, open-source software (FOSS) that isn't signed with a paid Apple/Microsoft
 > developer certificate. It's safe to open; you just have to tell your computer to
 > allow it **once**. Pick your system below for the exact clicks.
 
 <details>
-<summary><strong>🪟 Windows — exactly what to click</strong></summary>
+<summary><strong>🪟 Windows easy install </strong></summary>
 
 1. Double-click the downloaded **`Lumen-x.y.z-Setup.exe`**.
 2. A blue box may appear: **"Windows protected your PC."** Click the small
@@ -96,7 +99,7 @@ song to play.
 </details>
 
 <details>
-<summary><strong>🍎 Mac — exactly what to click</strong></summary>
+<summary><strong>🍎 Mac easy install</strong></summary>
 
 1. Open the downloaded **`.dmg`**, then drag the **Lumen** icon onto the
    **Applications** folder shown next to it.
@@ -119,9 +122,9 @@ song to play.
 </details>
 
 <details>
-<summary><strong>🐧 Linux — exactly what to click</strong></summary>
+<summary><strong>🐧 Linux easy install (I'm surprised to see you here)</strong></summary>
 
-**AppImage** (works on any distro — nothing to install):
+**AppImage** (works on any distro, nothing to install):
 
 1. Download **`Lumen-x.y.z-linux-x86_64.AppImage`**.
 2. Make it runnable — either right-click → **Properties → Permissions → "Allow
@@ -134,15 +137,16 @@ song to play.
      (Debian/Ubuntu) or `sudo pacman -S fuse2` (Arch).
 
 **Or the `.deb`** (Debian/Ubuntu/Mint): double-click it to install through your
-software centre, or `sudo apt install ./Lumen-*.deb`.
+software centre, or `sudo apt install ./Lumen-*.deb`. I also use debian. We are superior.
 
 </details>
 
 ## Build it yourself
 
 > Only do this if you want to modify Lumen, or there isn't a pre-built download for
-> your platform yet. If you just want to listen, use the downloads above instead —
-> you don't need any of this.
+> your platform yet. Or if have immeasurable levels of swag.
+>  If you just want to listen, use the downloads above instead,> you don't need
+>  any of this.
 
 ### Prerequisites
 
@@ -334,4 +338,4 @@ renderer-side errors.
 
 ## License
 
-[GPL-3.0-or-later](./LICENSE) © wumgub
+[GPL-3.0-or-later](./LICENSE) © evanlawrence
