@@ -84,28 +84,56 @@ input {
 }
 .search-box {
   -webkit-app-region: no-drag;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  color: var(--fg-dim);
+  z-index: 1;
+  transition: background 0.18s, border-color 0.18s;
+}
+.search-box.open {
   flex: 1;
   max-width: 440px;
   background: var(--bg-3);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 8px 14px;
-  color: var(--fg-dim);
-  z-index: 1;
+  border-color: var(--border);
 }
-.search-box input {
-  flex: 1;
+.search-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--fg-dim);
+  transition: background 0.15s, color 0.15s;
+}
+.search-box.collapsed .search-icon {
+  background: var(--bg-3);
+}
+.search-icon:hover {
+  color: var(--fg);
+}
+.search-input {
   background: none;
   border: none;
   outline: none;
   color: var(--fg);
   font-size: 13px;
+  min-width: 0;
+  transition: width 0.18s ease, opacity 0.15s, padding 0.18s;
 }
-.search-box input::placeholder {
-  color: var(--fg-dim);
+.search-box.open .search-input {
+  flex: 1;
+  padding-right: 12px;
+  opacity: 1;
+}
+.search-box.collapsed .search-input {
+  width: 0;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* ---------- Body layout ---------- */
@@ -2303,4 +2331,64 @@ input[type='range']:hover::-webkit-slider-thumb {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ---------- Custom theme chip: select area + inline pencil ---------- */
+.custom-chip {
+  display: inline-flex;
+  align-items: stretch;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: var(--bg-3);
+  overflow: hidden;
+}
+.custom-chip.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.custom-chip .chip-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px 7px 12px;
+  font-size: 12px;
+  color: inherit;
+  background: none;
+  border: none;
+}
+.custom-chip .chip-select:hover {
+  background: var(--accent-soft);
+}
+.custom-chip .chip-edit {
+  display: grid;
+  place-items: center;
+  padding: 0 11px;
+  color: var(--fg-dim);
+  background: none;
+  border: none;
+  border-left: 1px solid var(--border);
+  transition: background 0.15s, color 0.15s;
+}
+.custom-chip .chip-edit:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* Eyedropper button in the theme editor colour rows */
+.te-eyedrop {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--fg-dim);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.te-eyedrop:hover {
+  color: var(--accent);
+  border-color: var(--accent);
 }
