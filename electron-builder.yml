@@ -18,9 +18,10 @@ publish:
 mac:
   category: public.app-category.music
   icon: build/icon.icns
+  # Just the .dmg users double-click. (A .zip is only needed to feed macOS
+  # auto-update, which Lumen doesn't use — it would just clutter the release.)
   target:
     - dmg
-    - zip
   darkModeSupport: true
   artifactName: ${productName}-${version}-mac-${arch}.${ext}
 dmg:

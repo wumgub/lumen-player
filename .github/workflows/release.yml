@@ -60,3 +60,24 @@ jobs:
           # the build looking for a Developer ID. (Users get a one-time security
           # prompt the README walks them through.)
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+  # electron-builder also uploads auto-update plumbing (.blockmap delta files and
+  # latest*.yml update feeds) that nothing consumes — Lumen has no in-app updater.
+  # Strip them so the release page shows only the installers people download.
+  # Runs once, after every platform has finished publishing.
+  tidy-release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove auto-update metadata from the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          names=$(gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
+            --json assets --jq '.assets[].name' \
+            | grep -E '\.blockmap$|^latest.*\.yml$' || true)
+          for asset in $names; do
+            echo "Removing $asset"
+            gh release delete-asset "$GITHUB_REF_NAME" "$asset" --repo "$GITHUB_REPOSITORY" --yes
+          done
