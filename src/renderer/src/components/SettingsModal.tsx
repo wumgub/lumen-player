@@ -95,42 +95,52 @@ export function SettingsModal({
                 <div>
                   <div className="settings-heading">Appearance</div>
                   <div className="settings-desc">
-                    Theme: <strong>{activeTheme?.label ?? theme}</strong>. Edit every colour and
-                    the font to make your own.
+                    Theme: <strong>{activeTheme?.label ?? theme}</strong>. Pick one below, or open
+                    Custom (the pencil) to edit every colour and the font.
                   </div>
                 </div>
-                <button
-                  className="theme-edit-btn"
-                  title="Customize theme"
-                  onClick={() => {
-                    setTheme('custom')
-                    setEditingTheme(true)
-                  }}
-                >
-                  <Pencil size={16} />
-                </button>
               </div>
               <div className="theme-chips">
-                {THEMES.map((t) => (
-                  <button
-                    key={t.id}
-                    className={`theme-chip ${t.id === theme ? 'active' : ''}`}
-                    onClick={() => setTheme(t.id)}
-                  >
-                    <span
-                      className="theme-swatch"
-                      data-swatch={t.id}
-                      style={
-                        t.id === 'custom'
-                          ? {
-                              background: `linear-gradient(135deg, ${customTokens.accent}, ${customTokens['accent-2']})`
-                            }
-                          : undefined
-                      }
-                    />
-                    {t.label}
-                  </button>
-                ))}
+                {THEMES.map((t) =>
+                  t.id === 'custom' ? (
+                    // The Custom chip is one control: the main area selects it,
+                    // the pencil on the end opens the editor.
+                    <div
+                      key={t.id}
+                      className={`theme-chip custom-chip ${t.id === theme ? 'active' : ''}`}
+                    >
+                      <button className="chip-select" onClick={() => setTheme('custom')}>
+                        <span
+                          className="theme-swatch"
+                          data-swatch="custom"
+                          style={{
+                            background: `linear-gradient(135deg, ${customTokens.accent}, ${customTokens['accent-2']})`
+                          }}
+                        />
+                        {t.label}
+                      </button>
+                      <button
+                        className="chip-edit"
+                        title="Customize theme"
+                        onClick={() => {
+                          setTheme('custom')
+                          setEditingTheme(true)
+                        }}
+                      >
+                        <Pencil size={13} />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      key={t.id}
+                      className={`theme-chip ${t.id === theme ? 'active' : ''}`}
+                      onClick={() => setTheme(t.id)}
+                    >
+                      <span className="theme-swatch" data-swatch={t.id} />
+                      {t.label}
+                    </button>
+                  )
+                )}
               </div>
 
               <div className="settings-row inline">
@@ -183,55 +193,6 @@ export function SettingsModal({
                     onChange={(e) => patch({ discordClientId: e.target.value })}
                   />
                 </label>
-                <div className="settings-row inline">
-                  <div>
-                    <div className="settings-subheading">Per-track album art</div>
-                    <div className="settings-desc">
-                      Shows each track’s real cover (looked up on iTunes). Requires the Client
-                      Secret below and a one-time authorization. Sends the artist &amp; album
-                      name to Apple’s public search API.
-                    </div>
-                  </div>
-                  <label className="switch">
-                    <input
-                      type="checkbox"
-                      checked={settings.discordCoverArt}
-                      disabled={!settings.discordEnabled}
-                      onChange={(e) => patch({ discordCoverArt: e.target.checked })}
-                    />
-                    <span className="switch-track" />
-                  </label>
-                </div>
-
-                {settings.discordCoverArt && (
-                  <label className="field">
-                    <span className="field-label">
-                      Client Secret <span className="field-opt">(for album art only)</span>
-                    </span>
-                    <input
-                      className="modal-input"
-                      type="password"
-                      placeholder="from OAuth2 → Client Secret"
-                      value={settings.discordClientSecret}
-                      disabled={!settings.discordEnabled}
-                      onChange={(e) => patch({ discordClientSecret: e.target.value })}
-                    />
-                  </label>
-                )}
-
-                <label className="field">
-                  <span className="field-label">
-                    Fallback image asset key <span className="field-opt">(optional)</span>
-                  </span>
-                  <input
-                    className="modal-input"
-                    placeholder="lumen"
-                    value={settings.discordLargeImageKey}
-                    disabled={!settings.discordEnabled}
-                    onChange={(e) => patch({ discordLargeImageKey: e.target.value })}
-                  />
-                </label>
-
                 <ol className="settings-help">
                   <li>
                     In the{' '}
@@ -240,16 +201,6 @@ export function SettingsModal({
                     </a>
                     , create a <strong>New Application</strong> and copy its{' '}
                     <strong>Application ID</strong> above.
-                  </li>
-                  <li>
-                    For album art: under <strong>OAuth2</strong>, add the redirect URI{' '}
-                    <code>http://localhost</code>, then copy the <strong>Client Secret</strong>{' '}
-                    into the field above. Saving pops a one-time <strong>Authorize</strong>{' '}
-                    prompt in Discord — accept it.
-                  </li>
-                  <li>
-                    Optional: under <strong>Rich Presence → Art Assets</strong>, upload an image
-                    named <code>lumen</code> as the fallback when a cover isn’t found.
                   </li>
                   <li>Keep the desktop Discord app running on this machine.</li>
                 </ol>

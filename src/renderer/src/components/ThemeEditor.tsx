@@ -9,6 +9,13 @@ import {
   parseTheme,
   type ThemeToken
 } from '../theme/tokens'
+import { EyeDropper } from './icons'
+
+// Screen eyedropper — supported in desktop Chromium (Electron), absent on most
+// Android WebViews, so the button only shows when the API exists.
+const EyeDropperCtor = (
+  globalThis as unknown as { EyeDropper?: new () => { open(): Promise<{ sRGBHex: string }> } }
+).EyeDropper
 
 function downloadText(filename: string, text: string): void {
   const blob = new Blob([text], { type: 'text/plain' })
@@ -69,6 +76,16 @@ export function ThemeEditor({ onClose }: { onClose: () => void }): React.ReactEl
   }, [])
 
   const exported = useMemo(() => exportTheme(customTokens), [customTokens])
+
+  const pickFromScreen = async (key: ThemeToken['key']): Promise<void> => {
+    if (!EyeDropperCtor) return
+    try {
+      const { sRGBHex } = await new EyeDropperCtor().open()
+      setCustomToken(key, sRGBHex)
+    } catch {
+      // eyedropper dismissed — leave the colour unchanged
+    }
+  }
 
   const onCopy = async (): Promise<void> => {
     const ok = await copyText(exported)
@@ -148,6 +165,7 @@ export function ThemeEditor({ onClose }: { onClose: () => void }): React.ReactEl
                       <input
                         type="color"
                         className="te-swatch"
+                        title="Click to pick a colour"
                         value={cssColorToHex(customTokens[t.key] ?? '#000000')}
                         onChange={(e) => setCustomToken(t.key, e.target.value)}
                       />
@@ -158,6 +176,16 @@ export function ThemeEditor({ onClose }: { onClose: () => void }): React.ReactEl
                         value={customTokens[t.key] ?? ''}
                         onChange={(e) => setCustomToken(t.key, e.target.value)}
                       />
+                      {EyeDropperCtor && (
+                        <button
+                          type="button"
+                          className="te-eyedrop"
+                          title="Pick a colour from anywhere on screen"
+                          onClick={() => void pickFromScreen(t.key)}
+                        >
+                          <EyeDropper size={15} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ) : (
