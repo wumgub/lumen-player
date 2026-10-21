@@ -133,7 +133,7 @@ song to play.
    ```
 3. Double-click it (or run `./Lumen-*.AppImage`).
    - If it won't start, you may need FUSE: `sudo apt install libfuse2`
-     (Debian/Ubuntu) or `sudo pacman -S fuse2` (Arch/omarchy).
+     (Debian/Ubuntu) or `sudo pacman -S fuse2` (Arch).
 
 **Or the `.deb`** (Debian/Ubuntu/Mint): double-click it to install through your
 software centre, or `sudo apt install ./Lumen-*.deb`.
