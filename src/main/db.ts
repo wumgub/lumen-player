@@ -64,6 +64,17 @@ export function initDb(): void {
       key   TEXT PRIMARY KEY,
       value TEXT NOT NULL
     );
+
+    -- Per-album cover override. Without a row here an album shows the art of its
+    -- first track. source='track' points at another track's embedded art;
+    -- source='custom' stores an image the user supplied.
+    CREATE TABLE IF NOT EXISTS album_covers (
+      album    TEXT PRIMARY KEY,
+      source   TEXT NOT NULL,            -- 'track' | 'custom'
+      track_id INTEGER,                  -- when source='track'
+      mime     TEXT,                     -- when source='custom'
+      data     BLOB                      -- when source='custom'
+    );
   `)
 
   // Migration: `locked` is a bitmask of fields the user has renamed, so a
@@ -178,6 +189,63 @@ export function getArt(trackId: number): { mime: string; data: Buffer } | null {
     | { mime: string; data: Buffer }
     | undefined
   return row ?? null
+}
+
+// ---- album covers ----
+
+/** The track whose art represents an album by default: its first track (manual
+ * album order first, then disc/track number) that actually has embedded art. */
+function firstArtTrack(album: string): number | null {
+  const row = db
+    .prepare(
+      `SELECT id FROM tracks
+       WHERE album = ? AND hasArt = 1
+       ORDER BY albumPos IS NULL, albumPos, discNo, trackNo, id
+       LIMIT 1`
+    )
+    .get(album) as { id: number } | undefined
+  return row?.id ?? null
+}
+
+/** Resolve an album's cover: an explicit override if set, else its first track's
+ * embedded art. */
+export function getAlbumArt(album: string): { mime: string; data: Buffer } | null {
+  const ov = db
+    .prepare('SELECT source, track_id, mime, data FROM album_covers WHERE album = ?')
+    .get(album) as
+    | { source: string; track_id: number | null; mime: string | null; data: Buffer | null }
+    | undefined
+  if (ov) {
+    if (ov.source === 'custom' && ov.mime && ov.data) return { mime: ov.mime, data: ov.data }
+    if (ov.source === 'track' && ov.track_id != null) return getArt(ov.track_id)
+  }
+  const first = firstArtTrack(album)
+  return first != null ? getArt(first) : null
+}
+
+/** Whether the album has a user-set cover override (vs. the default first-track art). */
+export function albumHasCover(album: string): boolean {
+  return !!db.prepare('SELECT 1 FROM album_covers WHERE album = ?').get(album)
+}
+
+export function setAlbumCoverFromTrack(album: string, trackId: number): void {
+  db.prepare(
+    `INSERT INTO album_covers (album, source, track_id, mime, data)
+     VALUES (@album, 'track', @trackId, NULL, NULL)
+     ON CONFLICT(album) DO UPDATE SET source='track', track_id=@trackId, mime=NULL, data=NULL`
+  ).run({ album, trackId })
+}
+
+export function setAlbumCoverCustom(album: string, mime: string, data: Buffer): void {
+  db.prepare(
+    `INSERT INTO album_covers (album, source, track_id, mime, data)
+     VALUES (@album, 'custom', NULL, @mime, @data)
+     ON CONFLICT(album) DO UPDATE SET source='custom', track_id=NULL, mime=@mime, data=@data`
+  ).run({ album, mime, data })
+}
+
+export function clearAlbumCover(album: string): void {
+  db.prepare('DELETE FROM album_covers WHERE album = ?').run(album)
 }
 
 export function getTrack(id: number): Track | null {

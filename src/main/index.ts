@@ -6,11 +6,16 @@ import { fileURLToPath } from 'url'
 import {
   addFolder,
   addToPlaylist,
+  albumHasCover,
+  clearAlbumCover,
   createPlaylist,
   deletePlaylist,
+  getAlbumArt,
   getAppSettings,
   getArt,
   getTrack,
+  setAlbumCoverCustom,
+  setAlbumCoverFromTrack,
   initDb,
   listAlbums,
   listArtists,
@@ -104,9 +109,21 @@ function registerProtocols(): void {
     })
   })
 
-  // Serves embedded album art by track id.
+  // Serves cover art. `lumen-art://t/<id>` is a track's embedded art;
+  // `lumen-art://album/<name>` is an album's cover (override or first-track art).
   protocol.handle('lumen-art', async (request) => {
     const url = new URL(request.url)
+    if (url.hostname === 'album') {
+      const album = decodeURIComponent(url.pathname.replace(/^\//, ''))
+      const art = getAlbumArt(album)
+      if (!art) return new Response('No art', { status: 404 })
+      // Covers can change, and the URL is keyed only by album name, so don't let
+      // a stale image stick around (the renderer also cache-busts with ?v=).
+      return new Response(new Uint8Array(art.data), {
+        status: 200,
+        headers: { 'Content-Type': art.mime, 'Cache-Control': 'no-store' }
+      })
+    }
     const id = Number(url.pathname.replace(/^\//, '') || url.hostname)
     const art = getArt(id)
     if (!art) return new Response('No art', { status: 404 })
@@ -225,6 +242,33 @@ function registerIpc(): void {
   ipcMain.handle('album:reorder', (_e, album: string, orderedTrackIds: number[]) =>
     reorderAlbum(album, orderedTrackIds)
   )
+  ipcMain.handle('album:coverFromTrack', (_e, album: string, trackId: number) =>
+    setAlbumCoverFromTrack(album, trackId)
+  )
+  ipcMain.handle('album:clearCover', (_e, album: string) => clearAlbumCover(album))
+  ipcMain.handle('album:hasCover', (_e, album: string) => albumHasCover(album))
+  // Pick an image file and store it as the album's cover. Returns false if the
+  // user cancels the dialog.
+  ipcMain.handle('album:coverCustom', async (_e, album: string) => {
+    const res = await dialog.showOpenDialog({
+      title: 'Choose an album cover',
+      properties: ['openFile'],
+      filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'] }]
+    })
+    if (res.canceled || res.filePaths.length === 0) return false
+    const file = res.filePaths[0]
+    const IMG_MIME: Record<string, string> = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.webp': 'image/webp',
+      '.gif': 'image/gif',
+      '.bmp': 'image/bmp'
+    }
+    const data = await fs.readFile(file)
+    setAlbumCoverCustom(album, IMG_MIME[extname(file).toLowerCase()] ?? 'image/jpeg', data)
+    return true
+  })
 
   ipcMain.handle('playlist:list', () => listPlaylists())
   ipcMain.handle('playlist:create', (_e, name: string) => createPlaylist(name))
