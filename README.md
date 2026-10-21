@@ -67,13 +67,11 @@ nothing to configure.
 | Your computer | Download this file |
 |---|---|
 | **Windows** | `Lumen-x.y.z-Setup.exe` |
-| **Mac** — Apple silicon (any Mac from ~2020 on: M1/M2/M3/M4) | `Lumen-x.y.z-mac-arm64.dmg` |
-| **Mac** — older Intel | `Lumen-x.y.z-mac-x64.dmg` |
+| **Mac** (Apple silicon — M1/M2/M3/M4) | `Lumen-x.y.z-mac-arm64.dmg` |
 | **Linux** | `Lumen-x.y.z-linux-x86_64.AppImage` (or the `.deb`) |
 
-> _(Not sure which Mac you have? Click the Apple menu (top-left of the screen) →
-> **About This Mac**. If it says
-> "Apple M1/M2/M3/…" use the **arm64** file; if it says "Intel" use the **x64** one.)_
+> _(The Mac download is for Apple-silicon Macs — any Mac from ~2020 on. On an older
+> Intel Mac you'll need to [build it yourself](#build-it-yourself) instead.)_
 
 Then open Lumen, click the **＋** next to **Folders** in the left sidebar, choose the
 folder your music is in, and it scans and sorts everything for you. Double-click a
