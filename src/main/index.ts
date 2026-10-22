@@ -21,6 +21,7 @@ import {
   listArtists,
   listFolders,
   listPlaylists,
+  clearPlayHistory,
   playHistory,
   playlistTracks,
   queryTracks,
@@ -250,10 +251,12 @@ function registerIpc(): void {
   ipcMain.handle('album:clearCover', (_e, album: string) => clearAlbumCover(album))
   ipcMain.handle('album:hasCover', (_e, album: string) => albumHasCover(album))
 
-  ipcMain.handle('stats:recordPlay', (_e, trackId: number, seconds: number, counted: boolean) =>
-    recordPlay(trackId, seconds, counted)
-  )
+  ipcMain.handle('stats:recordPlay', (_e, trackId: number, seconds: number, counted: boolean) => {
+    // Honour the privacy toggle: drop the record when history is off.
+    if (getAppSettings().statsEnabled) recordPlay(trackId, seconds, counted)
+  })
   ipcMain.handle('stats:history', () => playHistory())
+  ipcMain.handle('stats:clear', () => clearPlayHistory())
   // Pick an image file and store it as the album's cover. Returns false if the
   // user cancels the dialog.
   ipcMain.handle('album:coverCustom', async (_e, album: string) => {

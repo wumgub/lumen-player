@@ -91,7 +91,9 @@ const api = {
   recordPlay: (trackId: number, seconds: number, counted: boolean): Promise<void> =>
     ipcRenderer.invoke('stats:recordPlay', trackId, seconds, counted),
   /** The full play log, aggregated by the stats view into the leaderboard. */
-  playHistory: (): Promise<PlayEvent[]> => ipcRenderer.invoke('stats:history')
+  playHistory: (): Promise<PlayEvent[]> => ipcRenderer.invoke('stats:history'),
+  /** Wipe all saved play history. */
+  clearPlayHistory: (): Promise<void> => ipcRenderer.invoke('stats:clear')
 }
 
 contextBridge.exposeInMainWorld('lumen', api)

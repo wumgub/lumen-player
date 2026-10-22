@@ -61,6 +61,8 @@ export interface PlaylistWithCount extends Playlist {
 }
 
 export interface AppSettings {
+  /** Record play history for the stats/leaderboard view. Off = nothing saved. */
+  statsEnabled: boolean
   discordEnabled: boolean
   discordClientId: string
   /** App Client Secret — needed only to register external cover art with Discord. */

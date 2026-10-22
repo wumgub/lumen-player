@@ -2587,3 +2587,7 @@ input[type='range']:hover::-webkit-slider-thumb {
   font-size: 11px;
   color: var(--fg-dim);
 }
+
+.stats-clear-row {
+  margin-top: 14px;
+}

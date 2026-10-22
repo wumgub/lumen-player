@@ -280,6 +280,11 @@ export function playHistory(): PlayEvent[] {
     .all() as PlayEvent[]
 }
 
+/** Wipe all saved play history (the "clear history" button). */
+export function clearPlayHistory(): void {
+  db.prepare('DELETE FROM plays').run()
+}
+
 export function getTrack(id: number): Track | null {
   return (db.prepare(`SELECT ${COLS} FROM tracks WHERE id = ?`).get(id) as Track) ?? null
 }
@@ -449,6 +454,7 @@ export function setSetting(key: string, value: string): void {
 }
 export function getAppSettings(): AppSettings {
   return {
+    statsEnabled: getSetting('statsEnabled', 'true') === 'true',
     discordEnabled: getSetting('discordEnabled', 'false') === 'true',
     discordClientId: getSetting('discordClientId', ''),
     discordClientSecret: getSetting('discordClientSecret', ''),
@@ -457,6 +463,7 @@ export function getAppSettings(): AppSettings {
   }
 }
 export function setAppSettings(p: Partial<AppSettings>): AppSettings {
+  if (p.statsEnabled !== undefined) setSetting('statsEnabled', String(p.statsEnabled))
   if (p.discordEnabled !== undefined) setSetting('discordEnabled', String(p.discordEnabled))
   if (p.discordClientId !== undefined) setSetting('discordClientId', p.discordClientId.trim())
   if (p.discordClientSecret !== undefined)
