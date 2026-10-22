@@ -96,11 +96,26 @@ export function exportTheme(tokens: TokenMap): string {
  * and returns null if nothing usable is found.
  */
 export function parseTheme(text: string): TokenMap | null {
+  // Tolerate copy-paste cruft: a markdown ``` / ```json fence, stray backticks,
+  // or whitespace wrapped around the actual JSON (a common way imports break).
+  const src = text
+    .trim()
+    .replace(/^`{3,}[a-zA-Z]*\s*/, '')
+    .replace(/`{3,}\s*$/, '')
+    .replace(/^`+|`+$/g, '')
+    .trim()
   let data: unknown
   try {
-    data = JSON.parse(text)
+    data = JSON.parse(src)
   } catch {
-    return null
+    // Last resort: lift the first {...} block out of whatever was pasted.
+    const m = src.match(/\{[\s\S]*\}/)
+    if (!m) return null
+    try {
+      data = JSON.parse(m[0])
+    } catch {
+      return null
+    }
   }
   if (!data || typeof data !== 'object') return null
   const obj = data as Record<string, unknown>

@@ -163,6 +163,14 @@ export const ImageIcon = (p: P): React.ReactElement => (
     <path d="m21 15-4.35-4.35a2 2 0 0 0-2.83 0L3 21" />
   </S>
 )
+export const Chart = (p: P): React.ReactElement => (
+  <S {...p}>
+    <line x1="3" y1="21" x2="21" y2="21" />
+    <rect x="5" y="11" width="3.5" height="8" rx="1" fill="currentColor" stroke="none" />
+    <rect x="10.25" y="6" width="3.5" height="13" rx="1" fill="currentColor" stroke="none" />
+    <rect x="15.5" y="14" width="3.5" height="5" rx="1" fill="currentColor" stroke="none" />
+  </S>
+)
 export const EyeDropper = (p: P): React.ReactElement => (
   <S {...p}>
     <path d="m2 22 1-1h3l9-9" />

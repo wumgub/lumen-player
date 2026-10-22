@@ -3,7 +3,7 @@ import type { PlaylistWithCount, ScanProgress } from '@shared/types'
 import type { View } from '../types'
 import { pluralize } from '../lib/format'
 import { randomPlaylistName } from '../lib/playlistNames'
-import { Disc, Folder, ListIcon, MusicNote, Pencil, Plus, Users } from './icons'
+import { Chart, Disc, Folder, ListIcon, MusicNote, Pencil, Plus, Users } from './icons'
 import { PromptDialog } from './PromptDialog'
 
 type PlaylistDialog = { mode: 'new' } | { mode: 'rename'; id: number; name: string } | null
@@ -129,6 +129,12 @@ export function Sidebar({
           onClick={() => setView({ kind: 'albums' })}
         >
           <Disc size={18} /> Albums
+        </button>
+        <button
+          className={`nav-item ${navActive('stats')}`}
+          onClick={() => setView({ kind: 'stats' })}
+        >
+          <Chart size={18} /> Stats
         </button>
       </div>
 

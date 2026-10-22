@@ -60,6 +60,26 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): Rea
 
   const current = index >= 0 && index < queue.length ? queue[index] : null
 
+  // ---- listening stats: accrue real play time for the current track and bank
+  // it as a play when it changes. `listened` only grows on forward playback (so
+  // seeks and pauses don't inflate it); `counted` flips once past the halfway /
+  // 4-minute mark, which is what the leaderboard tallies. ----
+  const playTrack = useRef<{
+    id: number
+    listened: number
+    lastPos: number
+    dur: number
+    counted: boolean
+  } | null>(null)
+
+  const flushPlay = (): void => {
+    const p = playTrack.current
+    playTrack.current = null
+    if (p && p.listened >= 5) {
+      void window.lumen.recordPlay?.(p.id, Math.round(p.listened), p.counted)
+    }
+  }
+
   const playAt = (q: Track[], i: number): void => {
     if (i < 0 || i >= q.length) return
     engine.load(window.lumen.mediaUrl(q[i].id))
@@ -165,6 +185,25 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): Rea
     const offTime = engine.onTime((cur, dur) => {
       setCurrentTime(cur)
       setDuration(dur)
+      // Accrue listening time for the stats view.
+      const p = playTrack.current
+      if (p) {
+        if (p.lastPos - cur > 1.5 && cur < 1.5) {
+          // Jumped back to the top (repeat-one, or replaying) — bank the finished
+          // listen and start counting the new pass.
+          flushPlay()
+          playTrack.current = { id: p.id, listened: 0, lastPos: cur, dur, counted: false }
+        } else {
+          const delta = cur - p.lastPos
+          if (delta > 0 && delta < 2) {
+            p.listened += delta
+            const d = dur || p.dur
+            if (!p.counted && d > 0 && p.listened >= Math.min(d * 0.5, 240)) p.counted = true
+          }
+          p.lastPos = cur
+          if (dur) p.dur = dur
+        }
+      }
       // Feed the OS "Now Playing" scrubber.
       if ('mediaSession' in navigator && dur > 0 && Number.isFinite(dur)) {
         try {
@@ -241,6 +280,16 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): Rea
     if ('mediaSession' in navigator)
       navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused'
   }, [isPlaying])
+
+  // Begin stats accrual for the new current track; the cleanup banks the
+  // outgoing one (on the next change, and on unmount).
+  useEffect(() => {
+    playTrack.current = current
+      ? { id: current.id, listened: 0, lastPos: 0, dur: 0, counted: false }
+      : null
+    return () => flushPlay()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current?.id])
 
   const value = useMemo<PlayerState>(
     () => ({
