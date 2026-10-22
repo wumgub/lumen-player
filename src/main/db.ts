@@ -4,6 +4,7 @@ import Database from 'better-sqlite3'
 import type {
   AppSettings,
   LibraryQuery,
+  PlayEvent,
   Playlist,
   PlaylistWithCount,
   Track
@@ -75,6 +76,18 @@ export function initDb(): void {
       mime     TEXT,                     -- when source='custom'
       data     BLOB                      -- when source='custom'
     );
+
+    -- One row per listening session, feeding the stats/leaderboard view.
+    -- 'counted' marks a session long enough to tally as a play.
+    CREATE TABLE IF NOT EXISTS plays (
+      id        INTEGER PRIMARY KEY AUTOINCREMENT,
+      track_id  INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
+      played_at INTEGER NOT NULL,        -- epoch ms
+      seconds   INTEGER NOT NULL,        -- whole seconds actually listened
+      counted   INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE INDEX IF NOT EXISTS idx_plays_track ON plays(track_id);
+    CREATE INDEX IF NOT EXISTS idx_plays_at ON plays(played_at);
   `)
 
   // Migration: `locked` is a bitmask of fields the user has renamed, so a
@@ -246,6 +259,25 @@ export function setAlbumCoverCustom(album: string, mime: string, data: Buffer): 
 
 export function clearAlbumCover(album: string): void {
   db.prepare('DELETE FROM album_covers WHERE album = ?').run(album)
+}
+
+// ---- listening stats ----
+export function recordPlay(trackId: number, seconds: number, counted: boolean): void {
+  db.prepare('INSERT INTO plays (track_id, played_at, seconds, counted) VALUES (?, ?, ?, ?)').run(
+    trackId,
+    Date.now(),
+    Math.max(0, Math.round(seconds)),
+    counted ? 1 : 0
+  )
+}
+
+/** The full play log (ordered oldest→newest). The stats view aggregates it. */
+export function playHistory(): PlayEvent[] {
+  return db
+    .prepare(
+      'SELECT track_id AS trackId, played_at AS playedAt, seconds, counted FROM plays ORDER BY played_at'
+    )
+    .all() as PlayEvent[]
 }
 
 export function getTrack(id: number): Track | null {

@@ -3,6 +3,7 @@ import type {
   AppInfo,
   AppSettings,
   LibraryQuery,
+  PlayEvent,
   Playlist,
   PlaylistWithCount,
   PresencePayload,
@@ -84,7 +85,13 @@ const api = {
   clearAlbumCover: (album: string): Promise<void> =>
     ipcRenderer.invoke('album:clearCover', album),
   albumHasCover: (album: string): Promise<boolean> =>
-    ipcRenderer.invoke('album:hasCover', album)
+    ipcRenderer.invoke('album:hasCover', album),
+
+  /** Record a finished listening session (fire-and-forget from the player). */
+  recordPlay: (trackId: number, seconds: number, counted: boolean): Promise<void> =>
+    ipcRenderer.invoke('stats:recordPlay', trackId, seconds, counted),
+  /** The full play log, aggregated by the stats view into the leaderboard. */
+  playHistory: (): Promise<PlayEvent[]> => ipcRenderer.invoke('stats:history')
 }
 
 contextBridge.exposeInMainWorld('lumen', api)

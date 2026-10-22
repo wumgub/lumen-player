@@ -21,8 +21,10 @@ import {
   listArtists,
   listFolders,
   listPlaylists,
+  playHistory,
   playlistTracks,
   queryTracks,
+  recordPlay,
   removeFolder,
   removeFromPlaylist,
   renameAlbum,
@@ -247,6 +249,11 @@ function registerIpc(): void {
   )
   ipcMain.handle('album:clearCover', (_e, album: string) => clearAlbumCover(album))
   ipcMain.handle('album:hasCover', (_e, album: string) => albumHasCover(album))
+
+  ipcMain.handle('stats:recordPlay', (_e, trackId: number, seconds: number, counted: boolean) =>
+    recordPlay(trackId, seconds, counted)
+  )
+  ipcMain.handle('stats:history', () => playHistory())
   // Pick an image file and store it as the album's cover. Returns false if the
   // user cancels the dialog.
   ipcMain.handle('album:coverCustom', async (_e, album: string) => {

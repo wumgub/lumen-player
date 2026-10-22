@@ -16,6 +16,14 @@ export interface Track {
   isVideo: number // 0 | 1 — has a video track (e.g. an .mp4 music video)
 }
 
+/** One listening session for a track, used by the stats/leaderboard view. */
+export interface PlayEvent {
+  trackId: number
+  playedAt: number // epoch ms
+  seconds: number // whole seconds actually listened in this session
+  counted: number // 1 if it crossed the "counts as a play" threshold, else 0
+}
+
 export interface ScanProgress {
   phase: 'discovering' | 'parsing' | 'done'
   processed: number

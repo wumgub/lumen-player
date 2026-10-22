@@ -3,6 +3,7 @@ import { PlayerProvider, usePlayer } from './context/PlayerContext'
 import { ThemeProvider, useTheme } from './context/ThemeContext'
 import { Sidebar } from './components/Sidebar'
 import { LibraryView } from './components/LibraryView'
+import { StatsView } from './components/StatsView'
 import { NowPlaying } from './components/NowPlaying'
 import { TransportBar } from './components/TransportBar'
 import { ThemeSelector } from './components/ThemeSelector'
@@ -136,13 +137,17 @@ function Shell(): React.ReactElement {
           libraryVersion={libraryVersion}
         />
         <main className="content">
-          <LibraryView
-            view={view}
-            setView={setView}
-            search={search}
-            libraryVersion={libraryVersion}
-            onLibraryChanged={() => setLibraryVersion((v) => v + 1)}
-          />
+          {view.kind === 'stats' ? (
+            <StatsView />
+          ) : (
+            <LibraryView
+              view={view}
+              setView={setView}
+              search={search}
+              libraryVersion={libraryVersion}
+              onLibraryChanged={() => setLibraryVersion((v) => v + 1)}
+            />
+          )}
         </main>
         <NowPlaying
           vizId={vizId}
