@@ -42,6 +42,8 @@ export function SettingsModal({
   const [editingTheme, setEditingTheme] = useState(false)
   const [appInfo, setAppInfo] = useState<AppInfo | null>(null)
   const [update, setUpdate] = useState<UpdateState>({ status: 'idle' })
+  const [confirmClear, setConfirmClear] = useState(false)
+  const [cleared, setCleared] = useState(false)
   const { theme, setTheme, customTokens } = useTheme()
   const activeTheme = THEMES.find((t) => t.id === theme)
 
@@ -67,6 +69,25 @@ export function SettingsModal({
 
   const patch = (p: Partial<AppSettings>): void =>
     setSettings((s) => (s ? { ...s, ...p } : s))
+
+  // The stats toggle persists immediately — a privacy choice shouldn't be lost
+  // if the user dismisses the dialog without hitting Done.
+  const toggleStats = async (on: boolean): Promise<void> => {
+    patch({ statsEnabled: on })
+    await window.lumen.setSettings({ statsEnabled: on })
+  }
+
+  const clearHistory = async (): Promise<void> => {
+    if (!confirmClear) {
+      setConfirmClear(true)
+      setTimeout(() => setConfirmClear(false), 3000)
+      return
+    }
+    setConfirmClear(false)
+    await window.lumen.clearPlayHistory()
+    setCleared(true)
+    setTimeout(() => setCleared(false), 2500)
+  }
 
   const save = async (): Promise<void> => {
     if (!settings) return
@@ -161,6 +182,35 @@ export function SettingsModal({
                     </button>
                   ))}
                 </div>
+              </div>
+            </section>
+
+            <section className="settings-section">
+              <div className="settings-row">
+                <div>
+                  <div className="settings-heading">Listening stats</div>
+                  <div className="settings-desc">
+                    Save what you play to build the Stats leaderboard. Turn this off and nothing
+                    is recorded.
+                  </div>
+                </div>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    checked={settings.statsEnabled}
+                    onChange={(e) => void toggleStats(e.target.checked)}
+                  />
+                  <span className="switch-track" />
+                </label>
+              </div>
+              <div className="settings-row inline stats-clear-row">
+                <div>
+                  <div className="settings-subheading">Clear history</div>
+                  <div className="settings-desc">Delete everything saved so far. Can’t be undone.</div>
+                </div>
+                <button className="modal-btn ghost" onClick={() => void clearHistory()}>
+                  {cleared ? 'Cleared ✓' : confirmClear ? 'Tap again to confirm' : 'Clear history'}
+                </button>
               </div>
             </section>
 
