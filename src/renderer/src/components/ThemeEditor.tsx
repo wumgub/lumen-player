@@ -53,7 +53,7 @@ async function copyText(text: string): Promise<boolean> {
 
 const BASES: { id: string; label: string }[] = [
   { id: 'neon', label: 'Neon' },
-  { id: 'minimal', label: 'Minimal' },
+  { id: 'minimal', label: 'Flashbang' },
   { id: 'minimal-dark', label: 'Minimal Dark' },
   { id: 'retro', label: 'Retro' },
   { id: 'glass', label: 'Glass' }
