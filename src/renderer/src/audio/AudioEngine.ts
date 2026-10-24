@@ -93,10 +93,12 @@ export class AudioEngine {
   }
 
   setVolume(v: number): void {
-    const vol = Math.max(0, Math.min(1, v))
+    const vol = Math.max(0, Math.min(1.5, v))
     this.pendingVolume = vol
+    // GainNode can amplify past 1.0; the bare <audio> element can't (it throws
+    // on volume > 1), so clamp the fallback.
     if (this.gain) this.gain.gain.value = vol
-    else this.el.volume = vol
+    else this.el.volume = Math.min(1, vol)
   }
 
   get paused(): boolean {
