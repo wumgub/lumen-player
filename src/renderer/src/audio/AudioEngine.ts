@@ -37,11 +37,54 @@ export class AudioEngine {
     this.el.preload = 'auto'
     this.el.playsInline = true
 
-    this.el.addEventListener('timeupdate', () => this.emitTime())
+    this.el.addEventListener('timeupdate', () => {
+      this.emitTime()
+      this.maybeArmEndGuard()
+    })
     this.el.addEventListener('durationchange', () => this.emitTime())
     this.el.addEventListener('play', () => this.emitState())
     this.el.addEventListener('pause', () => this.emitState())
-    this.el.addEventListener('ended', () => this.endedListeners.forEach((l) => l()))
+    this.el.addEventListener('ended', () => this.emitEnded())
+    // A stall at the very end of a track looks like these before 'ended' would
+    // have fired — arm the watchdog so a wedged element still advances.
+    this.el.addEventListener('waiting', () => this.maybeArmEndGuard())
+    this.el.addEventListener('stalled', () => this.maybeArmEndGuard())
+  }
+
+  // ---- end-of-track watchdog ----
+  // Loop/auto-advance hangs entirely off the 'ended' event. That event is
+  // occasionally dropped (a mis-sized range request, a buffering hiccup near
+  // EOF), which leaves the track parked at its final frame — paused forever,
+  // loop never kicking in. If we're sitting within a hair of the end and make
+  // no further progress, treat it as ended anyway.
+  private endGuard: ReturnType<typeof setTimeout> | null = null
+  private endedEmitted = false
+
+  private emitEnded(): void {
+    if (this.endedEmitted) return
+    this.endedEmitted = true
+    this.clearEndGuard()
+    this.endedListeners.forEach((l) => l())
+  }
+
+  private clearEndGuard(): void {
+    if (this.endGuard) {
+      clearTimeout(this.endGuard)
+      this.endGuard = null
+    }
+  }
+
+  private maybeArmEndGuard(): void {
+    const d = this.duration
+    if (!d || this.endedEmitted || this.endGuard) return
+    if (this.el.currentTime < d - 0.5) return
+    this.endGuard = setTimeout(() => {
+      this.endGuard = null
+      const dur = this.duration
+      if (this.endedEmitted || !dur) return
+      // Still parked at the end a moment later — the real 'ended' isn't coming.
+      if (this.el.currentTime >= dur - 0.5) this.emitEnded()
+    }, 1500)
   }
 
   /** Lazily build the audio graph; must run inside a user gesture. */
@@ -70,11 +113,16 @@ export class AudioEngine {
   private pendingVolume = 1
 
   load(url: string): void {
+    this.clearEndGuard()
+    this.endedEmitted = false
     this.el.src = url
   }
 
   async play(): Promise<void> {
     this.ensureGraph()
+    // Reset the end latch so a looped/replayed pass can end again (repeat-one
+    // replays via seek+play without a fresh load()).
+    this.endedEmitted = false
     if (this.ctx?.state === 'suspended') await this.ctx.resume()
     await this.el.play()
   }
@@ -89,7 +137,10 @@ export class AudioEngine {
   }
 
   seek(seconds: number): void {
-    if (Number.isFinite(seconds)) this.el.currentTime = seconds
+    if (Number.isFinite(seconds)) {
+      this.clearEndGuard()
+      this.el.currentTime = seconds
+    }
   }
 
   setVolume(v: number): void {

@@ -91,8 +91,21 @@ function registerProtocols(): void {
 
     if (range) {
       const m = /bytes=(\d*)-(\d*)/.exec(range)
-      const start = m && m[1] ? parseInt(m[1], 10) : 0
-      const end = m && m[2] ? Math.min(parseInt(m[2], 10), size - 1) : size - 1
+      let start = m && m[1] ? parseInt(m[1], 10) : 0
+      let end = m && m[2] ? parseInt(m[2], 10) : size - 1
+      if (!Number.isFinite(start) || start < 0) start = 0
+      if (!Number.isFinite(end) || end >= size) end = size - 1
+      // Media elements probe past EOF to confirm the end of a stream. An empty
+      // or out-of-bounds range (start past the last byte, or start > end) would
+      // otherwise build an invalid read stream that errors mid-playback and
+      // leaves the track stalled at its final frame — so 'ended' never fires and
+      // loop/auto-advance stops. Answer those with a clean 416 instead.
+      if (start >= size || start > end) {
+        return new Response(null, {
+          status: 416,
+          headers: { 'Content-Range': `bytes */${size}`, 'Accept-Ranges': 'bytes' }
+        })
+      }
       const stream = createReadStream(track.path, { start, end })
       return new Response(Readable.toWeb(stream) as ReadableStream, {
         status: 206,
