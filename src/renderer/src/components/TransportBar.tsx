@@ -108,10 +108,10 @@ export function TransportBar(): React.ReactElement {
           className="volume"
           type="range"
           min={0}
-          max={1}
+          max={1.5}
           step="0.01"
           value={p.volume}
-          style={{ ['--pct' as string]: `${p.volume * 100}%` }}
+          style={{ ['--pct' as string]: `${(p.volume / 1.5) * 100}%` }}
           onChange={(e) => p.setVolume(Number(e.target.value))}
         />
       </div>
