@@ -20,28 +20,33 @@ const mk = (id, title, artist, album, year, trackNo, duration, note = '', isVide
 })
 
 const songs = [
-  mk(1, 'Судно', 'Molchat Doma', 'Этажи', 2018, 1, 171, 'sudno — molchat doma'),
-  mk(2, 'Танцевать', 'Molchat Doma', 'Этажи', 2018, 2, 268, '', 1),
-  mk(3, 'Клетка', 'Molchat Doma', 'Этажи', 2018, 3, 214),
-  mk(4, 'Люди надоели', 'Molchat Doma', 'Этажи', 2018, 4, 199),
-  mk(5, 'Волны', 'Molchat Doma', 'Монумент', 2020, 1, 236),
-  mk(6, 'Дискотека', 'Molchat Doma', 'Монумент', 2020, 2, 227),
-  mk(7, 'Звезды', 'Molchat Doma', 'Монумент', 2020, 3, 258),
-  mk(8, 'Age of Consent', 'New Order', 'Power, Corruption & Lies', 1983, 1, 316),
-  mk(9, 'The Village', 'New Order', 'Power, Corruption & Lies', 1983, 2, 271),
-  mk(10, 'Your Silent Face', 'New Order', 'Power, Corruption & Lies', 1983, 3, 359),
-  mk(11, 'Enjoy the Silence', 'Depeche Mode', 'Violator', 1990, 1, 372),
-  mk(12, 'Personal Jesus', 'Depeche Mode', 'Violator', 1990, 2, 296),
-  mk(13, 'Policy of Truth', 'Depeche Mode', 'Violator', 1990, 3, 298),
-  mk(14, 'Shadowplay', 'Joy Division', 'Unknown Pleasures', 1979, 1, 213),
-  mk(15, 'Disorder', 'Joy Division', 'Unknown Pleasures', 1979, 2, 209),
-  mk(16, 'New Dawn Fades', 'Joy Division', 'Unknown Pleasures', 1979, 3, 285)
+  mk(1, 'Группа крови', 'Кино', 'Группа крови', 1988, 1, 285, 'gruppa krovi — blood type'),
+  mk(2, 'Закрой за мной дверь, я ухожу', 'Кино', 'Группа крови', 1988, 2, 238),
+  mk(3, 'Война', 'Кино', 'Группа крови', 1988, 3, 236),
+  mk(4, 'Спокойная ночь', 'Кино', 'Группа крови', 1988, 5, 376),
+  mk(5, 'Звезда по имени Солнце', 'Кино', 'Звезда по имени Солнце', 1989, 2, 237, 'a star called sun'),
+  mk(6, 'Пачка сигарет', 'Кино', 'Звезда по имени Солнце', 1989, 6, 258, 'pack of cigarettes'),
+  mk(7, 'Печаль', 'Кино', 'Звезда по имени Солнце', 1989, 8, 309),
+  mk(8, 'Судно', 'Molchat Doma', 'Этажи', 2018, 1, 171, 'sudno — bedpan'),
+  mk(9, 'Танцевать', 'Molchat Doma', 'Этажи', 2018, 2, 268, '', 1),
+  mk(10, 'Клетка', 'Molchat Doma', 'Этажи', 2018, 3, 214),
+  mk(11, 'Люди надоели', 'Molchat Doma', 'Этажи', 2018, 4, 199, 'lyudi nadoeli'),
+  mk(12, 'Волны', 'Molchat Doma', 'Монумент', 2020, 1, 236),
+  mk(13, 'Дискотека', 'Molchat Doma', 'Монумент', 2020, 2, 227, 'diskoteka'),
+  mk(14, 'Звёзды', 'Molchat Doma', 'Монумент', 2020, 3, 258)
 ]
 
 const groupBy = (arr, key) => {
   const m = new Map()
   for (const s of arr) m.set(s[key], (m.get(s[key]) || 0) + 1)
   return m
+}
+
+// Give each album a distinct demo cover id so the gradient covers differ.
+const albumId = (name) => {
+  let h = 0
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0
+  return (h % 997) + 1
 }
 
 const api = {
@@ -123,7 +128,15 @@ const api = {
   }),
   setPresence: async () => {},
   mediaUrl: (id) => `lumen-media://t/${id}`,
-  artUrl: (id) => `lumen-art://t/${id}`
+  artUrl: (id) => `lumen-art://t/${id}`,
+  albumArtUrl: (album) => `lumen-art://t/${albumId(album)}`,
+  setAlbumCoverFromTrack: async () => {},
+  setAlbumCoverCustom: async () => false,
+  clearAlbumCover: async () => {},
+  albumHasCover: async () => true,
+  recordPlay: async () => {},
+  playHistory: async () => [],
+  clearPlayHistory: async () => {}
 }
 
 contextBridge.exposeInMainWorld('lumen', api)
