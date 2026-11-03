@@ -1099,6 +1099,32 @@ input {
   display: block;
   background: #000;
 }
+.np-video-wrap {
+  position: relative;
+  width: 100%;
+}
+.np-video-expand {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.np-video-wrap:hover .np-video-expand,
+.np-video-expand:focus-visible {
+  opacity: 1;
+}
+.np-video-expand:hover {
+  background: rgba(0, 0, 0, 0.65);
+}
 .np-media-toggle {
   display: inline-flex;
   gap: 2px;
@@ -2590,4 +2616,43 @@ input[type='range']:hover::-webkit-slider-thumb {
 
 .stats-clear-row {
   margin-top: 14px;
+}
+
+/* ---------- Music video filling the window ---------- */
+.video-full {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #000;
+  -webkit-app-region: no-drag;
+}
+.video-full-stage {
+  position: absolute;
+  inset: 0;
+}
+.video-full-surface.video-surface {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.video-full-exit,
+.video-full-overlay {
+  transition: opacity 0.3s ease;
+}
+.video-full.idle {
+  cursor: none;
+}
+.video-full.idle .video-full-exit,
+.video-full.idle .video-full-overlay {
+  opacity: 0;
+  pointer-events: none;
+}
+.video-full-seek {
+  width: min(640px, 100%);
+}
+.video-full-seek .time {
+  color: rgba(255, 255, 255, 0.8);
 }

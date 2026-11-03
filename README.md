@@ -19,7 +19,8 @@ and swappable themes.
   including per-track **notes**, so a song that has a weird name, or a name
   in another language is easy to find directly from search! (right-click → *Add note…*).
 - **Music video** — `.mp4` tracks play like any song, with an **Art / Video**
-  toggle in Now Playing to show the album art or the video.
+  toggle in Now Playing to show the album art or the video. Double-click the
+  video (or hit its expand icon, or `f`) to have it fill the whole window.
 - **Queue** — *Play next* / *Add to queue* on any track (or a multi-select), with a
   slide-over queue you can reorder-by-jumping and prune.
 - **3 visualizers** — Spectrum Bars, Waveform, and Radial, driven by a Web Audio
@@ -30,7 +31,8 @@ and swappable themes.
 - **Hardware media keys** — ⏯ / ⏭ / ⏮ on your keyboard, and rich OS “Now Playing”
   metadata (title, artist, art, scrubber).
 - Shuffle / repeat-all / repeat-one, seeking, volume, and keyboard shortcuts
-  (`Space` play/pause, `⌘←/⌘→` prev/next, `f` immersive, `Esc` exit).
+  (`Space` play/pause, `⌘←/⌘→` prev/next, `f` immersive — or fill the window
+  with the music video when one's showing — `Esc` exit).
 - **Discord Rich Presence** — optionally show the current track (with a live
   progress bar) on your Discord profile.
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { usePlayer } from '../context/PlayerContext'
 import { VISUALIZER_LIST, type VisualizerId } from '../visualizers'
 import { VisualizerHost } from './VisualizerHost'
@@ -13,7 +13,11 @@ export function NowPlaying({
   vizOn,
   setVizOn,
   vizFps,
-  onImmersive
+  onImmersive,
+  videoMode,
+  chooseVideoMode,
+  videoFull,
+  onVideoFull
 }: {
   vizId: VisualizerId
   setVizId: (v: VisualizerId) => void
@@ -21,15 +25,13 @@ export function NowPlaying({
   setVizOn: (on: boolean) => void
   vizFps: number
   onImmersive: () => void
+  videoMode: boolean
+  chooseVideoMode: (on: boolean) => void
+  /** True while the video is shown filling the window (it can only live in one place). */
+  videoFull: boolean
+  onVideoFull: () => void
 }): React.ReactElement {
   const { current } = usePlayer()
-  const [videoMode, setVideoMode] = useState<boolean>(
-    () => localStorage.getItem('lumen.video-mode') !== '0'
-  )
-  const chooseVideoMode = (on: boolean): void => {
-    setVideoMode(on)
-    localStorage.setItem('lumen.video-mode', on ? '1' : '0')
-  }
   const isVideo = !!current?.isVideo
 
   return (
@@ -62,8 +64,17 @@ export function NowPlaying({
       <div className="np-detail">
         {current ? (
           <>
-            {isVideo && videoMode ? (
-              <VideoSurface className="np-media" />
+            {isVideo && videoMode && !videoFull ? (
+              <div className="np-video-wrap" onDoubleClick={onVideoFull}>
+                <VideoSurface className="np-media" />
+                <button
+                  className="np-video-expand"
+                  onClick={onVideoFull}
+                  title="Fill window (F)"
+                >
+                  <Expand size={16} />
+                </button>
+              </div>
             ) : (
               <Artwork
                 trackId={current.id}
