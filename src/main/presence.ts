@@ -6,6 +6,12 @@ const ACTIVITY_LISTENING = 2 as SetActivity['type']
 const REDIRECT_URI = 'http://localhost'
 const API = 'https://discord.com/api/v10'
 
+// Reconnect backoff when the Discord client goes away (quit, restart, update)
+// or isn't running yet at launch. Grows 5s → 60s so we recover within seconds
+// of Discord coming back without busy-looping.
+const RECONNECT_MIN_MS = 5_000
+const RECONNECT_MAX_MS = 60_000
+
 function clamp(s: string, max = 128): string {
   const t = s.trim()
   if (t.length === 0) return ''
@@ -37,6 +43,9 @@ class PresenceManager {
   private coverKey = ''
   private accessToken: string | null = null
   private assetCache = new Map<string, string | null>()
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null
+  private reconnectDelay = RECONNECT_MIN_MS
+  private intentionalClose = false
 
   async configure(
     enabled: boolean,
@@ -133,6 +142,12 @@ class PresenceManager {
       })
       client.on('ready', () => {
         this.ready = true
+        // Healthy again — reset the backoff and drop any queued retry.
+        this.reconnectDelay = RECONNECT_MIN_MS
+        if (this.reconnectTimer) {
+          clearTimeout(this.reconnectTimer)
+          this.reconnectTimer = null
+        }
         this.flush()
       })
       client.on('disconnected', () => {
@@ -140,6 +155,10 @@ class PresenceManager {
         this.client = null
         this.authed = false
         this.accessToken = null
+        // Discord went away (quit / restart / update). Unless we closed the
+        // connection on purpose, keep trying so presence comes back on its own
+        // instead of staying dead until the next track change.
+        if (!this.intentionalClose) this.scheduleReconnect()
       })
       await client.login()
       this.client = client
@@ -150,9 +169,33 @@ class PresenceManager {
       this.client = null
       this.ready = false
       console.error('[presence] connect failed:', (e as Error)?.message || e)
+      // Most often Discord simply isn't running yet — retry on a backoff.
+      this.scheduleReconnect()
     } finally {
       this.connecting = false
     }
+  }
+
+  /** Arm one reconnect attempt and grow the backoff for the next one. Idempotent
+   *  (a no-op while an attempt is already pending, a connection is live, or
+   *  presence is off), so both the 'disconnected' event and a failed connect can
+   *  call it freely. A successful connect resets the delay in the 'ready' handler.
+   *  The attempt itself fails through ensureConnected's catch, which calls back
+   *  here — so the loop keeps itself going until Discord answers. */
+  private scheduleReconnect(): void {
+    if (this.reconnectTimer || this.client || !this.enabled || !this.clientId) return
+    const delay = this.reconnectDelay
+    this.reconnectDelay = Math.min(this.reconnectDelay * 2, RECONNECT_MAX_MS)
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null
+      if (this.client || this.connecting || !this.enabled || !this.clientId) return
+      void this.ensureConnected().then(() => {
+        if (this.client) {
+          void this.resolveCover().then(() => this.flush())
+        }
+      })
+    }, delay)
+    this.reconnectTimer.unref?.()
   }
 
   /** Obtain an OAuth token (via the RPC AUTHORIZE command + code exchange) so we
@@ -235,15 +278,25 @@ class PresenceManager {
   }
 
   private async teardown(): Promise<void> {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer)
+      this.reconnectTimer = null
+    }
+    this.reconnectDelay = RECONNECT_MIN_MS
     this.ready = false
     this.authed = false
     const c = this.client
     this.client = null
     if (c) {
+      // Mark this close as deliberate so the 'disconnected' handler doesn't
+      // immediately queue a reconnect for a connection we're taking down.
+      this.intentionalClose = true
       try {
         await c.destroy()
       } catch {
         /* ignore */
+      } finally {
+        this.intentionalClose = false
       }
     }
   }
