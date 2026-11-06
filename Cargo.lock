@@ -2202,6 +2202,8 @@ dependencies = [
  "lumen-discord",
  "lumen-playback",
  "memmap2",
+ "objc2 0.6.5",
+ "objc2-app-kit 0.3.2",
  "parking_lot 0.13.0",
  "raw-window-handle",
  "resvg",
