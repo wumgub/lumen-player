@@ -135,6 +135,7 @@ const api = {
   clearAlbumCover: async () => {},
   albumHasCover: async () => true,
   recordPlay: async () => {},
+  recordPlaySync: () => {},
   playHistory: async () => [],
   clearPlayHistory: async () => {}
 }

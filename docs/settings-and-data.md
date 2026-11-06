@@ -17,15 +17,10 @@ has already been applied.
 
 ### Check for updates
 
-This compares the commit your copy was built from with the latest commit on GitHub. Lumen
-doesn't update itself. If it says an update is available, get the newest installer from the
-[releases page](https://github.com/wumgub/lumen-player/releases/latest) (or pull and rebuild if
-you run from source).
-
-The check compares against the latest *commit*, not the latest *release*, so it can say
-"update available" even when you're on the newest release, because something like a docs
-change has landed since. If the releases page has nothing newer than your version number,
-you're up to date.
+This compares your version number with the newest release on GitHub. Lumen doesn't update
+itself. If there's a newer version, the link takes you to its release page to download the
+installer (or pull and rebuild if you run from source). The build line under About still shows
+the exact commit your copy was built from, which is useful in bug reports.
 
 ## Where Lumen keeps things
 

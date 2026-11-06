@@ -150,6 +150,17 @@ function registerProtocols(): void {
   })
 }
 
+/** Compare dotted numeric versions ("0.2.10" vs "0.2.9"): <0, 0 or >0. */
+function compareVersions(a: string, b: string): number {
+  const pa = a.split(/[.-]/).map((n) => parseInt(n, 10) || 0)
+  const pb = b.split(/[.-]/).map((n) => parseInt(n, 10) || 0)
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] ?? 0) - (pb[i] ?? 0)
+    if (d) return d
+  }
+  return 0
+}
+
 function createWindow(): void {
   const win = new BrowserWindow({
     width: 1280,
@@ -215,29 +226,32 @@ function registerIpc(): void {
     commit: __APP_COMMIT__,
     buildDate: __APP_BUILD_DATE__
   }))
+  // Compares this build's version against the latest published GitHub release
+  // (not the head of main, which moves on docs-only commits too).
   ipcMain.handle('app:checkForUpdate', async () => {
-    const url = `https://github.com/${REPO}`
+    const url = `https://github.com/${REPO}/releases/latest`
     try {
-      const res = await fetch(`https://api.github.com/repos/${REPO}/commits/main`, {
+      const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, {
         headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'lumen-player' }
       })
       if (!res.ok) throw new Error(`GitHub API ${res.status}`)
       const data = (await res.json()) as {
-        sha?: string
-        commit?: { message?: string; committer?: { date?: string }; author?: { date?: string } }
+        tag_name?: string
+        name?: string
+        published_at?: string
+        html_url?: string
       }
-      const latest = (data.sha ?? '').slice(0, 7)
-      const message = (data.commit?.message ?? '').split('\n')[0]
-      const date = data.commit?.committer?.date ?? data.commit?.author?.date ?? null
-      const current = __APP_COMMIT__
+      const latest = (data.tag_name ?? '').replace(/^v/, '')
+      if (!latest) throw new Error('no release found')
+      const current = app.getVersion()
       return {
         ok: true,
         current,
         latest,
-        date,
-        message,
-        upToDate: !!current && current !== 'unknown' && current === latest,
-        url: `${url}/commits/main`
+        date: data.published_at ?? null,
+        message: data.name && data.name !== data.tag_name ? data.name : '',
+        upToDate: compareVersions(current, latest) >= 0,
+        url: data.html_url || url
       }
     } catch (e) {
       return { ok: false, error: (e as Error)?.message || 'network error', url }
@@ -267,6 +281,15 @@ function registerIpc(): void {
   ipcMain.handle('stats:recordPlay', (_e, trackId: number, seconds: number, counted: boolean) => {
     // Honour the privacy toggle: drop the record when history is off.
     if (getAppSettings().statsEnabled) recordPlay(trackId, seconds, counted)
+  })
+  // Synchronous twin for the window closing, when an async invoke could be
+  // dropped along with the renderer before it's handled.
+  ipcMain.on('stats:recordPlaySync', (e, trackId: number, seconds: number, counted: boolean) => {
+    try {
+      if (getAppSettings().statsEnabled) recordPlay(trackId, seconds, counted)
+    } finally {
+      e.returnValue = true
+    }
   })
   ipcMain.handle('stats:history', () => playHistory())
   ipcMain.handle('stats:clear', () => clearPlayHistory())

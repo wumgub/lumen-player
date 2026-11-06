@@ -80,10 +80,9 @@ Click the **magnifying glass** in the title bar and type. Search looks through e
 - Press **Esc** in the search box to clear it.
 - The box stays open while there's text in it, and shrinks back to the icon when it's empty.
 
-> [!NOTE]
-> Matching ignores upper/lower case **only for plain English letters (A–Z)**. For other
-> alphabets case matters, so `кино` won't find `Кино`. Type it with the right
-> capitals, or add a [note](#notes) with a romanised version you can type easily.
+Matching ignores upper/lower case in any alphabet, and ignores accents and other marks, so
+`кино` finds `Кино`, `звезды` finds `Звёзды`, and `cafe` finds `Café`. For songs in a script
+you can't type at all, add a [note](#notes) with a romanised version.
 
 ## Notes
 

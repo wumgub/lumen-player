@@ -72,13 +72,24 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): Rea
     counted: boolean
   } | null>(null)
 
-  const flushPlay = (): void => {
+  const flushPlay = (sync = false): void => {
     const p = playTrack.current
     playTrack.current = null
     if (p && p.listened >= 5) {
-      void window.lumen.recordPlay?.(p.id, Math.round(p.listened), p.counted)
+      if (sync && window.lumen.recordPlaySync)
+        window.lumen.recordPlaySync(p.id, Math.round(p.listened), p.counted)
+      else void window.lumen.recordPlay?.(p.id, Math.round(p.listened), p.counted)
     }
   }
+
+  // Bank the song that's playing when the window closes or the app quits —
+  // otherwise it's only saved on the next track change, which never comes.
+  useEffect(() => {
+    const onUnload = (): void => flushPlay(true)
+    window.addEventListener('beforeunload', onUnload)
+    return () => window.removeEventListener('beforeunload', onUnload)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const playAt = (q: Track[], i: number): void => {
     if (i < 0 || i >= q.length) return

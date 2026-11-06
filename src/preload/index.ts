@@ -90,6 +90,10 @@ const api = {
   /** Record a finished listening session (fire-and-forget from the player). */
   recordPlay: (trackId: number, seconds: number, counted: boolean): Promise<void> =>
     ipcRenderer.invoke('stats:recordPlay', trackId, seconds, counted),
+  /** Same, but blocks until saved. Only for the window closing. */
+  recordPlaySync: (trackId: number, seconds: number, counted: boolean): void => {
+    ipcRenderer.sendSync('stats:recordPlaySync', trackId, seconds, counted)
+  },
   /** The full play log, aggregated by the stats view into the leaderboard. */
   playHistory: (): Promise<PlayEvent[]> => ipcRenderer.invoke('stats:history'),
   /** Wipe all saved play history. */

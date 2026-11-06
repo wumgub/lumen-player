@@ -17,6 +17,11 @@ export function initDb(): void {
   db = new Database(file)
   db.pragma('journal_mode = WAL')
   db.pragma('foreign_keys = ON')
+  // SQLite's LIKE/lower() only fold ASCII, so `кино` wouldn't find `Кино`.
+  // Search compares through this instead.
+  db.function('fold', { deterministic: true }, (v: unknown) =>
+    typeof v === 'string' ? foldText(v) : ''
+  )
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS tracks (
@@ -123,6 +128,12 @@ export function initDb(): void {
        ) WHERE position IS NULL`
     )
   }
+}
+
+/** Case- and accent-insensitive form of a string for search: lower-cased in any
+ * script, with combining marks stripped (so ё matches е and é matches e). */
+export function foldText(s: string): string {
+  return s.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase()
 }
 
 // Lock bits for user-edited fields.
@@ -316,11 +327,21 @@ export function renameArtist(oldName: string, newName: string): void {
 }
 
 export function renameAlbum(oldName: string, newName: string): void {
-  db.prepare('UPDATE tracks SET album = @new, locked = locked | @bit WHERE album = @old').run({
-    old: oldName,
-    new: newName,
-    bit: L_ALBUM
+  const txn = db.transaction(() => {
+    db.prepare('UPDATE tracks SET album = @new, locked = locked | @bit WHERE album = @old').run({
+      old: oldName,
+      new: newName,
+      bit: L_ALBUM
+    })
+    // Covers are keyed by album name, so carry a custom cover across the rename.
+    // Merging into an album that already has its own cover keeps that one.
+    if (albumHasCover(newName)) {
+      db.prepare('DELETE FROM album_covers WHERE album = ?').run(oldName)
+    } else {
+      db.prepare('UPDATE album_covers SET album = ? WHERE album = ?').run(newName, oldName)
+    }
   })
+  txn()
 }
 
 /** Assign tracks to an album by name (creating the group if it's new). */
@@ -347,8 +368,11 @@ export function queryTracks(q: LibraryQuery): Track[] {
   const where: string[] = []
   const params: Record<string, unknown> = {}
   if (q.search) {
-    where.push('(title LIKE @s OR artist LIKE @s OR album LIKE @s OR note LIKE @s)')
-    params.s = `%${q.search}%`
+    // instr() rather than LIKE, so a typed % or _ is matched literally.
+    where.push(
+      '(instr(fold(title), @s) OR instr(fold(artist), @s) OR instr(fold(album), @s) OR instr(fold(note), @s))'
+    )
+    params.s = foldText(q.search)
   }
   if (q.artist) {
     // Match the effective artist (albumArtist when present) used by the Artists view.
