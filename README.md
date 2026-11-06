@@ -10,6 +10,8 @@ and swappable themes.
   <img src="docs/screenshots/album.png" width="49%" alt="Album view in the Minimal Dark theme with a waveform visualizer" />
 </p>
 
+📖 **[Full documentation](docs/README.md)**: every feature, setting and fix, explained.
+
 ## Features
 
 - **Full library** — point it at folders, it recursively scans and indexes your media
