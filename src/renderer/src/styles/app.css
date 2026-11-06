@@ -381,6 +381,8 @@ input {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px 20px;
   margin-bottom: 20px;
 }
 .view-header h1 {
@@ -394,6 +396,7 @@ input {
   gap: 10px;
 }
 .title-edit {
+  flex-shrink: 0;
   display: grid;
   place-items: center;
   width: 30px;
@@ -419,6 +422,9 @@ input {
   display: flex;
   align-items: center;
   gap: 12px;
+  /* Hold the buttons at full size; a long title wraps instead of squashing them. */
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* Sort control — one pill: a sort-key selector with a small circle that
@@ -2276,6 +2282,15 @@ input[type='range']:hover::-webkit-slider-thumb {
   align-items: center;
   gap: 16px;
   min-width: 0;
+}
+.header-main {
+  flex: 1 1 260px;
+}
+.header-main > div {
+  min-width: 0;
+}
+.view-title {
+  overflow-wrap: break-word;
 }
 
 /* Album-cover picker dialog */
