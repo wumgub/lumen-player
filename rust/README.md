@@ -5,6 +5,9 @@ Electron, no web views. The Electron app in the rest of this repo is still the
 one that ships until this one catches up.
 
 - `app/` is the app itself, using [egui](https://github.com/emilk/egui) on OpenGL.
+- `crates/lumen-core` is the library: the same `library.db` as the Electron app
+  (opened in place, so nothing needs migrating), folder scanning, search, stats
+  and themes.
 - `crates/lumen-playback` plays audio and video with libmpv and runs the
   analyzer the visualizers draw from.
 
