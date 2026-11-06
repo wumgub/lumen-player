@@ -3,11 +3,11 @@
 A music player with reactive visualizers, a proper library, and themes you can make
 your own. It's a native app written in Rust: no Electron, no browser engine inside.
 
-![Lumen library view with spectrum visualizer](docs/screenshots/library.png)
+![Album view in the Minimal Dark theme with a waveform visualizer](docs/screenshots/album.png)
 
 <p align="center">
   <img src="docs/screenshots/albums.png" width="49%" alt="Albums grid in the Glass theme with a radial visualizer" />
-  <img src="docs/screenshots/album.png" width="49%" alt="Album view in the Minimal Dark theme with a waveform visualizer" />
+  <img src="docs/screenshots/library.png" width="49%" alt="Lumen library view with spectrum visualizer" />
 </p>
 
 📖 **[Full documentation](https://github.com/wumgub/lumen-player/wiki)**: every feature, setting and fix, explained.
