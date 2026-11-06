@@ -78,11 +78,7 @@ if you're super cool :)
 |---|---|
 | **Windows** | `Lumen-x.y.z-Setup.exe` |
 | **Mac** (Apple silicon: M1/M2/M3/M4) | `Lumen-x.y.z-mac-arm64.dmg` |
-| **Linux** | `Lumen-x.y.z-linux-x86_64.AppImage` (or the `.deb`) |
-
-> _The native version is brand new. Until its first release is out, the downloads
-> on the releases page are the older Electron builds, which work the same way and
-> use the same library, so you can switch whenever._
+| **Linux** | `Lumen-x.y.z-linux-x86_64.AppImage` (or `Lumen-x.y.z-linux-amd64.deb`) |
 
 Then open Lumen, click the **＋** next to **Folders** in the left sidebar, choose the
 folder your music is in, and it scans and sorts everything for you. Click a song to
@@ -150,8 +146,10 @@ software centre, or `sudo apt install ./Lumen-*.deb`. I also use debian. We are 
 
 ### Coming from the Electron version?
 
-Nothing to move. Both versions use the same library file, so your songs, playlists,
-edits, covers and listening stats are all there when you open the new one.
+Nothing to move. Install the new one over it and your songs, playlists, edits,
+covers and listening stats are all there, along with your theme, visualizer and
+volume. On Windows and Linux the installer replaces the old version for you; on a
+Mac, dragging the new Lumen into Applications does the same.
 
 ## Build it yourself
 
@@ -178,7 +176,7 @@ edits, covers and listening stats are all there when you open the new one.
 
 ```bash
 git clone https://github.com/wumgub/lumen-player.git
-cd lumen-player/rust
+cd lumen-player
 cargo run --release
 ```
 
@@ -198,13 +196,13 @@ on a Mac without Homebrew.
 
 | Part | What it does |
 |------|--------------|
-| `rust/app` | The app and its interface, drawn with [egui](https://github.com/emilk/egui) on OpenGL. |
-| `rust/crates/lumen-core` | The library: the SQLite database, folder scanning ([lofty](https://github.com/Serial-ATA/lofty-rs) for tags), search, stats and themes. |
-| `rust/crates/lumen-playback` | Playback through libmpv (audio, and video drawn right into the window), the queue and shuffle rules, and the analyzer the visualizers draw from. |
-| `rust/crates/lumen-discord` | Discord Rich Presence over Discord's local socket. |
+| `app` | The app and its interface, drawn with [egui](https://github.com/emilk/egui) on OpenGL. |
+| `crates/lumen-core` | The library: the SQLite database, folder scanning ([lofty](https://github.com/Serial-ATA/lofty-rs) for tags), search, stats and themes. |
+| `crates/lumen-playback` | Playback through libmpv (audio, and video drawn right into the window), the queue and shuffle rules, and the analyzer the visualizers draw from. |
+| `crates/lumen-discord` | Discord Rich Presence over Discord's local socket. |
 
-The old Electron app is still in `src/` for now, until the native one has been out
-for a while. There's more in the wiki's
+Lumen used to be an Electron app; that version lives on in the git history (up to
+v0.2.5). There's more in the wiki's
 [Development guide](https://github.com/wumgub/lumen-player/wiki/Development-guide).
 
 ## Troubleshooting

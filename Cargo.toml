@@ -1,0 +1,18 @@
+[workspace]
+resolver = "3"
+members = ["app", "crates/*"]
+
+[workspace.package]
+version = "1.0.0"
+edition = "2024"
+license = "GPL-3.0-or-later"
+rust-version = "1.95"
+
+[profile.release]
+lto = "thin"
+codegen-units = 4
+strip = true
+
+# Image decoding and FFTs are painfully slow unoptimised; keep dev builds usable.
+[profile.dev.package."*"]
+opt-level = 2
