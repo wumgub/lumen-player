@@ -1,4 +1,4 @@
-//! The transport bar (TransportBar.tsx): what's playing, the controls and seek
+//! The transport bar: what's playing, the controls and seek
 //! bar in the middle, the queue button and volume on the right.
 
 use eframe::egui::{self, FontId, Id, Rect, Sense, Ui, pos2, vec2};

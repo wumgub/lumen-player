@@ -1,4 +1,4 @@
-//! The Stats view (StatsView.tsx): totals, the last 12 weeks, and the
+//! The Stats view: totals, the last 12 weeks, and the
 //! most-played leaderboard.
 
 use std::collections::HashMap;

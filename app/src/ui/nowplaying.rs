@@ -1,4 +1,4 @@
-//! The now-playing panel (NowPlaying.tsx): the visualizer card with its
+//! The now-playing panel: the visualizer card with its
 //! switch, full-screen button and tabs, then the art (or the music video),
 //! and the song's details.
 

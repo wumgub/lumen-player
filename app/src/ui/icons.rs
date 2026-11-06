@@ -1,8 +1,5 @@
-//! Lumen's icons: the same 24x24 line icons as the Electron app
-//! (src/renderer/src/components/icons.tsx), as SVG. They're drawn white and
-//! tinted when painted.
-//!
-//! Generated from icons.tsx; keep the two in step.
+//! Lumen's icons: 24x24 line icons as SVG (the set the Electron app used).
+//! They're drawn white and tinted when painted.
 
 pub const PLAY: &str = r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 4 20 12 6 20 6 4" fill="#ffffff" stroke="none" /></svg>"##;
 pub const PAUSE: &str = r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="5" width="4" height="14" fill="#ffffff" stroke="none" rx="1" /> <rect x="14" y="5" width="4" height="14" fill="#ffffff" stroke="none" rx="1" /></svg>"##;

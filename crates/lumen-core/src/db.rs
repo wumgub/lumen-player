@@ -1,6 +1,5 @@
-//! The library database. Same file, schema and rules as the Electron app's
-//! src/main/db.ts, so the native app opens an existing `library.db` in place
-//! and both can even run against it.
+//! The library database. Same file, schema and rules as the Electron app had
+//! (up to 0.2.5), so an upgrade opens the existing `library.db` in place.
 
 use std::collections::HashSet;
 use std::path::Path;

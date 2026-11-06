@@ -1,4 +1,4 @@
-//! Lumen's library: the SQLite database shared with the Electron app, folder
+//! Lumen's library: the SQLite database (the same file the Electron app used), folder
 //! scanning, search folding, listening stats and theme tokens.
 
 pub mod db;
@@ -13,8 +13,8 @@ pub use models::*;
 
 use std::path::PathBuf;
 
-/// Where the Electron app keeps its data (`app.getPath('userData')`), which
-/// this app shares so the library carries straight over.
+/// Lumen's data folder. It's where the Electron app kept its data
+/// (`app.getPath('userData')`), so an upgrade finds the library in place.
 pub fn data_dir() -> Option<PathBuf> {
     #[cfg(target_os = "macos")]
     let base = std::env::var_os("HOME").map(|h| PathBuf::from(h).join("Library/Application Support"));

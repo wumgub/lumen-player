@@ -1,4 +1,4 @@
-//! Settings (SettingsModal.tsx): appearance, the visualizer frame rate,
+//! Settings: appearance, the visualizer frame rate,
 //! listening stats, Discord Rich Presence, and About with the update check.
 
 use eframe::egui::{self, Color32, FontId, Id, Rect, Sense, Stroke, StrokeKind, Ui, pos2, vec2};
@@ -191,7 +191,7 @@ fn discord(app: &mut LumenApp, ui: &mut Ui) {
 fn about(app: &mut LumenApp, ui: &mut Ui) {
     let p = app.p;
     let version = env!("CARGO_PKG_VERSION");
-    row(ui, &p, "About", &format!("Version {version} · native"), |ui| {
+    row(ui, &p, "About", &format!("Version {version}"), |ui| {
         let label = if app.update.running { "Checking…" } else { "Check for updates" };
         if widgets::pill(ui, &p, label, widgets::Pill::Neutral, None).clicked() && !app.update.running {
             start_update_check(app, ui.ctx().clone());
