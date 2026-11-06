@@ -1,0 +1,145 @@
+name: Native app
+
+# Builds the Rust desktop app for macOS, Windows and Linux and packages it.
+# Every push to main that touches rust/ builds and keeps the packages as run
+# artifacts; pushing a version tag also publishes them as a GitHub Release
+# (a pre-release when the tag has a suffix, like v0.3.0-beta.1):
+#
+#     git tag v0.3.0 && git push origin v0.3.0
+
+on:
+  push:
+    branches: [main]
+    paths: ['rust/**', '.github/workflows/native.yml']
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install libmpv
+        run: brew install mpv dylibbundler
+      - name: Test
+        working-directory: rust
+        run: cargo test --workspace --release
+      - name: Build Lumen.app and the .dmg
+        working-directory: rust
+        run: |
+          scripts/bundle-macos.sh
+          VERSION=$(grep -m1 '^version' Cargo.toml | sed 's/.*"\(.*\)".*/\1/')
+          mkdir -p dmg && cp -R target/bundle/Lumen.app dmg/ && ln -s /Applications dmg/Applications
+          hdiutil create -volname "Lumen $VERSION" -srcfolder dmg -ov -format UDZO "Lumen-$VERSION-mac-arm64.dmg"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac
+          path: rust/Lumen-*.dmg
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Fetch libmpv
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download -R shinchiro/mpv-winbuild-cmake --pattern 'mpv-dev-x86_64-2*.7z' -D mpv-dl
+          7z x mpv-dl/*.7z -ompv > /dev/null
+          ls mpv
+      - name: Make an import library for MSVC
+        shell: cmd
+        run: lib /nologo /def:mpv\mpv.def /name:libmpv-2.dll /out:mpv\mpv.lib /machine:x64
+      - name: Build
+        working-directory: rust
+        shell: bash
+        env:
+          MPV_LIB_DIR: ${{ github.workspace }}\mpv
+        run: |
+          cargo build --release -p lumen
+          cargo test --release -p lumen-core -p lumen-discord
+      - name: Installer
+        shell: bash
+        run: |
+          VERSION=$(grep -m1 '^version' rust/Cargo.toml | sed 's/.*"\(.*\)".*/\1/')
+          mkdir -p stage && cp rust/target/release/lumen.exe mpv/libmpv-2.dll stage/
+          makensis -DVERSION=$VERSION -DSRC="$PWD/stage" -DOUT="$PWD/Lumen-$VERSION-Setup.exe" rust/packaging/windows/lumen.nsi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: Lumen-*-Setup.exe
+
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libmpv-dev libxkbcommon-dev libgtk-3-dev libdbus-1-dev pkg-config libfuse2 imagemagick
+      - name: Test and build
+        working-directory: rust
+        run: |
+          cargo test --workspace --release
+          cargo build --release -p lumen
+      - name: Package (.deb and AppImage)
+        run: |
+          VERSION=$(grep -m1 '^version' rust/Cargo.toml | sed 's/.*"\(.*\)".*/\1/')
+          # .deb: the system's libmpv does the playing.
+          D=deb/lumen_${VERSION}_amd64
+          mkdir -p $D/DEBIAN $D/usr/bin $D/usr/share/applications $D/usr/share/icons/hicolor/512x512/apps
+          cp rust/target/release/lumen $D/usr/bin/
+          cp rust/packaging/linux/lumen.desktop $D/usr/share/applications/
+          convert build/icon.png -resize 512x512 $D/usr/share/icons/hicolor/512x512/apps/lumen.png
+          cat > $D/DEBIAN/control <<CTRL
+          Package: lumen
+          Version: $VERSION
+          Architecture: amd64
+          Maintainer: wumgub <67914953+wumgub@users.noreply.github.com>
+          Depends: libmpv2 | libmpv1, libgtk-3-0, libxkbcommon0, libdbus-1-3
+          Section: sound
+          Priority: optional
+          Homepage: https://github.com/wumgub/lumen-player
+          Description: Music player with reactive visualizers
+           A native music player with a scanned library, themes and visualizers.
+          CTRL
+          sed -i 's/^ *//' $D/DEBIAN/control
+          sed -i 's/^\(A native\)/ \1/' $D/DEBIAN/control
+          dpkg-deb --build --root-owner-group $D "Lumen-$VERSION-linux-amd64.deb"
+          # AppImage: libmpv and its libraries come along inside.
+          wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          chmod +x linuxdeploy-x86_64.AppImage
+          mkdir -p AppDir
+          ./linuxdeploy-x86_64.AppImage --appimage-extract-and-run --appdir AppDir \
+            -e rust/target/release/lumen -d rust/packaging/linux/lumen.desktop \
+            -i $D/usr/share/icons/hicolor/512x512/apps/lumen.png --output appimage
+          mv Lumen-*.AppImage "Lumen-$VERSION-linux-x86_64.AppImage"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: |
+            Lumen-*.deb
+            Lumen-*.AppImage
+
+  release:
+    needs: [mac, windows, linux]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: out/*
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          draft: false

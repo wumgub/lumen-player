@@ -1,3 +1,4 @@
+#![cfg_attr(windows, windows_subsystem = "windows")]
 //! Lumen, native: the music player with the reactive visualizers, without a
 //! browser engine inside. See README.md in this folder.
 
