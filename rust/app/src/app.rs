@@ -117,6 +117,7 @@ pub struct LumenApp {
     presence_resend: Option<Instant>,
     media: Option<souvlaki::MediaControls>,
     media_rx: Receiver<souvlaki::MediaControlEvent>,
+    media_tx: std::sync::mpsc::Sender<souvlaki::MediaControlEvent>,
     media_last: Option<(Option<i64>, bool, i64)>,
 
     pub started: Instant,
@@ -125,6 +126,20 @@ pub struct LumenApp {
     frames: u64,
     opts: Opts,
     shot: (std::sync::mpsc::Sender<Arc<egui::ColorImage>>, Receiver<Arc<egui::ColorImage>>),
+}
+
+fn make_media_controls(
+    hwnd: Option<*mut std::ffi::c_void>,
+    tx: std::sync::mpsc::Sender<souvlaki::MediaControlEvent>,
+    ctx: egui::Context,
+) -> Option<souvlaki::MediaControls> {
+    let mut m = souvlaki::MediaControls::new(souvlaki::PlatformConfig { dbus_name: "lumen", display_name: "Lumen", hwnd }).ok()?;
+    m.attach(move |e| {
+        let _ = tx.send(e);
+        ctx.request_repaint();
+    })
+    .ok()?;
+    Some(m)
 }
 
 pub fn item(t: &Track) -> Item {
@@ -156,22 +171,10 @@ impl LumenApp {
             _ => None,
         };
 
-        let (mtx, media_rx) = channel();
-        let media = souvlaki::MediaControls::new(souvlaki::PlatformConfig {
-            dbus_name: "lumen",
-            display_name: "Lumen",
-            hwnd: None,
-        })
-        .ok()
-        .and_then(|mut m| {
-            let ctx = cc.egui_ctx.clone();
-            m.attach(move |e| {
-                let _ = mtx.send(e);
-                ctx.request_repaint();
-            })
-            .ok()?;
-            Some(m)
-        });
+        let (media_tx, media_rx) = channel();
+        // Windows needs the window's handle, which only exists once it's shown;
+        // there the controls are made on the first frame instead.
+        let media = if cfg!(windows) { None } else { make_media_controls(None, media_tx.clone(), cc.egui_ctx.clone()) };
 
         let art = ArtCache::new(db_path, cc.egui_ctx.clone());
         let presence = lumen_discord::Presence::new();
@@ -231,6 +234,7 @@ impl LumenApp {
             presence_resend: None,
             media,
             media_rx,
+            media_tx,
             media_last: None,
             started: Instant::now(),
             last_frame: Instant::now(),
@@ -565,6 +569,15 @@ impl eframe::App for LumenApp {
         self.last_frame = now;
         self.frames += 1;
 
+        #[cfg(windows)]
+        if self.media.is_none() && self.frames == 1 {
+            use raw_window_handle::{HasWindowHandle, RawWindowHandle};
+            if let Ok(h) = frame.window_handle()
+                && let RawWindowHandle::Win32(w) = h.as_raw()
+            {
+                self.media = make_media_controls(Some(w.hwnd.get() as *mut std::ffi::c_void), self.media_tx.clone(), ctx.clone());
+            }
+        }
         self.pump(&ctx);
         self.refresh_theme(&ctx);
         self.shortcuts(&ctx);

@@ -54,9 +54,15 @@ jobs:
           gh release download -R shinchiro/mpv-winbuild-cmake --pattern 'mpv-dev-x86_64-2*.7z' -D mpv-dl
           7z x mpv-dl/*.7z -ompv > /dev/null
           ls mpv
+      # The dev build ships a MinGW import library; MSVC needs a .lib, which
+      # we make from the DLL's own export table.
       - name: Make an import library for MSVC
-        shell: cmd
-        run: lib /nologo /def:mpv\mpv.def /name:libmpv-2.dll /out:mpv\mpv.lib /machine:x64
+        shell: bash
+        run: |
+          dumpbin //exports mpv/libmpv-2.dll | awk '$4 ~ /^mpv_/ {print $4}' > names.txt
+          { echo "LIBRARY libmpv-2.dll"; echo "EXPORTS"; cat names.txt; } > mpv/mpv.def
+          wc -l names.txt
+          lib //nologo //def:mpv/mpv.def //out:mpv/mpv.lib //machine:x64
       - name: Build
         working-directory: rust
         shell: bash
