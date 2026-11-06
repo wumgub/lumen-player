@@ -179,6 +179,9 @@ function createWindow(): void {
   })
 
   win.on('ready-to-show', () => win.show())
+  // Playback lives in the window, so closing it (macOS keeps the app running)
+  // stops the music. Don't leave Discord showing a song that isn't playing.
+  win.on('closed', () => void presence.update(null))
 
   win.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url)

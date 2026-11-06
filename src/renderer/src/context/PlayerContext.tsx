@@ -60,6 +60,26 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): Rea
 
   const current = index >= 0 && index < queue.length ? queue[index] : null
 
+  // Queue positions played so far, so ⏮ under shuffle can retrace what actually
+  // played instead of picking another random song. `forward` holds what ⏮
+  // stepped back over, which ⏭ replays before picking new songs.
+  const history = useRef<{ back: number[]; forward: number[] }>({ back: [], forward: [] })
+  const remember = (i: number): void => {
+    if (i < 0) return
+    const back = history.current.back
+    back.push(i)
+    if (back.length > 500) back.shift()
+  }
+  const resetHistory = (): void => {
+    history.current = { back: [], forward: [] }
+  }
+  /** Re-point remembered positions after the queue changes (null drops one). */
+  const remapHistory = (fn: (i: number) => number | null): void => {
+    const map = (arr: number[]): number[] =>
+      arr.map(fn).filter((i): i is number => i !== null)
+    history.current = { back: map(history.current.back), forward: map(history.current.forward) }
+  }
+
   // ---- listening stats: accrue real play time for the current track and bank
   // it as a play when it changes. `listened` only grows on forward playback (so
   // seeks and pauses don't inflate it); `counted` flips once past the halfway /
@@ -107,8 +127,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): Rea
     }
     let ni: number
     if (sh) {
-      ni = q.length === 1 ? i : randomExcept(q.length, i)
+      const fwd = history.current.forward.pop()
+      ni = fwd !== undefined && fwd < q.length ? fwd : q.length === 1 ? i : randomExcept(q.length, i)
     } else {
+      history.current.forward = []
       ni = i + 1
       if (ni >= q.length) {
         if (rp === 'all') ni = 0
@@ -118,6 +140,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): Rea
         }
       }
     }
+    if (ni !== i) remember(i)
+    ref.current = { ...ref.current, index: ni }
     setIndex(ni)
     playAt(q, ni)
   }
@@ -129,7 +153,20 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): Rea
       engine.seek(0)
       return
     }
-    const ni = sh ? randomExcept(q.length, i) : Math.max(0, i - 1)
+    let ni: number
+    if (sh) {
+      // Back through what shuffle actually played; with nothing earlier, restart this one.
+      const back = history.current.back.pop()
+      if (back === undefined || back >= q.length) {
+        engine.seek(0)
+        return
+      }
+      if (i >= 0) history.current.forward.push(i)
+      ni = back
+    } else {
+      ni = Math.max(0, i - 1)
+    }
+    ref.current = { ...ref.current, index: ni }
     setIndex(ni)
     playAt(q, ni)
   }
@@ -142,6 +179,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): Rea
     const { queue: q, index: i } = ref.current
     if (q.length === 0 || i < 0) {
       // Nothing playing — start the added tracks.
+      resetHistory()
       ref.current = { ...ref.current, queue: tracks, index: 0 }
       setQueue(tracks)
       setIndex(0)
@@ -150,13 +188,18 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): Rea
     }
     const at = where === 'next' ? i + 1 : q.length
     const nq = [...q.slice(0, at), ...tracks, ...q.slice(at)]
+    remapHistory((j) => (j >= at ? j + tracks.length : j))
     ref.current = { ...ref.current, queue: nq }
     setQueue(nq)
   }
 
   const jumpTo = (target: number): void => {
-    const { queue: q } = ref.current
+    const { queue: q, index: cur } = ref.current
     if (target < 0 || target >= q.length) return
+    if (target !== cur) {
+      remember(cur)
+      history.current.forward = []
+    }
     ref.current = { ...ref.current, index: target }
     setIndex(target)
     playAt(q, target)
@@ -166,6 +209,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): Rea
     const { queue: q, index: cur } = ref.current
     if (target < 0 || target >= q.length) return
     const nq = [...q.slice(0, target), ...q.slice(target + 1)]
+    remapHistory((j) => (j === target ? null : j > target ? j - 1 : j))
     let ni = cur
     if (target < cur) ni = cur - 1
     else if (target === cur) ni = Math.min(cur, nq.length - 1)
@@ -187,6 +231,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): Rea
     const { queue: q, index: cur } = ref.current
     if (cur < 0) return
     const nq = q.slice(0, cur + 1)
+    remapHistory((j) => (j > cur ? null : j))
     ref.current = { ...ref.current, queue: nq }
     setQueue(nq)
   }
@@ -315,6 +360,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): Rea
       shuffle,
       repeat,
       playQueue: (tracks, startIndex) => {
+        resetHistory()
         setQueue(tracks)
         setIndex(startIndex)
         ref.current = { ...ref.current, queue: tracks, index: startIndex }
@@ -334,7 +380,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): Rea
         engine.setVolume(v)
         localStorage.setItem('lumen.volume', String(v))
       },
-      toggleShuffle: () => setShuffle((s) => !s),
+      toggleShuffle: () => {
+        resetHistory() // each shuffle session retraces only its own path
+        setShuffle((s) => !s)
+      },
       cycleRepeat: () =>
         setRepeat((r) => (r === 'off' ? 'all' : r === 'all' ? 'one' : 'off'))
     }),
