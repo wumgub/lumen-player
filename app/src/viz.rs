@@ -151,14 +151,17 @@ fn bars(painter: &egui::Painter, rect: Rect, frame: &AudioFrame, c: Colors, s: &
             caps.push(Shape::Rect(RectShape::filled(cap, radius, color)));
         }
 
-        // Falling peak cap.
+        // Falling peak cap. Hidden once it's back on the baseline, so silence
+        // doesn't leave a dotted line along the bottom, behind the tabs.
         s.peaks[i] = (s.peaks[i] - fall).max(h / baseline);
-        let py = rect.top() + baseline - s.peaks[i] * baseline;
-        caps.push(Shape::rect_filled(
-            Rect::from_min_size(pos2(x, py - 2.0), vec2(bar_w, 2.0)),
-            0.0,
-            c.fg,
-        ));
+        if s.peaks[i] * baseline > 1.0 {
+            let py = rect.top() + baseline - s.peaks[i] * baseline;
+            caps.push(Shape::rect_filled(
+                Rect::from_min_size(pos2(x, py - 2.0), vec2(bar_w, 2.0)),
+                0.0,
+                c.fg,
+            ));
+        }
     }
     painter.add(Shape::mesh(glow));
     painter.add(Shape::mesh(body));
