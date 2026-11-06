@@ -2146,6 +2146,7 @@ dependencies = [
  "lumen-playback",
  "memmap2",
  "parking_lot 0.13.0",
+ "raw-window-handle",
  "resvg",
  "rfd",
  "serde",
