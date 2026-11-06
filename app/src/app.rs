@@ -587,6 +587,10 @@ impl eframe::App for LumenApp {
                 self.media = make_media_controls(Some(w.hwnd.get() as *mut std::ffi::c_void), self.media_tx.clone(), ctx.clone());
             }
         }
+        #[cfg(target_os = "macos")]
+        if self.frames == 1 {
+            inset_window_buttons(frame);
+        }
         self.pump(&ctx);
         self.refresh_theme(&ctx);
         self.shortcuts(&ctx);
@@ -621,5 +625,25 @@ impl eframe::App for LumenApp {
     fn clear_color(&self, _visuals: &egui::Visuals) -> [f32; 4] {
         let c: Color32 = self.p.bg;
         [c.r() as f32 / 255.0, c.g() as f32 / 255.0, c.b() as f32 / 255.0, 1.0]
+    }
+}
+
+/// Give the window an empty unified toolbar, which is what makes macOS draw
+/// a 52 pt title bar with the window buttons centred in it, in line with
+/// Lumen's own title bar (Electron's `hiddenInset`). Without it the buttons
+/// sit in a 28 pt strip at the very top.
+#[cfg(target_os = "macos")]
+fn inset_window_buttons(frame: &eframe::Frame) {
+    use objc2::MainThreadMarker;
+    use objc2_app_kit::{NSToolbar, NSView, NSWindowToolbarStyle};
+    use raw_window_handle::{HasWindowHandle, RawWindowHandle};
+    let (Ok(handle), Some(mtm)) = (frame.window_handle(), MainThreadMarker::new()) else { return };
+    let RawWindowHandle::AppKit(h) = handle.as_raw() else { return };
+    // Safety: winit hands out the window's live NSView, and we're on the main thread.
+    let view: &NSView = unsafe { h.ns_view.cast().as_ref() };
+    if let Some(window) = view.window() {
+        let toolbar = NSToolbar::new(mtm);
+        window.setToolbar(Some(&toolbar));
+        window.setToolbarStyle(NSWindowToolbarStyle::Unified);
     }
 }
