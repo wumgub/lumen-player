@@ -79,6 +79,8 @@ jobs:
         run: |
           VERSION=$(grep -m1 '^version' rust/Cargo.toml | sed 's/.*"\(.*\)".*/\1/')
           mkdir -p stage && cp rust/target/release/lumen.exe mpv/libmpv-2.dll stage/
+          command -v makensis || choco install nsis -y --no-progress > /dev/null
+          export PATH="$PATH:/c/Program Files (x86)/NSIS"
           makensis -DVERSION=$VERSION -DSRC="$PWD/stage" -DOUT="$PWD/Lumen-$VERSION-Setup.exe" rust/packaging/windows/lumen.nsi
       - uses: actions/upload-artifact@v4
         with:
