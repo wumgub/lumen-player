@@ -10,7 +10,7 @@ and swappable themes.
   <img src="docs/screenshots/album.png" width="49%" alt="Album view in the Minimal Dark theme with a waveform visualizer" />
 </p>
 
-📖 **[Full documentation](docs/README.md)**: every feature, setting and fix, explained.
+📖 **[Full documentation](https://github.com/wumgub/lumen-player/wiki)**: every feature, setting and fix, explained.
 
 ## Features
 
