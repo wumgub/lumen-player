@@ -1,6 +1,3 @@
-node_modules
-out
-dist
+target
 .DS_Store
 *.log
-rust/target
