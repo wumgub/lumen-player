@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Lumen
+Comment=Music player with reactive visualizers
+Exec=lumen %F
+Icon=lumen
+Terminal=false
+Categories=AudioVideo;Audio;Player;
+MimeType=audio/mpeg;audio/flac;audio/x-flac;audio/mp4;audio/ogg;audio/x-wav;audio/aac;
+StartupWMClass=lumen
