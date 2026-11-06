@@ -1,14 +1,47 @@
 #!/bin/bash
-# Retake the README screenshots (docs/screenshots/) from the real app, using a
-# made-up library: generated tones with tags and gradient covers, so no real
-# music is needed and nobody's collection ends up in the README.
-# Needs ffmpeg and sqlite3. Usage: scripts/screenshots.sh
+# Retake the README screenshots (docs/screenshots/) from the real app.
+#
+#   scripts/screenshots.sh                 a made-up library (generated tones
+#                                          with tags and gradient covers)
+#   scripts/screenshots.sh <library.db>    a real library. It works on a copy,
+#                                          leaves out songs with no cover, and
+#                                          shows the three biggest albums.
+#
+# Needs sqlite3 (and ffmpeg for the made-up library). macOS only (sips).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 MUSIC="$WORK/music"
 DB="$WORK/library.db"
+
+shot() { # out theme viz view play seek
+  sqlite3 "$DB" "INSERT OR REPLACE INTO settings (key, value) VALUES ('uiPrefs',
+    json_object('theme','$2','viz','$3','vizOn',json('true'),'adaptive',json('true'),'volume',0.9))"
+  target/release/lumen --db "$DB" --ao null --view "$4" --play "$5" --seek "$6" \
+    --screenshot "$WORK/$1" --frames 150
+  # Keep the files small: 1600 px wide is plenty for the README.
+  sips -Z 1600 "$WORK/$1" --out "docs/screenshots/$1" > /dev/null
+}
+
+if [ $# -ge 1 ]; then
+  sqlite3 -readonly "$1" ".backup '$DB'"
+  sqlite3 "$DB" "PRAGMA foreign_keys = ON;
+    DELETE FROM tracks WHERE hasArt = 0 AND NOT EXISTS
+      (SELECT 1 FROM album_covers c WHERE c.album = tracks.album AND tracks.album != '');"
+  # The biggest albums, and a song from the middle of each.
+  albums=$(sqlite3 "$DB" "SELECT album FROM tracks WHERE album != '' AND isVideo = 0
+    GROUP BY album ORDER BY COUNT(*) DESC LIMIT 3")
+  IFS=$'\n' read -r -d '' a1 a2 a3 <<<"$albums" || true
+  pick() { sqlite3 "$DB" "SELECT title FROM tracks WHERE album = '${1//\'/\'\'}' AND isVideo = 0
+    ORDER BY discNo, trackNo LIMIT 1 OFFSET 1"; }
+  cargo build -q --release -p lumen
+  shot library.png neon bars songs "$(pick "$a1")" 60
+  shot albums.png glass radial albums "$(pick "$a2")" 60
+  shot album.png minimal-dark waveform "album:$a3" "$(pick "$a3")" 45
+  echo "Saved to docs/screenshots/"
+  exit 0
+fi
 
 # artist | album | cover colours (r,g,b:r,g,b) | titles
 ALBUMS=(
@@ -45,14 +78,6 @@ done
 cargo run -q --release -p lumen-core --example scan_folder -- "$DB" "$MUSIC"
 cargo build -q --release -p lumen
 
-shot() { # out theme viz view play seek
-  sqlite3 "$DB" "INSERT OR REPLACE INTO settings (key, value) VALUES ('uiPrefs',
-    json_object('theme','$2','viz','$3','vizOn',json('true'),'adaptive',json('true'),'volume',0.9))"
-  target/release/lumen --db "$DB" --ao null --view "$4" --play "$5" --seek "$6" \
-    --screenshot "$WORK/$1" --frames 150
-  # Keep the files small: 1600 px wide is plenty for the README.
-  sips -Z 1600 "$WORK/$1" --out "docs/screenshots/$1" > /dev/null
-}
 shot library.png neon bars songs "Tram Lights" 40
 shot albums.png glass radial albums "Ночные окна" 60
 shot album.png minimal-dark waveform "album:Low Season" "Porch Light" 30
