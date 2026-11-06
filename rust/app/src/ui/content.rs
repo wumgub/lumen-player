@@ -53,7 +53,9 @@ fn track_view(app: &mut LumenApp, ui: &mut Ui, area: Rect) {
     // ---- header ----
     let inner = area.shrink2(PAD);
     let is_album = matches!(view, View::Album(_));
-    let header_h = if is_album { 86.0 } else { 64.0 };
+    let title_w0 = (inner.width() - if is_album { 88.0 } else { 0.0 } - 340.0).max(120.0);
+    let wraps = widgets::galley_rows(ui, &header_title(&view).0, crate::fonts::bold(30.0), p.fg, title_w0, 2).rows.len() > 1;
+    let header_h = if is_album { 86.0 } else { 64.0 } + if wraps { 36.0 } else { 0.0 };
     let header = Rect::from_min_size(inner.min, vec2(inner.width(), header_h));
     let mut x = header.left();
     if let View::Album(name) = &view {
@@ -73,7 +75,7 @@ fn track_view(app: &mut LumenApp, ui: &mut Ui, area: Rect) {
     let (title, sub_prefix) = header_title(&view);
     let actions_w = 340.0;
     let title_w = (header.right() - x - actions_w).max(120.0);
-    let tg = widgets::galley(ui, &title, crate::fonts::bold(30.0), p.fg, title_w);
+    let tg = widgets::galley_rows(ui, &title, crate::fonts::bold(30.0), p.fg, title_w, 2);
     let title_y = if is_album { header.top() + 6.0 } else { header.top() };
     let title_rect = Rect::from_min_size(pos2(x, title_y), tg.size());
     ui.painter().galley(title_rect.min, tg, p.fg);
@@ -435,7 +437,7 @@ fn artist_grid(app: &mut LumenApp, ui: &mut Ui, area: Rect) {
     let artists = app.lib.artists.clone();
     let top = grid_header(app, ui, inner, "Artists", &pluralize(artists.len() as i64, "artist"));
     let (cols, w) = grid_columns(inner.width());
-    let card_h = w + 28.0 + 50.0;
+    let card_h = w + 50.0;
     let rows = artists.len().div_ceil(cols);
     let list = Rect::from_min_max(pos2(area.left(), top), area.max);
     let mut c = ui.new_child(egui::UiBuilder::new().max_rect(list));
@@ -455,8 +457,7 @@ fn artist_grid(app: &mut LumenApp, ui: &mut Ui, area: Rect) {
             ui.painter().rect_filled(rect, 10.0, if resp.hovered() { p.bg3 } else { p.bg2 });
             let circle = Rect::from_min_size(rect.min + vec2(14.0, 14.0), vec2(w - 28.0, w - 28.0));
             let (c1, c2) = widgets::seeded_gradient(&a.artist);
-            ui.painter().circle_filled(circle.center(), circle.width() / 2.0, c1);
-            ui.painter().circle_filled(circle.center() + vec2(circle.width() * 0.12, circle.width() * 0.12), circle.width() * 0.36, with_alpha(c2, 0.55));
+            widgets::gradient_circle(ui, circle.center(), circle.width() / 2.0, c1, c2);
             let initials: String = a.artist.split_whitespace().take(2).filter_map(|w| w.chars().next()).flat_map(char::to_uppercase).collect();
             ui.painter().text(circle.center(), egui::Align2::CENTER_CENTER, initials, crate::fonts::bold(circle.width() * 0.28), Color32::from_white_alpha(217));
             widgets::text(ui, pos2(rect.left() + 14.0, circle.bottom() + 10.0), &a.artist, crate::fonts::medium(14.0), p.fg, w - 28.0);
@@ -487,7 +488,7 @@ fn album_grid(app: &mut LumenApp, ui: &mut Ui, area: Rect) {
     let albums = app.lib.albums.clone();
     let top = grid_header(app, ui, inner, "Albums", &pluralize(albums.len() as i64, "album"));
     let (cols, w) = grid_columns(inner.width());
-    let card_h = w + 28.0 + 50.0;
+    let card_h = w + 50.0;
     let rows = albums.len().div_ceil(cols);
     let list = Rect::from_min_max(pos2(area.left(), top), area.max);
     let mut c = ui.new_child(egui::UiBuilder::new().max_rect(list));

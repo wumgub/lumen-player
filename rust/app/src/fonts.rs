@@ -13,13 +13,16 @@ use eframe::epaint::text::VariationCoords;
 /// Families the UI asks for by weight.
 pub const MEDIUM: &str = "medium";
 pub const BOLD: &str = "bold";
+/// Bold at headline sizes, which SF Pro draws with its Display cut.
+pub const DISPLAY: &str = "display";
 
 pub fn medium(size: f32) -> egui::FontId {
     egui::FontId::new(size, FontFamily::Name(MEDIUM.into()))
 }
 
 pub fn bold(size: f32) -> egui::FontId {
-    egui::FontId::new(size, FontFamily::Name(BOLD.into()))
+    let family = if size >= 20.0 { DISPLAY } else { BOLD };
+    egui::FontId::new(size, FontFamily::Name(family.into()))
 }
 
 fn map(path: &str) -> Option<Arc<memmap2::Mmap>> {
@@ -86,6 +89,7 @@ pub fn definitions(mono_ui: bool) -> FontDefinitions {
     let mut regular = Vec::new();
     let mut medium_names = Vec::new();
     let mut bold_names = Vec::new();
+    let mut display_names = Vec::new();
 
     let add = |defs: &mut FontDefinitions, name: &str, data: FontData| {
         defs.font_data.insert(name.to_owned(), Arc::new(data));
@@ -115,16 +119,20 @@ pub fn definitions(mono_ui: bool) -> FontDefinitions {
             bold_names.push(add(&mut defs, "ui-bold", FontData::from_blob(m, 0)));
         }
     } else if let Some(m) = first(UI) {
-        // SF Pro is one variable font; weights are points on its "wght" axis.
+        // SF Pro is one variable font: weight and optical size are axes.
+        // Browsers pick the optical size from the text size, so body text
+        // gets the "Text" cut (17) and big headings the "Display" one; the
+        // font's own default is Display, which looks wrong at 13px.
         let variable = !FontData::from_blob(m.clone(), 0).variation_axes().is_empty();
-        let weight = |w: f32| FontTweak {
-            coords: if variable { VariationCoords::new([("wght", w)]) } else { Default::default() },
+        let cut = |w: f32, opsz: f32| FontTweak {
+            coords: if variable { VariationCoords::new([("wght", w), ("opsz", opsz)]) } else { Default::default() },
             ..Default::default()
         };
-        regular.push(add(&mut defs, "ui-regular", FontData::from_blob(m.clone(), 0).tweak(weight(400.0))));
+        regular.push(add(&mut defs, "ui-regular", FontData::from_blob(m.clone(), 0).tweak(cut(400.0, 17.0))));
         if variable {
-            medium_names.push(add(&mut defs, "ui-medium", FontData::from_blob(m.clone(), 0).tweak(weight(560.0))));
-            bold_names.push(add(&mut defs, "ui-bold", FontData::from_blob(m, 0).tweak(weight(700.0))));
+            medium_names.push(add(&mut defs, "ui-medium", FontData::from_blob(m.clone(), 0).tweak(cut(500.0, 17.0))));
+            bold_names.push(add(&mut defs, "ui-bold", FontData::from_blob(m.clone(), 0).tweak(cut(650.0, 17.0))));
+            display_names.push(add(&mut defs, "ui-display", FontData::from_blob(m, 0).tweak(cut(760.0, 30.0))));
         }
         #[cfg(not(target_os = "macos"))]
         {
@@ -155,5 +163,18 @@ pub fn definitions(mono_ui: bool) -> FontDefinitions {
     defs.families.insert(FontFamily::Proportional, chain(&regular, &[]));
     defs.families.insert(FontFamily::Name(MEDIUM.into()), chain(&medium_names, &regular));
     defs.families.insert(FontFamily::Name(BOLD.into()), chain(&bold_names, &regular));
+    let display = if display_names.is_empty() { bold_names.clone() } else { display_names };
+    defs.families.insert(FontFamily::Name(DISPLAY.into()), chain(&display, &regular));
     defs
+}
+
+#[cfg(all(test, target_os = "macos"))]
+mod tests {
+    #[test]
+    fn sf_pro_axes() {
+        let m = super::map(super::UI[0]).unwrap();
+        for a in eframe::egui::FontData::from_blob(m, 0).variation_axes() {
+            println!("{a:?}");
+        }
+    }
 }

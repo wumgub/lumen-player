@@ -1,7 +1,7 @@
 # Lumen 🎧
 
-An Electron music player with reactive audio visualizers, a scanned SQLite library,
-and swappable themes.
+A music player with reactive visualizers, a proper library, and themes you can make
+your own. It's a native app written in Rust: no Electron, no browser engine inside.
 
 ![Lumen library view with spectrum visualizer](docs/screenshots/library.png)
 
@@ -12,60 +12,63 @@ and swappable themes.
 
 📖 **[Full documentation](https://github.com/wumgub/lumen-player/wiki)**: every feature, setting and fix, explained.
 
+There's an Android version too: [lumen-android](https://github.com/wumgub/lumen-android).
+
 ## Features
 
-- **Full library** — point it at folders, it recursively scans and indexes your media
-  (MP3, FLAC, WAV/AIFF, M4A/AAC, OGG/Opus, plus MP4/M4V/WebM/MOV **music videos**)
-  into SQLite, reading ID3 tags + embedded art.
-- **Browse** by Songs, Artists, Albums, or custom Playlists, with instant search —
-  including per-track **notes**, so a song that has a weird name, or a name
-  in another language is easy to find directly from search! (right-click → *Add note…*).
-- **Music video** — `.mp4` tracks play like any song, with an **Art / Video**
-  toggle in Now Playing to show the album art or the video. Double-click the
-  video (or hit its expand icon, or `f`) to have it fill the whole window.
-- **Queue** — *Play next* / *Add to queue* on any track (or a multi-select), with a
-  slide-over queue you can reorder-by-jumping and prune.
-- **3 visualizers** — Spectrum Bars, Waveform, and Radial, driven by a Web Audio
-  `AnalyserNode`, with an on/off toggle and a frame-rate cap. Toggle between a docked
-  panel and an immersive full-window mode (press `f`, or the expand icon).
-- **Theme editor** — every colour and the font are customizable; import/export themes
-  as text. Plus five built-ins incl. Glass (tints its accents from the album art).
-- **Hardware media keys** — ⏯ / ⏭ / ⏮ on your keyboard, and rich OS “Now Playing”
-  metadata (title, artist, art, scrubber).
-- Shuffle / repeat-all / repeat-one, seeking, volume, and keyboard shortcuts
-  (`Space` play/pause, `⌘←/⌘→` prev/next, `f` immersive — or fill the window
-  with the music video when one's showing — `Esc` exit).
-- **Discord Rich Presence** — optionally show the current track (with a live
-  progress bar) on your Discord profile.
+- **Your whole library.** Point it at your music folders and it scans everything:
+  MP3, FLAC, WAV/AIFF, M4A/AAC, OGG/Opus, plus MP4/M4V/WebM/MOV **music videos**,
+  with their tags and embedded art.
+- **Browse** by songs, artists, albums, playlists or folder, with search that
+  doesn't care about case or accents, in any alphabet. Songs can have **notes**, and
+  search finds those too, so a song with a weird name, or a name in another language,
+  is easy to find (right-click → *Add note…*).
+- **Fix things without touching your files.** Rename songs, artists and albums, put
+  songs on an album (or make a new one), drag an album into your own track order,
+  and set album covers. Your edits survive rescans.
+- **Music videos** play like any song, with an **Art / Video** switch in Now Playing.
+  Double-click the video (or press `f`) and it fills the window.
+- **Gapless playback** and nearly any format, through [mpv](https://mpv.io).
+- **The queue**: *Play next* / *Add to queue* on any song (or a selection), and a
+  queue panel to jump around in and prune.
+- **3 visualizers**: Spectrum Bars, Waveform and Radial, synced to what you're
+  hearing, with an on/off switch and a frame-rate cap. Dock them in the side panel
+  or go full screen (`f`).
+- **Themes**: seven built in, including Glass (which blurs the playing song's cover
+  behind everything and takes its colours from it), Retro and Blackout. Every colour
+  and the font can be customized, and themes import and export as text, shared with
+  the Android app.
+- **Listening stats**: your most-played songs and the last 12 weeks. Switch it off
+  and nothing is saved.
+- **Media keys** and your OS's "Now Playing" controls.
+- Shuffle (where ⏮ actually goes back to what played), repeat all / one, volume up
+  to 150%, and keyboard shortcuts: `Space` play/pause, `⌘←/⌘→` (Ctrl on Windows and
+  Linux) previous/next, `f` full screen, `Esc` to leave it.
+- **Discord Rich Presence**: optionally show what you're playing, with a live
+  progress bar, on your Discord profile.
+
+It's light, too. Compared with the old Electron version it's about a third of the
+size to install and uses roughly a quarter of the memory while playing.
 
 ## DISCLAIMER!!
 This was made using the assistance of AI. However, this is not vibe-coded. AI was used as tool during the making of this, not as a 'code-all' god.
 
 ## Discord Rich Presence
 
-Presence is off by default. To enable it (⚙️ in the top-right → *Discord Rich Presence*):
+Presence is off by default. To turn it on (⚙️ in the top-right → *Discord Rich Presence*):
 
 1. Create an app in the [Discord Developer Portal](https://discord.com/developers/applications) and copy its **Application ID**.
-2. Paste that ID into Settings and toggle the feature on.
+2. Paste that ID into Settings and switch the feature on.
 3. Under **Rich Presence → Art Assets**, upload [`build/discord/lumen.png`](./build/discord/lumen.png)
-   and name the asset `lumen` — that's the large cover art shown next to the track.
-4. Keep the desktop Discord app running. Presence updates on track and play/pause
-   changes (kept well under Discord's rate limit); the progress bar animates from
-   start/end timestamps. If Discord isn't running or isn't configured, the app
-   simply skips presence — nothing breaks.
-
-## Architecture
-
-| Layer | Responsibility |
-|-------|----------------|
-| `src/main` | App lifecycle, SQLite library (`better-sqlite3`), recursive scanner (`music-metadata`), native folder picker, and two custom protocols: `lumen-media://` (Range-aware audio streaming) and `lumen-art://` (album art). |
-| `src/preload` | Locked-down `contextBridge` API (`window.lumen`). Context isolation on, no Node in the renderer. |
-| `src/renderer` | React UI: library views, now-playing, transport, theme engine, and the canvas visualizer host. |
-| `src/shared` | Types shared across processes. |
+   and name the asset `lumen`. That's the picture shown next to the song.
+4. Keep the desktop Discord app running. Lumen updates your status when the song
+   changes, you pause, or you seek; the progress bar runs by itself. If Discord quits
+   or restarts, Lumen reconnects on its own. If Discord isn't running at all, it just
+   waits; nothing breaks.
 
 ## Install
 
-### Just want to listen? Download it — no setup needed
+### Just want to listen? Download it, no setup needed
 
 **[⬇ Download the latest release](https://github.com/wumgub/lumen-player/releases/latest)**,
 grab the one file for your computer, and open it. You can also build from source,
@@ -74,22 +77,23 @@ if you're super cool :)
 | Your computer | Download this file |
 |---|---|
 | **Windows** | `Lumen-x.y.z-Setup.exe` |
-| **Mac** (Apple silicon — M1/M2/M3/M4) | `Lumen-x.y.z-mac-arm64.dmg` |
+| **Mac** (Apple silicon: M1/M2/M3/M4) | `Lumen-x.y.z-mac-arm64.dmg` |
 | **Linux** | `Lumen-x.y.z-linux-x86_64.AppImage` (or the `.deb`) |
 
-> _(The Mac download is for Apple-silicon Macs — any Mac from ~2020 on. On an older
-> Intel Mac you'll need to [build it yourself](#build-it-yourself) instead.)_
+> _The native version is brand new. Until its first release is out, the downloads
+> on the releases page are the older Electron builds, which work the same way and
+> use the same library, so you can switch whenever._
 
 Then open Lumen, click the **＋** next to **Folders** in the left sidebar, choose the
-folder your music is in, and it scans and sorts everything for you. Double-click a
-song to play.
+folder your music is in, and it scans and sorts everything for you. Click a song to
+play it.
 
 > [!IMPORTANT]
 > **The first time you open it, your computer might warn you** that the app is from an
-> "unknown"/"unidentified" developer, or try to block it. **This is expected** —
-> Lumen is free, open-source software (FOSS) that isn't signed with a paid Apple/Microsoft
-> developer certificate. It's safe to open; you just have to tell your computer to
-> allow it **once**. Pick your system below for the exact clicks.
+> "unknown"/"unidentified" developer, or try to block it. **This is expected.**
+> Lumen is free, open-source software (FOSS) that isn't signed with a paid Apple or
+> Microsoft developer certificate. It's safe to open; you just have to tell your
+> computer to allow it **once**. Pick your system below for the exact clicks.
 
 <details>
 <summary><strong>🪟 Windows easy install </strong></summary>
@@ -97,7 +101,7 @@ song to play.
 1. Double-click the downloaded **`Lumen-x.y.z-Setup.exe`**.
 2. A blue box may appear: **"Windows protected your PC."** Click the small
    **More info** link, then the **Run anyway** button that appears.
-3. The installer opens — click through it (Next → Install). Lumen then launches and
+3. The installer opens. Click through it (Next → Install). Lumen then launches and
    adds itself to your Start menu and desktop.
 
 </details>
@@ -108,12 +112,11 @@ song to play.
 1. Open the downloaded **`.dmg`**, then drag the **Lumen** icon onto the
    **Applications** folder shown next to it.
 2. Open **Applications** and double-click **Lumen**. macOS will refuse the first time
-   ("Apple could not verify…" / "unidentified developer") — that's the expected
+   ("Apple could not verify…" / "unidentified developer"). That's the expected
    one-time prompt.
 3. Open the Apple menu (top-left of the screen) → **System Settings → Privacy &
-   Security**, scroll down to the
-   message about Lumen being blocked, and click **Open Anyway** → **Open**. Lumen
-   now opens normally every time after this.
+   Security**, scroll down to the message about Lumen being blocked, and click
+   **Open Anyway** → **Open**. Lumen opens normally every time after this.
    - _Older macOS, or no "Open Anyway" button?_ **Right-click** (or Control-click)
      the **Lumen** app → **Open** → **Open**.
    - _If it says "Lumen is damaged and can't be opened"_ (can happen to downloaded
@@ -131,7 +134,7 @@ song to play.
 **AppImage** (works on any distro, nothing to install):
 
 1. Download **`Lumen-x.y.z-linux-x86_64.AppImage`**.
-2. Make it runnable — either right-click → **Properties → Permissions → "Allow
+2. Make it runnable: either right-click → **Properties → Permissions → "Allow
    executing file as program"**, or in a terminal:
    ```bash
    chmod +x ~/Downloads/Lumen-*.AppImage
@@ -145,118 +148,64 @@ software centre, or `sudo apt install ./Lumen-*.deb`. I also use debian. We are 
 
 </details>
 
+### Coming from the Electron version?
+
+Nothing to move. Both versions use the same library file, so your songs, playlists,
+edits, covers and listening stats are all there when you open the new one.
+
 ## Build it yourself
 
 > Only do this if you want to modify Lumen, or there isn't a pre-built download for
 > your platform yet. Or if have immeasurable levels of swag.
->  If you just want to listen, use the downloads above instead,> you don't need
->  any of this.
+> If you just want to listen, use the downloads above instead; you don't need
+> any of this.
 
 ### Prerequisites
 
-- **[Git](https://git-scm.com/)** and **[Node.js](https://nodejs.org/) 18 or newer** —
-  **20 LTS is recommended**, because it matches the Node ABI that Electron 33 bundles
-  and avoids the rebuild workaround below. `npm` comes with Node. Check with
-  `node -v` and `npm -v`.
-- A **C/C++ build toolchain.** The library index uses `better-sqlite3`, a native
-  module that is compiled against Electron when you install, so a compiler must be
-  present on every platform:
-  - **macOS** — Xcode Command Line Tools: `xcode-select --install`
-  - **Debian / Ubuntu** — `sudo apt install build-essential python3` (and, to *run*
-    the app on a minimal install, the usual desktop libs: `libgtk-3-0 libnss3 libasound2`)
-  - **Windows** — the *“Desktop development with C++”* workload from the
-    [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+- **[Git](https://git-scm.com/)** and **[Rust](https://rustup.rs/)** (stable, 1.95 or
+  newer).
+- **libmpv**, which does the actual playing:
+  - **macOS**: `brew install mpv` (and `brew install dylibbundler` if you want to
+    package a `.app`)
+  - **Debian / Ubuntu**: `sudo apt install libmpv-dev`
+  - **Fedora**: `sudo dnf install mpv-libs-devel`
+  - **Windows**: download an mpv dev build (e.g. from
+    [shinchiro's builds](https://github.com/shinchiro/mpv-winbuild-cmake/releases),
+    the `mpv-dev-x86_64-*.7z` file), and set `MPV_LIB_DIR` to the folder with
+    `mpv.lib` / `libmpv-2.dll` in it.
 
-### 1. Clone the repo
+### Run it
 
 ```bash
 git clone https://github.com/wumgub/lumen-player.git
-cd lumen-player
+cd lumen-player/rust
+cargo run --release
 ```
 
-### 2. Install dependencies
+Then click **＋** next to *Folders* in the sidebar, pick your music folder, and it
+scans. (The first scan of a big library takes a moment.)
 
-On an LTS Node this is all you need — the `postinstall` step rebuilds
-`better-sqlite3` against Electron's ABI for you:
+### Package it
 
 ```bash
-npm install
+scripts/bundle-macos.sh   # builds target/bundle/Lumen.app with libmpv inside
 ```
 
-<details>
-<summary><strong>Install fails on a newer-than-LTS Node (e.g. 22+), or you see an ABI / <code>NODE_MODULE_VERSION</code> / "Electron uninstall" error → expand</strong></summary>
+The bundled app carries its own copy of libmpv and everything it needs, so it runs
+on a Mac without Homebrew.
 
-A Node that's newer than Electron's bundled runtime ships an ABI that
-`better-sqlite3`'s prebuilt binary doesn't cover, and Electron's own installer can
-mis-extract its binary. Install in two steps instead:
+### How it's put together
 
-```bash
-# Install JS deps WITHOUT the native build scripts (they'd target the wrong ABI)
-npm install --ignore-scripts
+| Part | What it does |
+|------|--------------|
+| `rust/app` | The app and its interface, drawn with [egui](https://github.com/emilk/egui) on OpenGL. |
+| `rust/crates/lumen-core` | The library: the SQLite database, folder scanning ([lofty](https://github.com/Serial-ATA/lofty-rs) for tags), search, stats and themes. |
+| `rust/crates/lumen-playback` | Playback through libmpv (audio, and video drawn right into the window), the queue and shuffle rules, and the analyzer the visualizers draw from. |
+| `rust/crates/lumen-discord` | Discord Rich Presence over Discord's local socket. |
 
-# Compile the native module (better-sqlite3) against Electron's ABI
-npm run rebuild
-```
-
-If `npm run dev` then still complains **"Electron uninstall"**, the Electron binary
-didn't extract. Pull it from the download cache by hand. Match the version
-(**33.4.11**, or whatever `npx electron --version` prints), your **platform**
-(`darwin` macOS / `linux` / `win32`) and **arch** (`arm64` Apple silicon / `x64`):
-
-```bash
-# Where the cache lives:
-#   macOS    ~/Library/Caches/electron
-#   Linux    ~/.cache/electron
-#   Windows  %LOCALAPPDATA%\electron\Cache
-
-# Example — macOS, Apple silicon:
-unzip -q ~/Library/Caches/electron/*/electron-v33.4.11-darwin-arm64.zip -d node_modules/electron/dist
-printf 'Electron.app/Contents/MacOS/Electron' > node_modules/electron/path.txt
-```
-
-The `path.txt` contents differ per platform: `Electron.app/Contents/MacOS/Electron`
-on macOS, `electron` on Linux, `electron.exe` on Windows.
-
-</details>
-
-### 3. Run it
-
-```bash
-npm run dev          # launch in dev mode with hot reload
-```
-
-Then click **＋** next to *Folders* in the sidebar, pick your music directory, and it
-scans. Double-click any track to play. (First launch indexes your library; large
-collections take a moment.)
-
-### Build & package installers
-
-```bash
-npm run build        # bundle main/preload/renderer into out/
-npm run pack:mac     # package a .dmg + .zip      (macOS)   → dist/
-npm run pack:win     # package a Setup.exe        (Windows) → dist/
-npm run pack:linux   # package an AppImage + .deb (Linux)   → dist/
-```
-
-`electron-builder` can only package for the OS you run it on, so build the macOS
-artifacts on macOS, Windows on Windows, and Linux on Linux.
-
-### Cutting a release
-
-The downloads for every platform are built automatically by GitHub Actions
-([`.github/workflows/release.yml`](.github/workflows/release.yml)). Push a version
-tag and it builds the macOS, Windows and Linux installers and attaches them to a new
-GitHub Release:
-
-```bash
-npm version patch         # bumps package.json and creates the matching git tag
-git push --follow-tags    # pushing the tag starts the build + publish
-```
-
-A few minutes later the files appear on the
-[Releases page](https://github.com/wumgub/lumen-player/releases/latest) for everyone
-to download. (The apps are unsigned — see the one-time "unknown developer" note under
-[Install](#install).)
+The old Electron app is still in `src/` for now, until the native one has been out
+for a while. There's more in the wiki's
+[Development guide](https://github.com/wumgub/lumen-player/wiki/Development-guide).
 
 ## Troubleshooting
 
@@ -266,77 +215,63 @@ to download. (The apps are unsigned — see the one-time "unknown developer" not
 Lumen only indexes these extensions:
 `.mp3 .flac .wav .aif .aiff .m4a .aac .ogg .oga .opus` and the video containers
 `.mp4 .m4v .webm .mov`. Anything else (`.wma`, DSD, …) is skipped, as are folders
-it doesn't have permission to read. Fix the files/permissions, then click
+it doesn't have permission to read. Fix the files or permissions, then click
 **Rescan library** at the bottom of the sidebar.
 
 </details>
 
 <details>
-<summary><strong>A track is listed but plays silence</strong></summary>
+<summary><strong>A song shows 0:00 for its length</strong></summary>
 
-The library stores each track's file path. If a file was moved, renamed, or
-deleted after scanning, streaming it fails and you get silence. Re-scan the
-folder so the index matches what's on disk. (In dev, the terminal / DevTools
-console shows a `404` on a `lumen-media://` request when this happens.)
+Some files just don't say how long they are. The first time one plays, Lumen works
+out the real length and remembers it, and rescans won't reset it.
+
+</details>
+
+<details>
+<summary><strong>A track is listed but won't play</strong></summary>
+
+The library stores each track's file path. If a file was moved, renamed or deleted
+after scanning, it can't be found. Rescan so the library matches what's on disk.
 
 </details>
 
 <details>
 <summary><strong>Start the library over from scratch</strong></summary>
 
-The index is a single SQLite file, `library.db`, in Electron's per-user
-app-data folder:
+The library is a single SQLite file, `library.db`, in your app-data folder:
 
 | OS | Path |
 |----|------|
-| macOS | `~/Library/Application Support/<app>/library.db` |
-| Linux | `~/.config/<app>/library.db` |
-| Windows | `%APPDATA%\<app>\library.db` |
+| macOS | `~/Library/Application Support/Lumen/library.db` |
+| Linux | `~/.config/Lumen/library.db` |
+| Windows | `%APPDATA%\Lumen\library.db` |
 
-Quit Lumen and delete that file for an empty library. `<app>` is the app's name
-(`lumen-player` when run from source).
+Quit Lumen and delete that file for an empty library. This also drops your
+playlists, edits and stats.
 
 </details>
 
 <details>
 <summary><strong>Discord Rich Presence isn't showing</strong></summary>
 
-- The **desktop** Discord app must be running and signed in on the same machine
-  — presence talks to its local socket, so the browser version won't do.
+- The **desktop** Discord app must be running and signed in on the same machine.
+  Presence talks to its local socket, so the browser version won't do.
 - In Discord, **Settings → Activity Privacy** must have sharing your detected
   activity enabled, or nothing is shown.
-- In Lumen's ⚙️ settings, set the **Application ID** and toggle the feature on.
-  Note you often won't see your *own* status on your *own* profile — check from
-  another account or the profile pop-out.
-- **Per-track album art** additionally needs the Client Secret and a one-time
-  **Authorize** prompt (see [Discord Rich Presence](#discord-rich-presence)
-  above). If authorization fails it quietly falls back to the `lumen` logo/text
-  and logs `[presence] …` lines in the terminal.
+- In Lumen's ⚙️ settings, set the **Application ID** and switch the feature on.
+  You often won't see your *own* status on your *own* profile; check from another
+  account or the profile pop-out.
 
 </details>
 
 <details>
 <summary><strong>The visualizer uses too much CPU</strong></summary>
 
-It draws to a canvas while a track plays. To lighten or stop it:
+- **⚙️ → Appearance → Visualizer frame rate**: cap it to **30** or **15 fps**.
+- The **switch in the visualizer panel's top-left corner** turns it off entirely.
 
-- **⚙️ → Appearance → Visualizer frame rate** — cap it to **30** or **15 fps**.
-- The **toggle in the visualizer panel's top-left corner** turns it off
-  entirely, which stops the render loop.
-
-It already auto-throttles itself when playback is paused or the window is
-hidden, so the idle cost is low.
-
-</details>
-
-<details>
-<summary><strong><code>npm run dev</code> opens a blank window</strong></summary>
-
-Most often the native module failed to load — look for a `better-sqlite3` /
-`NODE_MODULE_VERSION` error in the terminal and re-run the
-[two-step install](#2-install-dependencies). Opening DevTools
-(<kbd>⌘⌥I</kbd> on macOS, <kbd>Ctrl+Shift+I</kbd> elsewhere) surfaces any
-renderer-side errors.
+When nothing's playing it stops redrawing, so the idle cost is close to nothing.
 
 </details>
 
