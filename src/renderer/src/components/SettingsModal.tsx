@@ -283,7 +283,7 @@ export function SettingsModal({
               </div>
 
               {update.status === 'current' && (
-                <div className="update-line ok">You’re on the latest build.</div>
+                <div className="update-line ok">You’re on the latest version.</div>
               )}
               {update.status === 'error' && (
                 <div className="update-line err">
@@ -295,15 +295,14 @@ export function SettingsModal({
               )}
               {update.status === 'available' && (
                 <div className="update-line avail">
-                  <strong>Update available</strong> — latest <code>{update.latest}</code>
+                  <strong>Update available</strong>: version {update.latest}
                   {fmtDate(update.date) && ` (${fmtDate(update.date)})`}
-                  {update.message ? `: ${update.message}` : ''}.
+                  {update.message ? `, ${update.message}` : ''}.
                   <div className="update-how">
-                    Pull &amp; rebuild from source, or{' '}
                     <a href={update.url} target="_blank" rel="noreferrer">
-                      view the changes on GitHub
+                      Download it from the releases page
                     </a>
-                    .
+                    , or pull &amp; rebuild if you run from source.
                   </div>
                 </div>
               )}

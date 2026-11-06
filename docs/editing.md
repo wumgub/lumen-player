@@ -22,9 +22,8 @@ Some things to know:
   as one album. That's an easy way to merge an album that got split across two spellings.
 - Renaming an artist changes the album artist where a song has one, and the plain artist where
   it doesn't. That's the same name the *Artists* view groups by.
-- **A custom cover doesn't follow an album when you rename it.** Covers are stored against
-  the album's name, so after a rename the album goes back to its default cover, and you'll
-  need to set the custom one again.
+- **A custom cover follows the album when you rename it.** If you rename into an album that
+  already has its own custom cover (a merge), that album's cover is kept.
 
 ## Making an album
 
@@ -93,7 +92,7 @@ Lumen remembers which fields you've changed and never overwrites them from the f
 | Artist name | ✅ |
 | Album (renaming it, adding songs to it, removing songs from it) | ✅ |
 | Track order | ✅ |
-| Album cover | ✅, as long as the album keeps the same name |
+| Album cover | ✅ (and it moves with the album if you rename it) |
 | Notes | ✅ (scans never touch notes) |
 
 Fields you haven't edited keep updating from the file. If you retag the genre or year in

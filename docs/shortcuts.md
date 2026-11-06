@@ -7,18 +7,11 @@ These don't fire while you're typing in a text box.
 | Key | Does |
 |---|---|
 | **Space** | Play / pause |
-| **⌘ →** | Next song (macOS) |
-| **⌘ ←** | Previous song / restart the current one (macOS) |
+| **⌘ →** (macOS) / **Ctrl →** (Windows, Linux) | Next song |
+| **⌘ ←** (macOS) / **Ctrl ←** (Windows, Linux) | Previous song / restart the current one |
 | **f** | Fill the window with the music video if one is showing, otherwise toggle the immersive visualizer |
 | **Esc** | Leave immersive mode or the full-window video |
 | Media keys **⏯ ⏮ ⏭** | Play/pause, previous, next, even while Lumen is in the background |
-
-> [!NOTE]
-> The next/previous shortcuts use the **⌘ / Windows / Super key**, not Ctrl. On Windows and
-> Linux the system usually takes Windows+arrow for window snapping, so use the media keys or
-> the buttons there.
->
-> **f** has to be a lowercase f. With Caps Lock on it does nothing.
 
 ## In dialogs and menus
 

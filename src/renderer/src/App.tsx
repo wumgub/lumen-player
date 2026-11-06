@@ -87,9 +87,10 @@ function Shell(): React.ReactElement {
   }, [current, setArtwork])
 
   // Mirror playback to Discord presence. Only fires on track / play-state /
-  // duration changes (not the per-second tick) to stay under Discord's rate limit;
-  // the progress bar animates itself from the start/end timestamps.
-  useEffect(() => {
+  // duration changes and seeks (not the per-second tick) to stay under Discord's
+  // rate limit; the progress bar animates itself from the start/end timestamps.
+  const sendPresence = useRef<() => void>(() => {})
+  sendPresence.current = () => {
     if (!current) {
       void window.lumen.setPresence(null)
       return
@@ -98,27 +99,50 @@ function Shell(): React.ReactElement {
       title: current.title,
       artist: current.artist,
       album: current.album,
-      isPlaying: player.isPlaying,
+      isPlaying: !player.engine.paused,
       position: player.engine.currentTime,
       duration: player.engine.duration
     })
+  }
+  useEffect(() => {
+    sendPresence.current()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.id, player.isPlaying, player.duration])
+
+  // A seek (including repeat-one looping back to 0:00) moves the position without
+  // any of the above changing, which left Discord's bar running from the old
+  // spot. Re-send after seeks, debounced so dragging the slider sends one update.
+  useEffect(() => {
+    const el = player.engine.el
+    let t: ReturnType<typeof setTimeout> | null = null
+    const onSeeked = (): void => {
+      if (t) clearTimeout(t)
+      t = setTimeout(() => sendPresence.current(), 600)
+    }
+    el.addEventListener('seeked', onSeeked)
+    return () => {
+      el.removeEventListener('seeked', onSeeked)
+      if (t) clearTimeout(t)
+    }
+  }, [player.engine])
 
   // Keyboard shortcuts.
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       const tag = (e.target as HTMLElement)?.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA') return
+      // ⌘ on macOS; Ctrl elsewhere, since Windows/Super+arrow belongs to the
+      // system's window snapping.
+      const mod = window.lumen.platform === 'darwin' ? e.metaKey : e.ctrlKey
       if (e.code === 'Space') {
         e.preventDefault()
         player.togglePlay()
-      } else if (e.code === 'ArrowRight' && e.metaKey) player.next()
-      else if (e.code === 'ArrowLeft' && e.metaKey) player.prev()
+      } else if (e.code === 'ArrowRight' && mod) player.next()
+      else if (e.code === 'ArrowLeft' && mod) player.prev()
       else if (e.key === 'Escape') {
         setImmersive(false)
         setVideoFull(false)
-      } else if (e.key === 'f' && !e.metaKey && !e.ctrlKey) {
+      } else if (e.code === 'KeyF' && !e.metaKey && !e.ctrlKey && !e.altKey) {
         // F fills the window with the music video when one is showing,
         // otherwise it toggles the immersive visualizer.
         if (showingVideo) setVideoFull((v) => !v)

@@ -69,7 +69,7 @@ To add a capability:
 | Edits | `meta:renameTrack` `meta:renameArtist` `meta:renameAlbum` `meta:setTrackAlbum` `meta:setTrackNote` |
 | Albums | `album:reorder` `album:coverFromTrack` `album:coverCustom` `album:clearCover` `album:hasCover` |
 | Playlists | `playlist:list` `playlist:create` `playlist:delete` `playlist:rename` `playlist:reorder` `playlist:add` `playlist:remove` `playlist:tracks` |
-| Stats | `stats:recordPlay` `stats:history` `stats:clear` |
+| Stats | `stats:recordPlay` `stats:recordPlaySync` (a synchronous `ipcMain.on`, used on unload) `stats:history` `stats:clear` |
 | Settings | `settings:get` `settings:set` (also reconfigures presence) |
 | Presence | `presence:set` |
 | App | `app:info` `app:checkForUpdate` |
@@ -122,8 +122,10 @@ the tags. `note` and `albumPos` are never written by the scanner, so they don't 
 - "Effective artist" = `albumArtist` if non-empty, else `artist`. This is used by
   `listArtists()`, the artist filter in `queryTracks()`, and `renameArtist()`.
 - Albums group on `album` alone, and empty albums are excluded from `listAlbums()`.
-- Search is `LIKE '%term%'` across title, artist, album and note. SQLite's `LIKE` only folds
-  ASCII case.
+- Search is `instr(fold(column), fold(term))` across title, artist, album and note. `fold()`
+  is a JS function registered on the connection (`foldText()`: NFKD, strip combining marks,
+  lower-case), because SQLite's own `LIKE`/`lower()` only fold ASCII. `instr` also means a typed
+  `%` or `_` is matched literally.
 
 ### Scanning
 
@@ -153,7 +155,7 @@ end 1.5 s later, it emits `ended` itself.
 `PlayerContext` holds the queue, index, shuffle and repeat. It mirrors them into a ref so the
 engine callbacks (registered once) always see current state. It also accrues listening time
 for stats: forward progress under 2 s per tick counts, a jump back to near 0 banks the pass,
-and a listen is flushed on track change if it's at least 5 s. It's `counted` once it reaches
+and a listen is flushed on track change (or synchronously on `beforeunload`) if it's at least 5 s. It's `counted` once it reaches
 `min(duration / 2, 240 s)`. It also drives `navigator.mediaSession` for media keys and the OS
 widget.
 
@@ -184,7 +186,8 @@ each built-in theme in `themes.css`.
 
 `PresenceManager` (`presence.ts`) connects lazily over the local Discord IPC socket. It sends a
 `LISTENING` activity with start/end timestamps, and clears it when there's no track. The
-renderer only calls `presence:set` on track, play-state and duration changes, never per second.
+renderer only calls `presence:set` on track, play-state and duration changes, and (debounced)
+after `seeked`. Never per second.
 
 If the connection drops for a reason other than Lumen closing it (`intentionalClose`), or a
 connect attempt fails, `scheduleReconnect()` arms a single timer with exponential backoff from
@@ -198,8 +201,8 @@ currently expose `discordClientSecret`, so this path only runs if it's set in th
 ## Build stamping and update check
 
 `electron.vite.config.ts` bakes the short git SHA and build time into main as
-`__APP_COMMIT__` / `__APP_BUILD_DATE__`. **Check for updates** compares that SHA to the head of
-`main` through the GitHub API.
+`__APP_COMMIT__` / `__APP_BUILD_DATE__`, which Settings → About shows. **Check for updates**
+compares `app.getVersion()` with the newest release's tag (`/releases/latest` on the GitHub API).
 
 ## Scripts
 

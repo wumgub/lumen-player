@@ -60,15 +60,11 @@ Removing a folder only stops future scans. The songs stay while their files exis
 The files were probably moved or renamed on disk, so Lumen treats them as new songs
 ([more](library.md#moving-and-renaming-files)).
 
-**My custom album cover disappeared.**
-Did you rename the album? Covers are tied to the album name, so set it again after renaming.
-
 ## Search
 
 **Searching doesn't find a song I know is there.**
-Outside plain English letters, search cares about upper and lower case, so `кино` won't
-match `Кино`. Match the capitals, or add a [note](browsing.md#notes) with something easier to
-type.
+Search looks at the title, artist, album and note only, not the file name or the folder. If the
+tags are odd, add a [note](browsing.md#notes) with the words you'd search for.
 
 ## Playback
 
@@ -76,8 +72,7 @@ type.
 This was fixed in 0.2.3. Update to the latest release.
 
 **Next/previous keyboard shortcuts don't work on Windows/Linux.**
-They're ⌘/Windows-key shortcuts, which the system usually takes for itself. Use the media keys
-([Shortcuts](shortcuts.md)).
+Use **Ctrl ←/→** (before 0.2.6 they used the Windows key, which the system grabs).
 
 **The volume is way too loud or distorted.**
 The volume slider goes up to 150%. Anything past about two-thirds of the slider is a boost.
@@ -106,6 +101,10 @@ Go down this list:
 4. In Lumen, presence is switched on, the Application ID is pasted, and you clicked **Save**.
 5. Check from a friend's view. You often can't see your own activity.
 
+**The progress bar on Discord is wrong after skipping around in a song, or runs past the end on
+repeat.**
+Fixed in 0.2.6. Presence is now re-sent after every seek and repeat-one loop.
+
 **It worked, then stopped after Discord restarted.**
 Lumen reconnects by itself within about a minute. On versions older than 0.2.4 it didn't, so
 update, or restart Lumen.
@@ -117,9 +116,8 @@ portal, and give it a few minutes ([setup](discord.md#2-add-the-artwork-recommen
 ## Settings
 
 **"Check for updates" says there's an update, but I have the newest release.**
-It compares commits, not releases, so small changes such as docs updates trigger it. Check the
-[releases page](https://github.com/wumgub/lumen-player/releases/latest); if there's no newer
-version number there, you're fine.
+Versions before 0.2.6 compared commits rather than releases, so docs changes set it off.
+Update once and it'll compare against releases from then on.
 
 ## Running from source
 

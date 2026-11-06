@@ -26,8 +26,7 @@ Lumen keeps track of how long you actually listen to each song:
 - Shorter listens still add to **listening time**, just not to the play count.
 - Each pass of a song on **repeat one** is counted separately.
 
-The song playing when you quit Lumen may not be saved, because listens are saved when the song
-changes.
+The song that's playing when you close the window or quit Lumen is saved too.
 
 ## Privacy and clearing history
 
