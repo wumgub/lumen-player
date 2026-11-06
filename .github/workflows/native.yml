@@ -63,13 +63,16 @@ jobs:
           { echo "LIBRARY libmpv-2.dll"; echo "EXPORTS"; cat names.txt; } > mpv/mpv.def
           wc -l names.txt
           lib //nologo //def:mpv/mpv.def //out:mpv/mpv.lib //machine:x64
+      # PowerShell, not bash: Git's bash puts its own `link` ahead of MSVC's
+      # link.exe on the PATH.
       - name: Build
         working-directory: rust
-        shell: bash
+        shell: pwsh
         env:
           MPV_LIB_DIR: ${{ github.workspace }}\mpv
         run: |
           cargo build --release -p lumen
+          if ($LASTEXITCODE -ne 0) { exit 1 }
           cargo test --release -p lumen-core -p lumen-discord
       - name: Installer
         shell: bash
