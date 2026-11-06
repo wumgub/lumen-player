@@ -135,8 +135,10 @@ impl Gl {
                 return;
             }
             let previous = gl.get_parameter_i32(glow::FRAMEBUFFER_BINDING);
-            // egui samples textures top row first, so have mpv flip.
-            if let Err(e) = self.render.render(self.fbo.0.get() as i32, w, h, true) {
+            // mpv's unflipped output already lands the right way up in a
+            // texture egui samples top-down. (flip_y is for drawing straight
+            // to the window.)
+            if let Err(e) = self.render.render(self.fbo.0.get() as i32, w, h, false) {
                 log::warn!("video: {e}");
             }
             // Put back what egui expects; mpv leaves its own state behind.

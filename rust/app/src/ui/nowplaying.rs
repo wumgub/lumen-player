@@ -24,7 +24,7 @@ pub fn show(app: &mut LumenApp, ui: &mut Ui, frame: &mut eframe::Frame) {
         return;
     };
     let media = Rect::from_center_size(pos2(cx, y + 75.0), vec2(150.0, 150.0));
-    if t.is_video && app.prefs.video_mode && !app.video_full && app.snap.has_video {
+    if t.is_video && app.prefs.video_mode && !app.video_full {
         let wide = Rect::from_min_size(pos2(area.left(), y), vec2(area.width(), area.width() * 9.0 / 16.0));
         ui.painter().rect_filled(wide, 8.0, Color32::BLACK);
         if let Some(v) = app.video.as_mut() {

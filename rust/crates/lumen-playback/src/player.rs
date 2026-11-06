@@ -423,6 +423,7 @@ fn replan(mpv: &Mpv, s: &mut Inner) {
     let planned = s.queue.peek_next(true).or_else(|| s.queue.plan_shuffle_next());
     let Some(index) = planned else { return };
     let Some(item) = s.queue.items().get(index).cloned() else { return };
+    log::debug!("planning {} next: {}", index, item.path);
     if mpv.command(&["loadfile", &item.path, "append"]).is_ok()
         && let Some(entry) = mpv.get_i64("playlist/1/id")
     {
@@ -433,6 +434,9 @@ fn replan(mpv: &Mpv, s: &mut Inner) {
 fn event_loop(mpv: Arc<Mpv>, inner: Arc<Mutex<Inner>>, on_event: Callback, notify: Notify) {
     loop {
         let Some(ev) = mpv.wait_event(-1.0) else { continue };
+        if matches!(ev, Event::StartFile { .. } | Event::EndFile { .. } | Event::FileLoaded) {
+            log::debug!("mpv event {ev:?}");
+        }
         match ev {
             Event::Shutdown => break,
             Event::Log { prefix, level, text } => {
@@ -522,6 +526,11 @@ fn event_loop(mpv: Arc<Mpv>, inner: Arc<Mutex<Inner>>, on_event: Callback, notif
                     s.paused = p;
                     s.pos_at = Instant::now();
                 }
+            }
+            // vo-configured only reports changes, and it can stay true from one
+            // video to the next, so ask again whenever a file or its video changes.
+            Event::FileLoaded | Event::VideoReconfig => {
+                inner.lock().has_video = mpv.get_flag("vo-configured").unwrap_or(false);
             }
             Event::Property { id: P_VIDEO, value, .. } => {
                 inner.lock().has_video = value == Value::Flag(true);

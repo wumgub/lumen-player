@@ -110,6 +110,7 @@ pub struct LumenApp {
     pub drag_playlist: Option<usize>,
     pub editor: crate::ui::theme_editor::EditorState,
     healed: Option<i64>,
+    video_on: Option<bool>,
 
     pub presence: lumen_discord::Presence,
     presence_key: Option<(Option<i64>, bool, i64)>,
@@ -228,6 +229,7 @@ impl LumenApp {
             drag_playlist: None,
             editor: Default::default(),
             healed: None,
+            video_on: None,
             presence,
             presence_key: None,
             presence_pos: (0.0, Instant::now()),
@@ -347,6 +349,13 @@ impl LumenApp {
         self.art.want_backdrop(if wants_backdrop { cur } else { None });
         if !self.snap.has_video_track() {
             self.video_full = false;
+        }
+        // Only decode video while something shows it (the panel's Video mode or
+        // the full-window view); otherwise mpv plays just the sound.
+        let want_video = self.snap.has_video_track() && (self.video_full || (self.prefs.video_mode && !self.immersive));
+        if self.video_on != Some(want_video) {
+            self.video_on = Some(want_video);
+            let _ = self.player.mpv().set_string("vid", if want_video { "auto" } else { "no" });
         }
 
         // Media keys and the OS "Now Playing" widget.
