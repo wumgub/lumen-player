@@ -37,6 +37,7 @@ pub fn show(app: &mut LumenApp, ctx: &egui::Context) {
         });
     if m.should_close() || m.inner {
         let _ = app.lib.db.save_app_settings(&app.settings);
+        app.configure_presence();
         app.settings_open = false;
         app.confirm_clear_stats = false;
     }

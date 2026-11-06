@@ -11,6 +11,7 @@ env_logger = "0.11"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp", "gif", "bmp"] }
 log = "0.4"
 lumen-core = { version = "0.3.0", path = "../crates/lumen-core" }
+lumen-discord = { version = "0.3.0", path = "../crates/lumen-discord" }
 lumen-playback = { path = "../crates/lumen-playback" }
 memmap2 = "0.9"
 parking_lot = "0.13"

@@ -2142,6 +2142,7 @@ dependencies = [
  "image",
  "log",
  "lumen-core",
+ "lumen-discord",
  "lumen-playback",
  "memmap2",
  "parking_lot 0.13.0",
@@ -2166,6 +2167,14 @@ dependencies = [
  "tempfile",
  "unicode-normalization",
  "walkdir",
+]
+
+[[package]]
+name = "lumen-discord"
+version = "0.3.0"
+dependencies = [
+ "log",
+ "serde_json",
 ]
 
 [[package]]

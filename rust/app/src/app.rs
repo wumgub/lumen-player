@@ -111,6 +111,10 @@ pub struct LumenApp {
     pub editor: crate::ui::theme_editor::EditorState,
     healed: Option<i64>,
 
+    pub presence: lumen_discord::Presence,
+    presence_key: Option<(Option<i64>, bool, i64)>,
+    presence_pos: (f64, Instant),
+    presence_resend: Option<Instant>,
     media: Option<souvlaki::MediaControls>,
     media_rx: Receiver<souvlaki::MediaControlEvent>,
     media_last: Option<(Option<i64>, bool, i64)>,
@@ -170,6 +174,8 @@ impl LumenApp {
         });
 
         let art = ArtCache::new(db_path, cc.egui_ctx.clone());
+        let presence = lumen_discord::Presence::new();
+        presence.configure(settings.discord_enabled, &settings.discord_client_id, &settings.discord_large_image_key);
         let view = match opts.view.as_deref() {
             Some("artists") => View::Artists,
             Some("albums") => View::Albums,
@@ -219,6 +225,10 @@ impl LumenApp {
             drag_playlist: None,
             editor: Default::default(),
             healed: None,
+            presence,
+            presence_key: None,
+            presence_pos: (0.0, Instant::now()),
+            presence_resend: None,
             media,
             media_rx,
             media_last: None,
@@ -375,6 +385,8 @@ impl LumenApp {
             }
         }
 
+        self.sync_presence();
+
         if self.lib.poll_scan() {
             self.art.invalidate();
         }
@@ -392,6 +404,44 @@ impl LumenApp {
         if self.prefs != self.prefs_saved {
             self.prefs.save(&self.lib.db);
             self.prefs_saved = self.prefs.clone();
+        }
+    }
+
+    /// Re-apply the Discord settings after they change.
+    pub fn configure_presence(&mut self) {
+        let s = &self.settings;
+        self.presence.configure(s.discord_enabled, &s.discord_client_id, &s.discord_large_image_key);
+        self.presence_key = None;
+    }
+
+    /// Tell Discord about track, play/pause and duration changes, and about
+    /// seeks (debounced, so dragging the slider sends one update), but not
+    /// the per-second tick: its progress bar runs itself from timestamps.
+    fn sync_presence(&mut self) {
+        let cur = self.snap.current.as_ref().map(|c| c.track_id);
+        let playing = !self.snap.paused;
+        let key = (cur, playing, self.snap.duration.round() as i64);
+        let (pos, at) = self.presence_pos;
+        let expected = if playing { pos + at.elapsed().as_secs_f64() } else { pos };
+        if self.presence_key == Some(key) && (self.snap.position - expected).abs() > 2.0 && self.presence_resend.is_none() {
+            self.presence_resend = Some(Instant::now() + Duration::from_millis(600));
+        }
+        let due = self.presence_resend.is_some_and(|t| t <= Instant::now());
+        if self.presence_key != Some(key) || due {
+            self.presence_key = Some(key);
+            self.presence_resend = None;
+            self.presence_pos = (self.snap.position, Instant::now());
+            let payload = cur.and_then(|id| self.lib.db.track(id).ok().flatten()).filter(|_| !self.snap.stopped).map(|t| lumen_discord::Payload {
+                title: t.title,
+                artist: t.artist,
+                album: t.album,
+                playing,
+                position: self.snap.position,
+                duration: self.snap.duration,
+            });
+            self.presence.update(payload);
+        } else if self.presence_resend.is_none() {
+            self.presence_pos = (self.snap.position, Instant::now());
         }
     }
 
@@ -543,6 +593,7 @@ impl eframe::App for LumenApp {
             v.destroy(gl);
         }
         self.prefs.save(&self.lib.db);
+        self.presence.update(None);
     }
 
     fn clear_color(&self, _visuals: &egui::Visuals) -> [f32; 4] {

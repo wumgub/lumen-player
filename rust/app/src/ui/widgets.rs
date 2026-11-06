@@ -21,6 +21,13 @@ pub fn galley(ui: &Ui, text: &str, font: FontId, color: Color32, max_width: f32)
     ui.painter().layout_job(job)
 }
 
+/// Text wrapped to at most `rows` lines, the last ending in "…" if cut.
+pub fn galley_rows(ui: &Ui, text: &str, font: FontId, color: Color32, max_width: f32, rows: usize) -> Arc<Galley> {
+    let mut job = LayoutJob::single_section(text.to_owned(), TextFormat::simple(font, color));
+    job.wrap = TextWrapping { max_width: max_width.max(1.0), max_rows: rows, break_anywhere: false, overflow_character: Some('…') };
+    ui.painter().layout_job(job)
+}
+
 /// One line of text at `pos` (left-top), cut with "…" at `max_width`.
 pub fn text(ui: &Ui, pos: Pos2, s: &str, font: FontId, color: Color32, max_width: f32) -> Rect {
     let g = galley(ui, s, font, color, max_width);
@@ -333,4 +340,22 @@ pub fn tooltip(resp: Response, text: &str) -> Response {
 
 pub fn size(w: f32, h: f32) -> Vec2 {
     vec2(w, h)
+}
+
+/// A circle filled with a 135° gradient from `a` to `b` (`.card-circle`).
+pub fn gradient_circle(ui: &Ui, center: Pos2, radius: f32, a: Color32, b: Color32) {
+    let mut mesh = Mesh::default();
+    mesh.colored_vertex(center, mix(a, b, 0.5));
+    const N: u32 = 64;
+    for k in 0..=N {
+        let ang = k as f32 / N as f32 * std::f32::consts::TAU;
+        let d = vec2(ang.cos(), ang.sin());
+        // Position along the top-left to bottom-right diagonal, 0..1.
+        let t = ((d.x + d.y) / std::f32::consts::SQRT_2 * 0.5 + 0.5).clamp(0.0, 1.0);
+        mesh.colored_vertex(center + d * radius, mix(a, b, t));
+        if k > 0 {
+            mesh.add_triangle(0, k, k + 1);
+        }
+    }
+    ui.painter().add(Shape::mesh(mesh));
 }
