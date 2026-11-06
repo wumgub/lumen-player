@@ -3,3 +3,5 @@
 
 pub mod analyzer;
 pub mod mpv;
+pub mod player;
+pub mod queue;
