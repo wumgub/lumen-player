@@ -1,4 +1,4 @@
-//! The custom theme editor (ThemeEditor.tsx): start from a built-in theme,
+//! The custom theme editor: start from a built-in theme,
 //! pick every colour and the font, and share it as the same JSON the other
 //! Lumen apps read.
 

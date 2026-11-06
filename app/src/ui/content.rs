@@ -1,4 +1,4 @@
-//! The middle of the window (LibraryView.tsx): a view's header with sort,
+//! The middle of the window: a view's header with sort,
 //! Edit and Play all; the track list with edit mode (multi-select, or drag to
 //! reorder an album) and the selection bar; and the artist and album grids.
 

@@ -1,4 +1,4 @@
-//! The sidebar (Sidebar.tsx): library views, playlists you can drag into
+//! The sidebar: library views, playlists you can drag into
 //! order, music folders, and the rescan button with its progress.
 
 use eframe::egui::{self, FontId, Id, Rect, Sense, Stroke, StrokeKind, Ui, pos2, vec2};
