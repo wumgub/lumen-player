@@ -89,9 +89,11 @@ fn upsert_in(tx: &Connection, t: &UpsertTrack) -> Result<(i64, bool)> {
             let keep = |bit: i64, old: &str, new: &str| -> String {
                 if locked & bit != 0 { old.to_owned() } else { new.to_owned() }
             };
+            // A file that doesn't say how long it is keeps the length learned on playback.
             tx.execute(
                 "UPDATE tracks SET title=?1, artist=?2, albumArtist=?3, album=?4, genre=?5,
-                 year=?6, trackNo=?7, discNo=?8, duration=?9, hasArt=?10, isVideo=?11
+                 year=?6, trackNo=?7, discNo=?8,
+                 duration=CASE WHEN ?9 > 0 THEN ?9 ELSE duration END, hasArt=?10, isVideo=?11
                  WHERE path=?12",
                 params![
                     keep(L_TITLE, title, &t.title),
@@ -287,6 +289,12 @@ impl Library {
         let r = tracks.iter().map(|t| upsert_in(&tx, t)).collect::<Result<Vec<_>>>()?;
         tx.commit()?;
         Ok(r)
+    }
+
+    /// Fill in a length the tags didn't have (mpv works it out on playback).
+    pub fn set_duration(&self, id: i64, seconds: f64) -> Result<()> {
+        self.conn.execute("UPDATE tracks SET duration = ? WHERE id = ? AND duration <= 0", params![seconds, id])?;
+        Ok(())
     }
 
     pub fn track(&self, id: i64) -> Result<Option<Track>> {

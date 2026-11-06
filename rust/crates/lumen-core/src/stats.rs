@@ -54,6 +54,12 @@ fn monday_of(ms: i64) -> NaiveDate {
     d - Duration::days(d.weekday().num_days_from_monday() as i64)
 }
 
+/// The local (month, day) of an epoch-ms time, for chart labels.
+pub fn local_month_day(ms: i64) -> (u32, u32) {
+    let d = Local.timestamp_millis_opt(ms).earliest().map(|t| t.date_naive()).unwrap_or_default();
+    (d.month(), d.day())
+}
+
 /// Monday 00:00 (local) of the week containing `ms`.
 pub fn week_start(ms: i64) -> i64 {
     local_midnight(monday_of(ms))
