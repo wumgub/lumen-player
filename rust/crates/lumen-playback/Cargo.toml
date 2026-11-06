@@ -1,0 +1,16 @@
+[package]
+name = "lumen-playback"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+crossbeam-channel = "0.5"
+log = "0.4"
+parking_lot = "0.13"
+realfft = "3"
+symphonia = { version = "0.6", default-features = false, features = ["opt-simd", "all-codecs", "all-formats"] }
+
+[build-dependencies]
+pkg-config = "0.3"
