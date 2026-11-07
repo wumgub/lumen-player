@@ -390,6 +390,20 @@ impl Library {
         q.query_map([], |r| r.get(0))?.collect()
     }
 
+    /// Every track's id, path, title (as the tags or the user named it) and length,
+    /// for the scanner to recognise files that moved.
+    pub fn path_index(&self) -> Result<Vec<(i64, String, String, f64)>> {
+        let mut q = self.conn.prepare("SELECT id, path, title, duration FROM tracks")?;
+        q.query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)))?.collect()
+    }
+
+    /// Point a track at the file's new location, keeping everything attached to it
+    /// (plays, playlists, edits, notes).
+    pub fn move_track(&self, id: i64, path: &str) -> Result<()> {
+        self.conn.execute("UPDATE tracks SET path = ? WHERE id = ?", params![path, id])?;
+        Ok(())
+    }
+
     /// Delete every track whose path isn't in `keep`. Returns how many went.
     pub fn remove_missing(&self, keep: &HashSet<String>) -> Result<usize> {
         let tx = self.conn.unchecked_transaction()?;
