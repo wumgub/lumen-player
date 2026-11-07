@@ -311,26 +311,26 @@ mod gpu {
     use std::collections::HashMap;
 
     use windows_sys::Win32::System::Performance::{
-        PDH_FMT_COUNTERVALUE_ITEM_W, PDH_FMT_DOUBLE, PDH_MORE_DATA, PdhAddEnglishCounterW, PdhCloseQuery, PdhCollectQueryData,
-        PdhGetFormattedCounterArrayW,
+        PDH_FMT_COUNTERVALUE_ITEM_W, PDH_FMT_DOUBLE, PDH_HCOUNTER, PDH_HQUERY, PDH_MORE_DATA, PdhAddEnglishCounterW, PdhCloseQuery,
+        PdhCollectQueryData, PdhGetFormattedCounterArrayW, PdhOpenQueryW,
     };
 
     pub struct Gpu {
-        query: isize,
-        counter: isize,
+        query: PDH_HQUERY,
+        counter: PDH_HCOUNTER,
         prefix: String,
     }
 
     impl Gpu {
         pub fn new() -> Gpu {
-            let mut g = Gpu { query: 0, counter: 0, prefix: format!("pid_{}_", std::process::id()) };
+            let mut g = Gpu { query: std::ptr::null_mut(), counter: std::ptr::null_mut(), prefix: format!("pid_{}_", std::process::id()) };
             let path: Vec<u16> = "\\GPU Engine(*)\\Utilization Percentage".encode_utf16().chain([0]).collect();
             // Safety: PDH fills in the handles; the path is NUL-terminated UTF-16.
             unsafe {
-                if windows_sys::Win32::System::Performance::PdhOpenQueryW(std::ptr::null(), 0, &mut g.query) != 0
+                if PdhOpenQueryW(std::ptr::null(), 0, &mut g.query) != 0
                     || PdhAddEnglishCounterW(g.query, path.as_ptr(), 0, &mut g.counter) != 0
                 {
-                    g.counter = 0;
+                    g.counter = std::ptr::null_mut();
                 }
                 PdhCollectQueryData(g.query);
             }
@@ -338,7 +338,7 @@ mod gpu {
         }
 
         pub fn percent(&mut self) -> Option<f32> {
-            if self.counter == 0 {
+            if self.counter.is_null() {
                 return None;
             }
             // Safety: the buffer is sized by PDH's first call and holds `count` items.
@@ -347,9 +347,7 @@ mod gpu {
                     return None;
                 }
                 let (mut size, mut count) = (0u32, 0u32);
-                if PdhGetFormattedCounterArrayW(self.counter, PDH_FMT_DOUBLE, &mut size, &mut count, std::ptr::null_mut()) as u32
-                    != PDH_MORE_DATA
-                {
+                if PdhGetFormattedCounterArrayW(self.counter, PDH_FMT_DOUBLE, &mut size, &mut count, std::ptr::null_mut()) != PDH_MORE_DATA {
                     return None;
                 }
                 let mut buf = vec![0u64; (size as usize).div_ceil(8)];
