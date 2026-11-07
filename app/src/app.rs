@@ -37,7 +37,6 @@ pub struct Opts {
 }
 
 pub enum RenameKind {
-    Song(i64),
     Artist(String),
     Album(String),
     Playlist(i64),
@@ -46,11 +45,26 @@ pub enum RenameKind {
 pub enum Dialog {
     Rename { kind: RenameKind, title: &'static str, label: &'static str, text: String, initial: String },
     NewPlaylist { text: String, placeholder: String, add: Vec<i64> },
-    Note { track: i64, title: String, text: String },
+    /// The song menu's Edit song…: title, artist, album and note together.
+    EditSong(Box<SongEdit>),
     AlbumPicker { tracks: Vec<i64>, text: String },
     Cover { album: String },
     CoverFromSong { album: String, text: String },
     DeletePlaylist { id: i64, name: String },
+}
+
+pub struct SongEdit {
+    pub track: Track,
+    pub title: String,
+    pub artist: String,
+    pub album: String,
+    pub note: String,
+}
+
+impl SongEdit {
+    pub fn new(t: &Track) -> SongEdit {
+        SongEdit { track: t.clone(), title: t.title.clone(), artist: t.artist.clone(), album: t.album.clone(), note: t.note.clone() }
+    }
 }
 
 pub struct ContextMenu {
@@ -260,6 +274,9 @@ impl LumenApp {
             let q = q.to_lowercase();
             let all = app.lib.all_tracks();
             if let Some(i) = all.iter().position(|t| t.title.to_lowercase().contains(&q)) {
+                if app.opts.open.as_deref() == Some("edit-song") {
+                    app.dialog = Some(Dialog::EditSong(Box::new(SongEdit::new(&all[i]))));
+                }
                 app.play_tracks(&all, i);
                 if let Some(s) = app.opts.seek {
                     std::thread::sleep(Duration::from_millis(150));

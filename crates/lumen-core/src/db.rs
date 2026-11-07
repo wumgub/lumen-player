@@ -424,6 +424,21 @@ impl Library {
         Ok(())
     }
 
+    /// Set one track's artist, leaving every other track alone. An album
+    /// artist that matched the old artist follows it, so the track moves to
+    /// the new name in Artists too.
+    pub fn set_track_artist(&self, id: i64, artist: &str) -> Result<()> {
+        self.conn.execute(
+            "UPDATE tracks SET
+               albumArtist = CASE WHEN albumArtist = artist THEN ?1 ELSE albumArtist END,
+               artist = ?1,
+               locked = locked | ?2
+             WHERE id = ?3",
+            params![artist, L_ARTIST, id],
+        )?;
+        Ok(())
+    }
+
     /// Rename the effective artist (album artist when set, else artist) for the
     /// whole group.
     pub fn rename_artist(&self, old: &str, new: &str) -> Result<()> {
@@ -784,6 +799,19 @@ mod tests {
         assert_eq!(t.title, "My Title");
         assert_eq!(t.album, "My Album");
         assert_eq!(t.artist, "Tag Artist 2"); // not renamed, so it follows the tags
+    }
+
+    #[test]
+    fn a_songs_artist_changes_only_that_song() {
+        let lib = Library::open_in_memory().unwrap();
+        let (a, _) = lib.upsert_track(&song("/m/a.mp3", "A", "", "")).unwrap();
+        let (b, _) = lib.upsert_track(&song("/m/b.mp3", "B", "", "")).unwrap();
+        lib.set_track_artist(a, "Кино").unwrap();
+        assert_eq!(lib.track(a).unwrap().unwrap().artist, "Кино");
+        assert_eq!(lib.track(b).unwrap().unwrap().artist, "");
+        // Locked, so a rescan keeps it.
+        lib.upsert_track(&song("/m/a.mp3", "A", "", "")).unwrap();
+        assert_eq!(lib.track(a).unwrap().unwrap().artist, "Кино");
     }
 
     #[test]
