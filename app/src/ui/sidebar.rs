@@ -103,8 +103,8 @@ pub fn show(app: &mut LumenApp, ui: &mut Ui) {
                 // Rename and delete appear over the right edge on hover.
                 let del = Rect::from_center_size(pos2(rect.right() - 14.0, rect.center().y), vec2(22.0, 22.0));
                 let ren = del.translate(vec2(-24.0, 0.0));
-                let rr = ui.interact(ren, Id::new(("pl-rename", pl.id)), Sense::click());
-                let dr = ui.interact(del, Id::new(("pl-delete", pl.id)), Sense::click());
+                let rr = ui.interact(ren, Id::unique(("pl-rename", pl.id)), Sense::click());
+                let dr = ui.interact(del, Id::unique(("pl-delete", pl.id)), Sense::click());
                 for (r, b, svg) in [(ren, &rr, icons::PENCIL), (del, &dr, icons::CLOSE)] {
                     if b.hovered() {
                         ui.painter().rect_filled(r, 5.0, p.bg3_solid());
@@ -174,7 +174,7 @@ pub fn show(app: &mut LumenApp, ui: &mut Ui) {
             let name = std::path::Path::new(f).file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_else(|| f.clone());
             widgets::text_v(ui, rect.left() + 30.0, rect.center().y, &name, FontId::proportional(13.0), if active { p.fg } else { p.fg_dim }, rect.width() - 60.0);
             let x = Rect::from_center_size(pos2(rect.right() - 14.0, rect.center().y), vec2(22.0, 22.0));
-            let xr = ui.interact(x, Id::new(("folder-x", f)), Sense::click());
+            let xr = ui.interact(x, Id::unique(("folder-x", f)), Sense::click());
             if resp.hovered() || xr.hovered() {
                 icon::paint_centered(ui, icons::CLOSE, x, 12.0, if xr.hovered() { p.fg } else { p.fg_dim });
             }
@@ -209,7 +209,7 @@ pub fn show(app: &mut LumenApp, ui: &mut Ui) {
         ui.ctx().request_repaint();
     } else {
         let btn = Rect::from_min_size(pos2(foot.left(), foot.top() + 12.0), vec2(foot.width(), 34.0));
-        let resp = ui.interact(btn, Id::new("rescan"), Sense::click());
+        let resp = ui.interact(btn, Id::unique("rescan"), Sense::click());
         let enabled = !app.lib.folders.is_empty();
         ui.painter().rect_filled(btn, 6.0, if resp.hovered() && enabled { p.bg3_solid() } else { p.bg3 });
         widgets::centered_text(ui, btn, "Rescan library", crate::fonts::bold(13.0), if enabled { p.fg } else { p.fg_dim });

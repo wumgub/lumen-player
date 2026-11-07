@@ -61,7 +61,7 @@ fn track_view(app: &mut LumenApp, ui: &mut Ui, area: Rect) {
     if let View::Album(name) = &view {
         let cover = Rect::from_min_size(pos2(x, header.top()), vec2(72.0, 72.0));
         widgets::artwork(ui, &p, &mut app.art, &ArtKey::Album(name.clone()), cover, 8.0);
-        let cr = ui.interact(cover, Id::new("album-cover-btn"), Sense::click());
+        let cr = ui.interact(cover, Id::unique("album-cover-btn"), Sense::click());
         if cr.hovered() {
             let b = Rect::from_min_size(pos2(cover.right() - 28.0, cover.bottom() - 28.0), vec2(24.0, 24.0));
             ui.painter().rect_filled(b, 6.0, Color32::from_black_alpha(160));
@@ -83,7 +83,7 @@ fn track_view(app: &mut LumenApp, ui: &mut Ui, area: Rect) {
     if can_rename {
         let pr = Rect::from_min_size(pos2(title_rect.right() + 10.0, title_rect.center().y - 13.0), vec2(26.0, 26.0));
         let hover_header = ui.rect_contains_pointer(header);
-        let resp = ui.interact(pr, Id::new("title-edit"), Sense::click());
+        let resp = ui.interact(pr, Id::unique("title-edit"), Sense::click());
         if hover_header || resp.hovered() {
             if resp.hovered() {
                 ui.painter().rect_filled(pr, 6.0, p.bg3);
@@ -192,7 +192,7 @@ fn track_view(app: &mut LumenApp, ui: &mut Ui, area: Rect) {
                 }
                 let t = &tracks[i];
                 let rect = Rect::from_min_size(origin + vec2(PAD.x, top), vec2(width, heights[i]));
-                let resp = ui.interact(rect, Id::new(("row", i, t.id)), if reorderable { Sense::click_and_drag() } else { Sense::click() });
+                let resp = ui.interact(rect, Id::unique(("row", i, t.id)), if reorderable { Sense::click_and_drag() } else { Sense::click() });
                 let is_current = current == Some(t.id);
                 let is_selected = app.selected.contains(&t.id);
                 let fill = if selectable && is_selected {
@@ -257,7 +257,7 @@ fn track_view(app: &mut LumenApp, ui: &mut Ui, area: Rect) {
                 let time = format_time(t.duration);
                 let tw = widgets::text_width(ui, &time, FontId::proportional(12.0));
                 widgets::text_v(ui, time_r + 56.0 - tw, cy, &time, FontId::proportional(12.0), p.fg_dim, 60.0);
-                let mr = ui.interact(more, Id::new(("more", i, t.id)), Sense::click());
+                let mr = ui.interact(more, Id::unique(("more", i, t.id)), Sense::click());
                 if resp.hovered() || mr.hovered() || is_current {
                     if mr.hovered() {
                         ui.painter().circle_filled(more.center(), 15.0, p.bg3_solid());
@@ -316,7 +316,7 @@ fn sort_control(app: &mut LumenApp, ui: &mut Ui, is_album: bool) {
     let (rect, _) = ui.allocate_exact_size(vec2(w, 34.0), Sense::hover());
     ui.painter().rect(rect, 17.0, p.bg3_solid(), Stroke::new(1.0, p.border), StrokeKind::Inside);
     let main = Rect::from_min_max(rect.min, pos2(rect.right() - 32.0, rect.bottom()));
-    let mr = ui.interact(main, Id::new("sort-main"), Sense::click());
+    let mr = ui.interact(main, Id::unique("sort-main"), Sense::click());
     if mr.hovered() {
         ui.painter().rect_filled(main.shrink(2.0), 15.0, p.bg3);
     }
@@ -324,7 +324,7 @@ fn sort_control(app: &mut LumenApp, ui: &mut Ui, is_album: bool) {
     let k = widgets::text_v(ui, r.right() + 6.0, rect.center().y, label, font, p.fg, kw + 2.0);
     ui.painter().circle_filled(pos2(k.right() + 7.0, rect.center().y), 1.5, p.fg_dim);
     let dir = Rect::from_center_size(pos2(rect.right() - 17.0, rect.center().y), vec2(26.0, 26.0));
-    let dr = ui.interact(dir, Id::new("sort-dir"), Sense::click());
+    let dr = ui.interact(dir, Id::unique("sort-dir"), Sense::click());
     ui.painter().circle_filled(dir.center(), 13.0, if dr.hovered() { p.border } else { p.bg2 });
     icon::paint_centered(ui, if app.sort.descending { icons::ARROW_DOWN } else { icons::ARROW_UP }, dir, 13.0, p.fg);
     if dr.on_hover_text(if app.sort.descending { "Descending" } else { "Ascending" }).clicked() {
@@ -340,7 +340,7 @@ fn sort_control(app: &mut LumenApp, ui: &mut Ui, is_album: bool) {
             options.push(Sort::Custom);
         }
         options.extend(SORT_OPTIONS);
-        let area = egui::Area::new(Id::new("sort-menu")).order(egui::Order::Foreground).fixed_pos(rect.left_bottom() + vec2(0.0, 6.0));
+        let area = egui::Area::new(Id::unique("sort-menu")).order(egui::Order::Foreground).fixed_pos(rect.left_bottom() + vec2(0.0, 6.0));
         let resp = area.show(ui.ctx(), |ui| {
             egui::Frame::new().fill(p.popover).stroke(Stroke::new(1.0, p.border)).corner_radius(10).inner_margin(6).show(ui, |ui| {
                 ui.set_min_width(160.0);
@@ -391,7 +391,7 @@ fn selection_bar(app: &mut LumenApp, ui: &mut Ui, list: Rect, tracks: &[Track]) 
     }
     if app.bulk_playlist_open {
         let playlists = app.lib.playlists.clone();
-        let area = egui::Area::new(Id::new("bulk-playlists")).order(egui::Order::Foreground).fixed_pos(pl.rect.left_top() - vec2(0.0, 8.0)).pivot(egui::Align2::LEFT_BOTTOM);
+        let area = egui::Area::new(Id::unique("bulk-playlists")).order(egui::Order::Foreground).fixed_pos(pl.rect.left_top() - vec2(0.0, 8.0)).pivot(egui::Align2::LEFT_BOTTOM);
         area.show(ui.ctx(), |ui| {
             egui::Frame::new().fill(p.popover).stroke(Stroke::new(1.0, p.border)).corner_radius(10).inner_margin(6).show(ui, |ui| {
                 ui.set_min_width(200.0);
@@ -453,7 +453,7 @@ fn artist_grid(app: &mut LumenApp, ui: &mut Ui, area: Rect) {
                 continue;
             }
             let rect = Rect::from_min_size(origin + vec2(col as f32 * (w + 18.0), y), vec2(w, card_h));
-            let resp = ui.interact(rect, Id::new(("artist", &a.artist)), Sense::click());
+            let resp = ui.interact(rect, Id::unique(("artist", &a.artist)), Sense::click());
             ui.painter().rect_filled(rect, 10.0, if resp.hovered() { p.bg3 } else { p.bg2 });
             let circle = Rect::from_min_size(rect.min + vec2(14.0, 14.0), vec2(w - 28.0, w - 28.0));
             let (c1, c2) = widgets::seeded_gradient(&a.artist);
@@ -463,7 +463,7 @@ fn artist_grid(app: &mut LumenApp, ui: &mut Ui, area: Rect) {
             widgets::text(ui, pos2(rect.left() + 14.0, circle.bottom() + 10.0), &a.artist, crate::fonts::medium(14.0), p.fg, w - 28.0);
             widgets::text(ui, pos2(rect.left() + 14.0, circle.bottom() + 30.0), &pluralize(a.count, "song"), FontId::proportional(12.0), p.fg_dim, w - 28.0);
             let edit = Rect::from_min_size(pos2(rect.right() - 36.0, rect.top() + 8.0), vec2(28.0, 28.0));
-            let er = ui.interact(edit, Id::new(("artist-edit", &a.artist)), Sense::click());
+            let er = ui.interact(edit, Id::unique(("artist-edit", &a.artist)), Sense::click());
             if resp.hovered() || er.hovered() {
                 ui.painter().circle_filled(edit.center(), 14.0, Color32::from_black_alpha(140));
                 icon::paint_centered(ui, icons::PENCIL, edit, 14.0, Color32::WHITE);
@@ -505,7 +505,7 @@ fn album_grid(app: &mut LumenApp, ui: &mut Ui, area: Rect) {
                 continue;
             }
             let rect = Rect::from_min_size(origin + vec2(col as f32 * (w + 18.0), y), vec2(w, card_h));
-            let resp = ui.interact(rect, Id::new(("album", &a.album)), Sense::click());
+            let resp = ui.interact(rect, Id::unique(("album", &a.album)), Sense::click());
             ui.painter().rect_filled(rect, 10.0, if resp.hovered() { p.bg3 } else { p.bg2 });
             let art = Rect::from_min_size(rect.min + vec2(14.0, 14.0), vec2(w - 28.0, w - 28.0));
             widgets::artwork(ui, &p, &mut app.art, &ArtKey::Album(a.album.clone()), art, 6.0);
@@ -513,8 +513,8 @@ fn album_grid(app: &mut LumenApp, ui: &mut Ui, area: Rect) {
             widgets::text(ui, pos2(rect.left() + 14.0, art.bottom() + 30.0), &a.artist, FontId::proportional(12.0), p.fg_dim, w - 28.0);
             let edit = Rect::from_min_size(pos2(rect.right() - 36.0, rect.top() + 8.0), vec2(28.0, 28.0));
             let img = Rect::from_min_size(pos2(art.right() - 30.0, art.bottom() - 30.0), vec2(26.0, 26.0));
-            let er = ui.interact(edit, Id::new(("album-edit", &a.album)), Sense::click());
-            let ir = ui.interact(img, Id::new(("album-img", &a.album)), Sense::click());
+            let er = ui.interact(edit, Id::unique(("album-edit", &a.album)), Sense::click());
+            let ir = ui.interact(img, Id::unique(("album-img", &a.album)), Sense::click());
             if resp.hovered() || er.hovered() || ir.hovered() {
                 ui.painter().circle_filled(edit.center(), 14.0, Color32::from_black_alpha(140));
                 icon::paint_centered(ui, icons::PENCIL, edit, 14.0, Color32::WHITE);

@@ -133,6 +133,8 @@ pub struct LumenApp {
     presence_resend: Option<Instant>,
     media: Option<souvlaki::MediaControls>,
     media_rx: Receiver<souvlaki::MediaControlEvent>,
+    /// Kept for Windows, where the controls are made once the window exists.
+    #[cfg_attr(not(windows), allow(dead_code))]
     media_tx: std::sync::mpsc::Sender<souvlaki::MediaControlEvent>,
     media_last: Option<(Option<i64>, bool, i64)>,
 
@@ -291,10 +293,6 @@ impl LumenApp {
 
     pub fn play_tracks(&mut self, tracks: &[Track], start: usize) {
         self.player.play(tracks.iter().map(item).collect(), start);
-    }
-
-    pub fn current(&self) -> Option<&Item> {
-        self.snap.current.as_ref()
     }
 
     pub fn current_track(&self) -> Option<Track> {

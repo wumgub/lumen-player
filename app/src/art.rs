@@ -43,7 +43,6 @@ struct Entry {
 }
 
 pub struct Backdrop {
-    pub track: i64,
     pub texture: Option<TextureHandle>,
     pub accents: ArtAccents,
 }
@@ -93,7 +92,7 @@ impl ArtCache {
                 Done::Backdrop { track, image, accents } => {
                     if self.wanted_backdrop == Some(track) {
                         let texture = image.map(|img| ctx.load_texture("backdrop", img, TextureOptions::LINEAR));
-                        self.backdrop = Some(Backdrop { track, texture, accents });
+                        self.backdrop = Some(Backdrop { texture, accents });
                     }
                 }
             }
@@ -123,11 +122,6 @@ impl ArtCache {
         self.entries.insert((key.clone(), px), Entry { slot: Slot::Loading, used: frame });
         let _ = self.jobs.send(Job::Thumb { key: key.clone(), px });
         None
-    }
-
-    /// Known to have no art (so draw the placeholder rather than wait).
-    pub fn missing(&self, key: &ArtKey, points: f32, ppp: f32) -> bool {
-        matches!(self.entries.get(&(key.clone(), bucket(points, ppp))), Some(Entry { slot: Slot::Missing, .. }))
     }
 
     /// Ask for the playing song's backdrop and accents (no-op if current).

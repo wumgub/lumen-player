@@ -245,8 +245,10 @@ mod tests {
     fn moved_files_keep_their_plays_and_playlists() {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path().join("Music");
+        // Join piece by piece so Windows gets backslashes, as the scanner sees them.
+        let at = |rel: &str| rel.split('/').fold(root.clone(), |p, c| p.join(c));
         let write = |rel: &str| {
-            let p = root.join(rel);
+            let p = at(rel);
             std::fs::create_dir_all(p.parent().unwrap()).unwrap();
             std::fs::write(&p, b"not really audio").unwrap();
         };
@@ -257,7 +259,7 @@ mod tests {
         let folders = vec![root.to_string_lossy().into_owned()];
         assert_eq!(scan(&lib, &folders, |_| {}).unwrap().added, 3);
         let id_of = |rel: &str| {
-            let p = root.join(rel).to_string_lossy().into_owned();
+            let p = at(rel).to_string_lossy().into_owned();
             lib.path_index().unwrap().into_iter().find(|t| t.1 == p).map(|t| t.0)
         };
         let a = id_of("A/song.mp3").unwrap();
