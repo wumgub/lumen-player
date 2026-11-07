@@ -2192,7 +2192,7 @@ checksum = "5d15f86d12da44cd8d4ec3c73984537eb7f4cadcb9776a575a0a8a05ca11005c"
 
 [[package]]
 name = "lumen"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "core-foundation 0.10.1",
  "eframe",
@@ -2220,7 +2220,7 @@ dependencies = [
 
 [[package]]
 name = "lumen-core"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "chrono",
  "lofty",
@@ -2236,7 +2236,7 @@ dependencies = [
 
 [[package]]
 name = "lumen-discord"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "log",
  "serde_json",
@@ -2244,7 +2244,7 @@ dependencies = [
 
 [[package]]
 name = "lumen-playback"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "crossbeam-channel",
  "log",
