@@ -109,6 +109,7 @@ pub struct LumenApp {
     pub theme_pill_rect: egui::Rect,
     pub drag_playlist: Option<usize>,
     pub editor: crate::ui::theme_editor::EditorState,
+    pub perf: crate::perf::Monitor,
     healed: Option<i64>,
     video_on: Option<bool>,
 
@@ -228,6 +229,7 @@ impl LumenApp {
             theme_pill_rect: egui::Rect::NOTHING,
             drag_playlist: None,
             editor: Default::default(),
+            perf: Default::default(),
             healed: None,
             video_on: None,
             presence,
@@ -592,6 +594,7 @@ impl eframe::App for LumenApp {
             inset_window_buttons(frame);
         }
         self.pump(&ctx);
+        self.perf.set_enabled(self.prefs.debug_overlay, &ctx);
         self.refresh_theme(&ctx);
         self.shortcuts(&ctx);
         crate::ui::shell(self, ui, frame);

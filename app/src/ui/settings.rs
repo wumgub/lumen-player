@@ -12,9 +12,12 @@ const REPO: &str = "wumgub/lumen-player";
 
 pub fn show(app: &mut LumenApp, ctx: &egui::Context) {
     let p = app.p;
+    // Solid, unlike the other popovers: Glass's see-through panel made the
+    // settings hard to read over a busy window.
+    let fill = p.bg.blend(p.popover);
     let m = egui::Modal::new(Id::new("settings"))
         .backdrop_color(Color32::from_black_alpha(140))
-        .frame(egui::Frame::new().fill(p.popover).stroke(Stroke::new(1.0, p.border)).corner_radius(14).inner_margin(22))
+        .frame(egui::Frame::new().fill(fill).stroke(Stroke::new(1.0, p.border)).corner_radius(14).inner_margin(22))
         .show(ctx, |ui| {
             ui.set_width(520.0);
             ui.label(egui::RichText::new("Settings").font(crate::fonts::bold(18.0)).color(p.fg));
@@ -25,6 +28,12 @@ pub fn show(app: &mut LumenApp, ctx: &egui::Context) {
                 stats(app, ui);
                 section_line(ui, &p);
                 discord(app, ui);
+                section_line(ui, &p);
+                row(ui, &p, "Debug overlay", "Show how much CPU, GPU and memory Lumen is using, in the bottom-left corner.", |ui| {
+                    if widgets::switch(ui, &p, app.prefs.debug_overlay).clicked() {
+                        app.prefs.debug_overlay = !app.prefs.debug_overlay;
+                    }
+                });
                 section_line(ui, &p);
                 about(app, ui);
             });
