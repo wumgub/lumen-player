@@ -14,7 +14,7 @@ pub fn show(app: &mut LumenApp, ui: &mut Ui) {
     let bar = ui.max_rect();
 
     // Drag the window from anywhere that isn't a control.
-    let drag = ui.interact(bar, Id::new("titlebar-drag"), Sense::click_and_drag());
+    let drag = ui.interact(bar, Id::unique("titlebar-drag"), Sense::click_and_drag());
     if drag.drag_started() {
         ui.ctx().send_viewport_cmd(egui::ViewportCommand::StartDrag);
     }
@@ -47,7 +47,7 @@ pub fn show(app: &mut LumenApp, ui: &mut Ui) {
         ui.painter().circle_filled(sr.center(), 17.0, p.bg3_solid());
     }
     let icon_rect = Rect::from_min_size(sr.min, vec2(34.0, 34.0));
-    let ic = ui.interact(icon_rect, Id::new("search-icon"), Sense::click());
+    let ic = ui.interact(icon_rect, Id::unique("search-icon"), Sense::click());
     icon::paint_centered(ui, icons::SEARCH, icon_rect, 16.0, if ic.hovered() { p.fg } else { p.fg_dim });
     let ic = ic.on_hover_cursor(egui::CursorIcon::PointingHand);
     if ic.clicked() {
@@ -66,7 +66,7 @@ pub fn show(app: &mut LumenApp, ui: &mut Ui) {
             .font(FontId::proportional(13.0))
             .text_color(p.fg)
             .desired_width(field.width())
-            .id(Id::new("search-field"));
+            .id(Id::unique("search-field"));
         let resp = child.add(edit);
         if app.search_open && !resp.has_focus() && before.is_empty() && app.search.is_empty() && !resp.lost_focus() {
             resp.request_focus();
@@ -93,7 +93,7 @@ pub fn show(app: &mut LumenApp, ui: &mut Ui) {
         .unwrap_or("Neon");
     let tw = widgets::text_width(ui, label, FontId::proportional(13.0));
     let pr = Rect::from_min_size(pos2(x, cy - 17.0), vec2(tw + 58.0, 34.0));
-    let pill = ui.interact(pr, Id::new("theme-pill"), Sense::click());
+    let pill = ui.interact(pr, Id::unique("theme-pill"), Sense::click());
     ui.painter().rect(
         pr,
         17.0,
@@ -113,7 +113,7 @@ pub fn show(app: &mut LumenApp, ui: &mut Ui) {
 
     // Settings.
     let gr = Rect::from_min_size(pos2(x, cy - 18.0), vec2(36.0, 36.0));
-    let gear = ui.interact(gr, Id::new("settings-btn"), Sense::click());
+    let gear = ui.interact(gr, Id::unique("settings-btn"), Sense::click());
     ui.painter().circle_filled(gr.center(), 18.0, if gear.hovered() { crate::palette::mix(p.bg3_solid(), p.fg, 0.08) } else { p.bg3_solid() });
     icon::paint_centered(ui, icons::GEAR, gr, 18.0, if gear.hovered() { p.fg } else { p.fg_dim });
     if gear.on_hover_text("Settings").clicked() {

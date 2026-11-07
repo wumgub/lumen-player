@@ -15,7 +15,7 @@ pub fn show(app: &mut LumenApp, ctx: &egui::Context) {
     // Solid, unlike the other popovers: Glass's see-through panel made the
     // settings hard to read over a busy window.
     let fill = p.bg.blend(p.popover);
-    let m = egui::Modal::new(Id::new("settings"))
+    let m = egui::Modal::new(Id::unique("settings"))
         .backdrop_color(Color32::from_black_alpha(140))
         .frame(egui::Frame::new().fill(fill).stroke(Stroke::new(1.0, p.border)).corner_radius(14).inner_margin(22))
         .show(ctx, |ui| {
@@ -72,7 +72,7 @@ fn heading(ui: &mut Ui, p: &Palette, title: &str, desc: &str) {
 /// whatever room the control leaves (measured on the frame before), so the
 /// two never overlap however wide the control is.
 fn row(ui: &mut Ui, p: &Palette, title: &str, desc: &str, control: impl FnOnce(&mut Ui)) {
-    let id = Id::new(("settings-row", title));
+    let id = Id::unique(("settings-row", title));
     let control_w: f32 = ui.data(|d| d.get_temp(id)).unwrap_or(120.0);
     let text_w = (ui.available_width() - control_w - 16.0).max(160.0);
     ui.horizontal(|ui| {
@@ -119,7 +119,7 @@ fn appearance(app: &mut LumenApp, ui: &mut Ui) {
             let mut pencil = false;
             if custom {
                 let pr = Rect::from_center_size(pos2(rect.right() - 16.0, rect.center().y), vec2(24.0, 24.0));
-                let r = ui.interact(pr, Id::new("custom-pencil"), Sense::click());
+                let r = ui.interact(pr, Id::unique("custom-pencil"), Sense::click());
                 if r.hovered() {
                     ui.painter().circle_filled(pr.center(), 12.0, p.bg3);
                 }

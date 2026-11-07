@@ -7,7 +7,7 @@ use std::sync::Arc;
 use eframe::egui::text::{LayoutJob, TextFormat, TextWrapping};
 use eframe::egui::{
     self, Align2, Color32, CornerRadius, CursorIcon, FontId, Galley, Id, Mesh, Pos2, Rect, Response, Sense, Shape,
-    Stroke, Ui, Vec2, pos2, vec2,
+    Stroke, Ui, pos2, vec2,
 };
 
 use crate::art::{ArtCache, ArtKey};
@@ -175,7 +175,7 @@ pub fn section_head(ui: &mut Ui, p: &Palette, label: &str, with_plus: bool) -> O
         return None;
     }
     let b = Rect::from_center_size(pos2(rect.right() - 14.0, rect.center().y), vec2(24.0, 24.0));
-    let resp = ui.interact(b, ui.id().with(("plus", label)), Sense::click());
+    let resp = ui.interact(b, ui.scope_id().with(("plus", label)), Sense::click());
     if resp.hovered() {
         ui.painter().rect_filled(b, 6.0, p.bg3);
     }
@@ -332,14 +332,6 @@ pub fn subtle_separator(ui: &mut Ui, p: &Palette) {
 
 pub fn centered_text(ui: &Ui, rect: Rect, s: &str, font: FontId, color: Color32) {
     ui.painter().text(rect.center(), Align2::CENTER_CENTER, s, font, color);
-}
-
-pub fn tooltip(resp: Response, text: &str) -> Response {
-    resp.on_hover_text(text)
-}
-
-pub fn size(w: f32, h: f32) -> Vec2 {
-    vec2(w, h)
 }
 
 /// A circle filled with a 135° gradient from `a` to `b` (`.card-circle`).

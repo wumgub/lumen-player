@@ -28,7 +28,7 @@ pub enum Share {
 pub fn show(app: &mut LumenApp, ctx: &egui::Context) {
     let p = app.p;
     let mut st = std::mem::take(&mut app.editor);
-    let m = egui::Modal::new(Id::new("theme-editor-modal"))
+    let m = egui::Modal::new(Id::unique("theme-editor-modal"))
         .backdrop_color(Color32::from_black_alpha(140))
         .frame(egui::Frame::new().fill(p.popover).stroke(Stroke::new(1.0, p.border)).corner_radius(14).inner_margin(22))
         .show(ctx, |ui| {

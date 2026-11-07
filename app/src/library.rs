@@ -30,9 +30,6 @@ impl View {
         }
     }
 
-    pub fn has_track_list(&self) -> bool {
-        !matches!(self, View::Artists | View::Albums | View::Stats)
-    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

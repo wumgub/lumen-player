@@ -69,7 +69,7 @@ pub fn show(app: &mut LumenApp, ui: &mut Ui) {
     ui.painter().text(r.center(), egui::Align2::CENTER_CENTER, format_time(snap.duration), time_font, p.fg_dim);
     let seek_rect = Rect::from_min_max(pos2(l.right() + 6.0, seek_y - 8.0), pos2(r.left() - 6.0, seek_y + 8.0));
     let mut s = ui.new_child(egui::UiBuilder::new().max_rect(seek_rect));
-    seek_bar(app, &mut s, seek_rect.width(), Id::new("seek"));
+    seek_bar(app, &mut s, seek_rect.width(), Id::unique("seek"));
 
     // Right: queue and volume.
     let vol_w = 110.0;
@@ -77,7 +77,7 @@ pub fn show(app: &mut LumenApp, ui: &mut Ui) {
     let vr = Rect::from_min_max(pos2(right - vol_w, cy - 8.0), pos2(right, cy + 8.0));
     let mut v = ui.new_child(egui::UiBuilder::new().max_rect(vr));
     let mut vol = app.prefs.volume;
-    if widgets::slider(&mut v, &p, Id::new("volume"), &mut vol, 1.5, vol_w).changed {
+    if widgets::slider(&mut v, &p, Id::unique("volume"), &mut vol, 1.5, vol_w).changed {
         app.prefs.volume = vol;
         app.player.set_volume(vol);
     }

@@ -68,7 +68,7 @@ fn queue_panel(app: &mut LumenApp, ctx: &egui::Context) {
     let mut jump = None;
     let mut remove = None;
     let mut clear = false;
-    let resp = egui::Area::new(Id::new("queue")).order(egui::Order::Foreground).fixed_pos(rect.min).show(ctx, |ui| {
+    let resp = egui::Area::new(Id::unique("queue")).order(egui::Order::Foreground).fixed_pos(rect.min).show(ctx, |ui| {
         popup_frame(app).inner_margin(0).show(ui, |ui| {
             ui.set_width(w);
             ui.set_height(h);
@@ -79,7 +79,7 @@ fn queue_panel(app: &mut LumenApp, ctx: &egui::Context) {
             widgets::text(ui, head.min + vec2(16.0, 32.0), &sub, FontId::proportional(12.0), p.fg_dim, 200.0);
             if upcoming > 0 && snap.index.is_some() {
                 let b = Rect::from_min_size(pos2(head.right() - 128.0, head.top() + 14.0), vec2(114.0, 28.0));
-                let br = ui.interact(b, Id::new("queue-clear"), Sense::click());
+                let br = ui.interact(b, Id::unique("queue-clear"), Sense::click());
                 ui.painter().rect_filled(b, 14.0, if br.hovered() { p.bg3 } else { Color32::TRANSPARENT });
                 widgets::centered_text(ui, b, "Clear upcoming", FontId::proportional(12.0), p.accent);
                 if br.clicked() {
@@ -114,7 +114,7 @@ fn queue_panel(app: &mut LumenApp, ctx: &egui::Context) {
                     let time = format_time(it.duration);
                     ui.painter().text(pos2(r.right() - 44.0, r.center().y), egui::Align2::RIGHT_CENTER, time, FontId::proportional(11.0), p.fg_dim);
                     let x = Rect::from_center_size(pos2(r.right() - 22.0, r.center().y), vec2(24.0, 24.0));
-                    let xr = ui.interact(x, Id::new(("q-remove", i)), Sense::click());
+                    let xr = ui.interact(x, Id::unique(("q-remove", i)), Sense::click());
                     if resp.hovered() || xr.hovered() {
                         icon::paint_centered(ui, icons::CLOSE, x, 13.0, if xr.hovered() { p.fg } else { p.fg_dim });
                     }
@@ -146,7 +146,7 @@ fn theme_menu(app: &mut LumenApp, ctx: &egui::Context) {
     let p = app.p;
     let at = app.theme_pill_rect.left_bottom() + vec2(0.0, 6.0);
     let mut choose: Option<&'static str> = None;
-    let resp = egui::Area::new(Id::new("theme-menu")).order(egui::Order::Foreground).fixed_pos(at).show(ctx, |ui| {
+    let resp = egui::Area::new(Id::unique("theme-menu")).order(egui::Order::Foreground).fixed_pos(at).show(ctx, |ui| {
         popup_frame(app).show(ui, |ui| {
             ui.set_min_width(220.0);
             for t in lumen_core::theme::THEMES.iter() {
@@ -196,7 +196,7 @@ fn context_menu(app: &mut LumenApp, ctx: &egui::Context) {
     let at = pos2(pos.x.min(screen.right() - width - 20.0), pos.y.min(screen.bottom() - est_h).max(screen.top() + 8.0));
     let mut close = false;
     let pp = app.p;
-    let resp = egui::Area::new(Id::new("ctx-menu")).order(egui::Order::Foreground).fixed_pos(at).show(ctx, |ui| {
+    let resp = egui::Area::new(Id::unique("ctx-menu")).order(egui::Order::Foreground).fixed_pos(at).show(ctx, |ui| {
         popup_frame(app).show(ui, |ui| {
             ui.spacing_mut().item_spacing.y = 0.0;
             if menu_item(ui, &pp, "Play next", width, false).clicked() {
@@ -277,7 +277,7 @@ pub fn reveal(path: &str) {
 
 /// A centred modal with a title, used by every dialog.
 fn modal<R>(p: crate::palette::Palette, ctx: &egui::Context, id: &str, width: f32, body: impl FnOnce(&mut Ui) -> R) -> (R, bool) {
-    let m = egui::Modal::new(Id::new(id))
+    let m = egui::Modal::new(Id::unique(id))
         .backdrop_color(Color32::from_black_alpha(140))
         .frame(egui::Frame::new().fill(p.popover).stroke(Stroke::new(1.0, p.border)).corner_radius(14).inner_margin(22))
         .show(ctx, |ui| {
@@ -320,7 +320,7 @@ fn field(ui: &mut Ui, p: &crate::palette::Palette, text: &mut String, hint: &str
                     .desired_width(f32::INFINITY)
                     .font(FontId::proportional(14.0))
                     .text_color(p.fg)
-                    .id(Id::new(id)),
+                    .id(Id::unique(id)),
             )
         })
         .inner;
@@ -472,7 +472,7 @@ fn dialog(app: &mut LumenApp, ctx: &egui::Context) {
                             .frame(egui::Frame::NONE)
                             .desired_width(f32::INFINITY)
                             .text_color(p.fg)
-                            .id(Id::new("edit-note")),
+                            .id(Id::unique("edit-note")),
                     );
                     note_focused = r.has_focus();
                 });
@@ -663,7 +663,7 @@ pub fn immersive(app: &mut LumenApp, ui: &mut Ui) {
     nowplaying::visualizer_card(app, ui, screen, false);
     overlay_controls(app, ui, screen, false);
     let ex = Rect::from_min_size(pos2(screen.right() - 52.0, screen.top() + 16.0), vec2(36.0, 36.0));
-    let er = ui.interact(ex, Id::new("immersive-exit"), Sense::click());
+    let er = ui.interact(ex, Id::unique("immersive-exit"), Sense::click());
     ui.painter().rect_filled(ex, 10.0, Color32::from_black_alpha(if er.hovered() { 160 } else { 100 }));
     icon::paint_centered(ui, icons::COLLAPSE, ex, 20.0, Color32::WHITE);
     if er.on_hover_text("Exit (Esc)").clicked() {
@@ -683,7 +683,7 @@ pub fn video_full(app: &mut LumenApp, ui: &mut Ui, frame: &mut eframe::Frame) {
         app.idle_since = Instant::now();
     }
     let idle = app.idle_since.elapsed() > Duration::from_millis(2500);
-    let stage = ui.interact(screen, Id::new("video-stage"), Sense::click());
+    let stage = ui.interact(screen, Id::unique("video-stage"), Sense::click());
     if stage.double_clicked() {
         app.video_full = false;
         return;
@@ -691,7 +691,7 @@ pub fn video_full(app: &mut LumenApp, ui: &mut Ui, frame: &mut eframe::Frame) {
     if !idle {
         overlay_controls(app, ui, screen, true);
         let ex = Rect::from_min_size(pos2(screen.right() - 52.0, screen.top() + 16.0), vec2(36.0, 36.0));
-        let er = ui.interact(ex, Id::new("video-exit"), Sense::click());
+        let er = ui.interact(ex, Id::unique("video-exit"), Sense::click());
         ui.painter().rect_filled(ex, 10.0, Color32::from_black_alpha(if er.hovered() { 160 } else { 100 }));
         icon::paint_centered(ui, icons::COLLAPSE, ex, 20.0, Color32::WHITE);
         if er.on_hover_text("Exit (Esc)").clicked() {
@@ -740,7 +740,7 @@ fn overlay_controls(app: &mut LumenApp, ui: &mut Ui, screen: Rect, with_seek: bo
     if with_seek {
         let sr = Rect::from_min_max(pos2(band.left() + 80.0, band.bottom() - 34.0), pos2(band.right() - 80.0, band.bottom() - 18.0));
         let mut s = ui.new_child(egui::UiBuilder::new().max_rect(sr));
-        crate::ui::transport::seek_bar(app, &mut s, sr.width(), Id::new("video-seek"));
+        crate::ui::transport::seek_bar(app, &mut s, sr.width(), Id::unique("video-seek"));
         let shown = app.seek_drag.unwrap_or(app.snap.position);
         ui.painter().text(pos2(sr.left() - 12.0, sr.center().y), egui::Align2::RIGHT_CENTER, format_time(shown), FontId::proportional(11.0), Color32::from_white_alpha(200));
         ui.painter().text(pos2(sr.right() + 12.0, sr.center().y), egui::Align2::LEFT_CENTER, format_time(app.snap.duration), FontId::proportional(11.0), Color32::from_white_alpha(200));
@@ -766,7 +766,7 @@ fn debug_overlay(app: &LumenApp, ctx: &egui::Context) {
     } else {
         (egui::Align2::RIGHT_TOP, vec2(-14.0, (crate::ui::TITLEBAR_H - 24.0) / 2.0))
     };
-    egui::Area::new(Id::new("debug-overlay"))
+    egui::Area::new(Id::unique("debug-overlay"))
         .anchor(align, offset)
         .order(egui::Order::Tooltip)
         .interactable(false)

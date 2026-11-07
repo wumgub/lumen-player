@@ -30,9 +30,9 @@ pub fn show(app: &mut LumenApp, ui: &mut Ui, frame: &mut eframe::Frame) {
         if let Some(v) = app.video.as_mut() {
             v.show(ui, frame, wide);
         }
-        let resp = ui.interact(wide, Id::new("np-video"), Sense::click());
+        let resp = ui.interact(wide, Id::unique("np-video"), Sense::click());
         let ex = Rect::from_min_size(pos2(wide.right() - 34.0, wide.top() + 6.0), vec2(28.0, 28.0));
-        let er = ui.interact(ex, Id::new("np-video-expand"), Sense::click());
+        let er = ui.interact(ex, Id::unique("np-video-expand"), Sense::click());
         if resp.hovered() || er.hovered() {
             ui.painter().rect_filled(ex, 6.0, Color32::from_black_alpha(140));
             icon::paint_centered(ui, icons::EXPAND, ex, 16.0, Color32::WHITE);
@@ -51,7 +51,7 @@ pub fn show(app: &mut LumenApp, ui: &mut Ui, frame: &mut eframe::Frame) {
         ui.painter().rect(seg, 13.0, p.bg3, Stroke::new(1.0, p.border), StrokeKind::Inside);
         for (i, (label, on)) in [("Art", false), ("Video", true)].into_iter().enumerate() {
             let r = Rect::from_min_size(pos2(seg.left() + i as f32 * 60.0, seg.top()), vec2(60.0, 26.0));
-            let resp = ui.interact(r, Id::new(("np-seg", i)), Sense::click());
+            let resp = ui.interact(r, Id::unique(("np-seg", i)), Sense::click());
             let active = app.prefs.video_mode == on;
             if active {
                 ui.painter().rect_filled(r.shrink(2.0), 11.0, p.accent);
@@ -96,7 +96,7 @@ pub fn visualizer_card(app: &mut LumenApp, ui: &mut Ui, card: Rect, rounded: boo
 
     // Switch, top left.
     let sw = Rect::from_min_size(card.min + vec2(12.0, 12.0), vec2(34.0, 20.0));
-    let resp = ui.interact(sw, Id::new(("viz-switch", rounded)), Sense::click());
+    let resp = ui.interact(sw, Id::unique(("viz-switch", rounded)), Sense::click());
     widgets::paint_switch(ui, &p, sw, app.prefs.viz_on);
     if resp.on_hover_text(if app.prefs.viz_on { "Turn the visualizer off" } else { "Turn the visualizer on" }).clicked() {
         app.prefs.viz_on = !app.prefs.viz_on;
@@ -105,7 +105,7 @@ pub fn visualizer_card(app: &mut LumenApp, ui: &mut Ui, card: Rect, rounded: boo
     // Immersive, top right.
     if rounded {
         let ex = Rect::from_min_size(pos2(card.right() - 40.0, card.top() + 8.0), vec2(32.0, 32.0));
-        let er = ui.interact(ex, Id::new("viz-expand"), Sense::click());
+        let er = ui.interact(ex, Id::unique("viz-expand"), Sense::click());
         ui.painter().rect_filled(ex, 8.0, Color32::from_black_alpha(if er.hovered() { 150 } else { 90 }));
         icon::paint_centered(ui, icons::EXPAND, ex, 18.0, Color32::from_white_alpha(230));
         if er.on_hover_text("Immersive mode").clicked() {
@@ -121,7 +121,7 @@ pub fn visualizer_card(app: &mut LumenApp, ui: &mut Ui, card: Rect, rounded: boo
             let label = k.label();
             let w = widgets::text_width(ui, label, FontId::proportional(11.0)) + 18.0;
             let r = Rect::from_min_size(pos2(x, y), vec2(w, 22.0));
-            let resp = ui.interact(r, Id::new(("viz-tab", label, rounded)), Sense::click());
+            let resp = ui.interact(r, Id::unique(("viz-tab", label, rounded)), Sense::click());
             let active = app.viz_kind() == k;
             let fill = if active { p.viz_accent } else { Color32::from_black_alpha(if resp.hovered() { 130 } else { 90 }) };
             ui.painter().rect_filled(r, 11.0, fill);

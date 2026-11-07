@@ -66,7 +66,7 @@ pub fn show(app: &mut LumenApp, ui: &mut Ui) {
                 let fill = if i + 1 == s.weeks.len() { p.accent } else { crate::palette::mix(p.accent, p.bg3, 0.35) };
                 ui.painter().rect_filled(r, 4.0, fill);
             }
-            let resp = ui.interact(col, Id::new(("week", i)), Sense::hover());
+            let resp = ui.interact(col, Id::unique(("week", i)), Sense::hover());
             resp.on_hover_text(format!("{}: {} · {}", week_range(wk.start), format_duration(wk.seconds as f64), pluralize(wk.plays, "play")));
             let tick = week_tick(wk.start);
             ui.painter().text(pos2(x + bw / 2.0, inner.bottom() - 4.0), egui::Align2::CENTER_CENTER, tick, FontId::proportional(10.0), p.fg_dim);
