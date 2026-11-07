@@ -76,7 +76,10 @@ jobs:
         run: |
           VERSION=$(grep -m1 '^version' Cargo.toml | sed 's/.*"\(.*\)".*/\1/')
           mkdir -p stage && cp target/release/lumen.exe mpv/libmpv-2.dll stage/
-          command -v makensis || choco install nsis -y --no-progress > /dev/null
+          # Chocolatey's download fails now and then; try a few times.
+          if ! command -v makensis; then
+            for i in 1 2 3; do choco install nsis -y --no-progress && break; sleep 15; done
+          fi
           export PATH="$PATH:/c/Program Files (x86)/NSIS"
           makensis -DVERSION=$VERSION -DSRC="$PWD/stage" -DOUT="$PWD/Lumen-$VERSION-Setup.exe" packaging/windows/lumen.nsi
       - uses: actions/upload-artifact@v4
