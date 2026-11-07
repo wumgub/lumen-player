@@ -19,7 +19,14 @@ permissions:
 
 jobs:
   mac:
-    runs-on: macos-latest
+    # One build per architecture, each on its own kind of runner, so Homebrew's
+    # libmpv matches the binary. (A universal app would need both libmpvs.)
+    strategy:
+      matrix:
+        include:
+          - { runner: macos-latest, arch: arm64 }
+          - { runner: macos-15-intel, arch: x64 }
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -32,10 +39,10 @@ jobs:
           scripts/bundle-macos.sh
           VERSION=$(grep -m1 '^version' Cargo.toml | sed 's/.*"\(.*\)".*/\1/')
           mkdir -p dmg && cp -R target/bundle/Lumen.app dmg/ && ln -s /Applications dmg/Applications
-          hdiutil create -volname "Lumen $VERSION" -srcfolder dmg -ov -format UDZO "Lumen-$VERSION-mac-arm64.dmg"
+          hdiutil create -volname "Lumen $VERSION" -srcfolder dmg -ov -format UDZO "Lumen-$VERSION-mac-${{ matrix.arch }}.dmg"
       - uses: actions/upload-artifact@v4
         with:
-          name: mac
+          name: mac-${{ matrix.arch }}
           path: Lumen-*.dmg
 
   windows:

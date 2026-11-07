@@ -77,7 +77,8 @@ if you're super cool :)
 | Your computer | Download this file |
 |---|---|
 | **Windows** | `Lumen-x.y.z-Setup.exe` |
-| **Mac** (Apple silicon: M1/M2/M3/M4) | `Lumen-x.y.z-mac-arm64.dmg` |
+| **Mac** with Apple silicon (M1 and later) | `Lumen-x.y.z-mac-arm64.dmg` |
+| **Mac** with an Intel chip | `Lumen-x.y.z-mac-x64.dmg` |
 | **Linux** | `Lumen-x.y.z-linux-x86_64.AppImage` (or `Lumen-x.y.z-linux-amd64.deb`) |
 
 Then open Lumen, click the **＋** next to **Folders** in the left sidebar, choose the
