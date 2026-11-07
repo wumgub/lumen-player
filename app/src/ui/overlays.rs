@@ -7,7 +7,7 @@ use std::time::{Duration, Instant};
 use eframe::egui::{self, Color32, FontId, Id, Key, Rect, Sense, Stroke, StrokeKind, Ui, pos2, vec2};
 use lumen_core::fold::fold;
 
-use crate::app::{Dialog, LumenApp, RenameKind};
+use crate::app::{Dialog, LumenApp, RenameKind, SongEdit};
 use crate::art::ArtKey;
 use crate::library::View;
 use crate::palette::with_alpha;
@@ -208,26 +208,12 @@ fn context_menu(app: &mut LumenApp, ctx: &egui::Context) {
                 close = true;
             }
             widgets::subtle_separator(ui, &app.p);
-            if menu_item(ui, &pp, "Rename song…", width, false).clicked() {
-                app.dialog = Some(Dialog::Rename {
-                    kind: RenameKind::Song(track.id),
-                    title: "Rename song",
-                    label: "Display name for this track",
-                    text: track.title.clone(),
-                    initial: track.title.clone(),
-                });
-                close = true;
-            }
-            if menu_item(ui, &pp, if track.note.is_empty() { "Add note…" } else { "Edit note…" }, width, false).clicked() {
-                app.dialog = Some(Dialog::Note { track: track.id, title: track.title.clone(), text: track.note.clone() });
+            if menu_item(ui, &pp, "Edit song…", width, false).clicked() {
+                app.dialog = Some(Dialog::EditSong(Box::new(SongEdit::new(&track))));
                 close = true;
             }
             if menu_item(ui, &pp, reveal_label(), width, false).clicked() {
                 reveal(&track.path);
-                close = true;
-            }
-            if menu_item(ui, &pp, "Add to album…", width, false).clicked() {
-                app.dialog = Some(Dialog::AlbumPicker { tracks: vec![track.id], text: String::new() });
                 close = true;
             }
             if !track.album.is_empty() && menu_item(ui, &pp, "Remove from album", width, false).clicked() {
@@ -344,6 +330,41 @@ fn field(ui: &mut Ui, p: &crate::palette::Palette, text: &mut String, hint: &str
     r
 }
 
+fn small_label(ui: &mut Ui, p: &crate::palette::Palette, s: &str) {
+    ui.add_space(6.0);
+    ui.label(egui::RichText::new(s).size(12.0).color(p.fg_dim));
+    ui.add_space(2.0);
+}
+
+/// Write only the fields that changed, so untouched ones stay unlocked and
+/// keep following the file's tags on a rescan.
+fn save_song_edit(app: &mut LumenApp, e: &SongEdit) {
+    let t = &e.track;
+    let db = &app.lib.db;
+    let title = e.title.trim();
+    if !title.is_empty() && title != t.title {
+        let _ = db.rename_track(t.id, title);
+    }
+    // Same placeholder the scanner gives untagged files.
+    let artist = match e.artist.trim() {
+        "" => "Unknown Artist",
+        a => a,
+    };
+    if artist != t.artist {
+        let _ = db.set_track_artist(t.id, artist);
+    }
+    let album = e.album.trim();
+    if album != t.album {
+        let _ = db.set_track_album(&[t.id], album);
+        app.art.invalidate_album(&t.album);
+        app.art.invalidate_album(album);
+    }
+    if e.note.trim() != t.note {
+        let _ = db.set_track_note(t.id, e.note.trim());
+    }
+    app.library_changed();
+}
+
 fn dialog(app: &mut LumenApp, ctx: &egui::Context) {
     let Some(mut d) = app.dialog.take() else { return };
     let pp = app.p;
@@ -368,9 +389,6 @@ fn dialog(app: &mut LumenApp, ctx: &egui::Context) {
                 let v = text.trim().to_owned();
                 if !v.is_empty() && v != *initial {
                     match kind {
-                        RenameKind::Song(id) => {
-                            let _ = app.lib.db.rename_track(*id, &v);
-                        }
                         RenameKind::Artist(old) => {
                             let _ = app.lib.db.rename_artist(old, &v);
                             if app.view == View::Artist(old.clone()) {
@@ -423,42 +441,52 @@ fn dialog(app: &mut LumenApp, ctx: &egui::Context) {
                 keep = false;
             }
         }
-        Dialog::Note { track, title: song, text } => {
+        Dialog::EditSong(e) => {
             let p = app.p;
-            let (submit, dismissed) = modal(app.p, ctx, "note", 380.0, |ui| {
-                title(ui, &pp, "Note");
-                ui.label(
-                    egui::RichText::new(format!("A note for {song}. It's searchable, so add a romanized title or keywords to find songs you can't type."))
-                        .size(13.0)
-                        .color(p.fg_dim),
-                );
-                ui.add_space(8.0);
+            let albums: Vec<String> = app.lib.albums.iter().map(|a| a.album.clone()).collect();
+            let mut note_focused = false;
+            let (submit, dismissed) = modal(app.p, ctx, "edit-song", 400.0, |ui| {
+                title(ui, &pp, "Edit song");
+                label(ui, &pp, "Changes only this song, and only in Lumen; the file stays as it is.");
+                small_label(ui, &p, "Title");
+                field(ui, &pp, &mut e.title, &e.track.title, "edit-title");
+                small_label(ui, &p, "Artist");
+                field(ui, &pp, &mut e.artist, "Unknown Artist", "edit-artist");
+                small_label(ui, &p, "Album");
+                field(ui, &pp, &mut e.album, "No album", "edit-album");
+                // Existing albums that match what's typed, to pick instead of retyping.
+                let q = fold(e.album.trim());
+                if !q.is_empty() && e.album.trim() != e.track.album && !albums.iter().any(|a| a == e.album.trim()) {
+                    for a in albums.iter().filter(|a| fold(a).contains(&q)).take(5) {
+                        if menu_item(ui, &pp, a, 400.0, false).clicked() {
+                            e.album = a.clone();
+                        }
+                    }
+                }
+                small_label(ui, &p, "Note");
                 widgets::input_frame(&p).show(ui, |ui| {
                     let r = ui.add(
-                        egui::TextEdit::multiline(text)
-                            .hint_text("e.g. pachka sigaret — kino")
-                            .desired_rows(3)
+                        egui::TextEdit::multiline(&mut e.note)
+                            .hint_text("Searchable: a romanized title, keywords…")
+                            .desired_rows(2)
                             .frame(egui::Frame::NONE)
                             .desired_width(f32::INFINITY)
                             .text_color(p.fg)
-                            .id(Id::new("note-field")),
+                            .id(Id::new("edit-note")),
                     );
-                    if ui.memory(|m| m.focused().is_none()) {
-                        r.request_focus();
-                    }
+                    note_focused = r.has_focus();
                 });
                 let (cancel, save) = actions(ui, &pp, "Save");
                 if cancel {
                     keep = false;
                 }
-                save || ui.input(|i| i.key_pressed(Key::Enter) && i.modifiers.command)
+                save || (enter && !note_focused) || ui.input(|i| i.key_pressed(Key::Enter) && i.modifiers.command)
             });
             if dismissed {
                 keep = false;
             }
             if submit {
-                let _ = app.lib.db.set_track_note(*track, text.trim());
-                app.library_changed();
+                save_song_edit(app, e);
                 keep = false;
             }
         }
