@@ -27,6 +27,8 @@ pub struct UiPrefs {
     pub volume: f64,
     /// Show a music video's picture rather than its art.
     pub video_mode: bool,
+    /// The CPU / GPU / memory readout in the corner.
+    pub debug_overlay: bool,
 }
 
 impl Default for UiPrefs {
@@ -40,6 +42,7 @@ impl Default for UiPrefs {
             viz_fps: 0,
             volume: 0.9,
             video_mode: true,
+            debug_overlay: false,
         }
     }
 }

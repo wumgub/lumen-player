@@ -33,6 +33,9 @@ pub fn show(app: &mut LumenApp, ui: &mut Ui, frame: &mut eframe::Frame) {
     if app.theme_editor_open {
         theme_editor::show(app, &ctx);
     }
+    if app.prefs.debug_overlay {
+        debug_overlay(app, &ctx);
+    }
     let _ = frame;
 }
 
@@ -715,4 +718,38 @@ fn overlay_controls(app: &mut LumenApp, ui: &mut Ui, screen: Rect, with_seek: bo
         ui.painter().text(pos2(sr.right() + 12.0, sr.center().y), egui::Align2::LEFT_CENTER, format_time(app.snap.duration), FontId::proportional(11.0), Color32::from_white_alpha(200));
     }
     let _ = (with_alpha(p.fg, 1.0), StrokeKind::Inside, sidebar::random_playlist_name);
+}
+
+/// Settings → Debug overlay: CPU, GPU and memory in one line, at the right
+/// end of the title bar (top-left in the full-window views, where the exit
+/// button has that corner). Drawn over everything, and clicks pass through.
+fn debug_overlay(app: &LumenApp, ctx: &egui::Context) {
+    let p = app.p;
+    let text = match *app.perf.usage.lock() {
+        Some(u) => {
+            let gpu = u.gpu.map_or("n/a".to_owned(), |g| format!("{g:.1}%"));
+            format!("CPU {:.1}%  GPU {gpu}  MEM {}", u.cpu, crate::perf::format_bytes(u.mem_bytes))
+        }
+        None => "CPU -  GPU -  MEM -".to_owned(),
+    };
+    let full = app.immersive || app.video_full;
+    let (align, offset) = if full {
+        (egui::Align2::LEFT_TOP, vec2(16.0, 22.0))
+    } else {
+        (egui::Align2::RIGHT_TOP, vec2(-14.0, (crate::ui::TITLEBAR_H - 24.0) / 2.0))
+    };
+    egui::Area::new(Id::new("debug-overlay"))
+        .anchor(align, offset)
+        .order(egui::Order::Tooltip)
+        .interactable(false)
+        .show(ctx, |ui| {
+            egui::Frame::new()
+                .fill(Color32::from_black_alpha(150))
+                .stroke(Stroke::new(1.0, with_alpha(p.border, 0.8)))
+                .corner_radius(12)
+                .inner_margin(egui::Margin::symmetric(10, 5))
+                .show(ui, |ui| {
+                    ui.add(egui::Label::new(egui::RichText::new(text).font(FontId::monospace(11.0)).color(Color32::from_gray(225))).extend());
+                });
+        });
 }
