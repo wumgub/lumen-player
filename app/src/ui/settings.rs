@@ -23,19 +23,22 @@ pub fn show(app: &mut LumenApp, ctx: &egui::Context) {
             ui.label(egui::RichText::new("Settings").font(crate::fonts::bold(18.0)).color(p.fg));
             ui.add_space(10.0);
             egui::ScrollArea::vertical().max_height(ctx.content_rect().height() * 0.7).show(ui, |ui| {
-                appearance(app, ui);
-                section_line(ui, &p);
-                stats(app, ui);
-                section_line(ui, &p);
-                discord(app, ui);
-                section_line(ui, &p);
-                row(ui, &p, "Debug overlay", "Show how much CPU, GPU and memory Lumen is using, in the bottom-left corner.", |ui| {
-                    if widgets::switch(ui, &p, app.prefs.debug_overlay).clicked() {
-                        app.prefs.debug_overlay = !app.prefs.debug_overlay;
-                    }
+                // A gutter for the scroll bar, so it never sits on a control.
+                egui::Frame::new().inner_margin(egui::Margin { right: 14, ..Default::default() }).show(ui, |ui| {
+                    appearance(app, ui);
+                    section_line(ui, &p);
+                    stats(app, ui);
+                    section_line(ui, &p);
+                    discord(app, ui);
+                    section_line(ui, &p);
+                    row(ui, &p, "Debug overlay", "Show how much CPU, GPU and memory Lumen is using, in the title bar.", |ui| {
+                        if widgets::switch(ui, &p, app.prefs.debug_overlay).clicked() {
+                            app.prefs.debug_overlay = !app.prefs.debug_overlay;
+                        }
+                    });
+                    section_line(ui, &p);
+                    about(app, ui);
                 });
-                section_line(ui, &p);
-                about(app, ui);
             });
             ui.add_space(12.0);
             let mut done = false;
@@ -65,14 +68,23 @@ fn heading(ui: &mut Ui, p: &Palette, title: &str, desc: &str) {
     }
 }
 
-/// A row with text on the left and a control on the right.
+/// A row with text on the left and a control on the right. The text gets
+/// whatever room the control leaves (measured on the frame before), so the
+/// two never overlap however wide the control is.
 fn row(ui: &mut Ui, p: &Palette, title: &str, desc: &str, control: impl FnOnce(&mut Ui)) {
+    let id = Id::new(("settings-row", title));
+    let control_w: f32 = ui.data(|d| d.get_temp(id)).unwrap_or(120.0);
+    let text_w = (ui.available_width() - control_w - 16.0).max(160.0);
     ui.horizontal(|ui| {
         ui.vertical(|ui| {
-            ui.set_width(380.0);
+            ui.set_width(text_w);
             heading(ui, p, title, desc);
         });
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), control);
+        let used = ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), control).response.rect.width();
+        if (used - control_w).abs() > 0.5 {
+            ui.data_mut(|d| d.insert_temp(id, used));
+            ui.ctx().request_repaint();
+        }
     });
 }
 
@@ -133,7 +145,8 @@ fn appearance(app: &mut LumenApp, ui: &mut Ui) {
     ui.add_space(10.0);
     row(ui, &p, "Visualizer frame rate", "Cap the visualizer to save CPU and battery. Lower is lighter.", |ui| {
         ui.spacing_mut().item_spacing.x = 4.0;
-        for (fps, label) in [(15u32, "15 fps"), (30, "30 fps"), (0, "Full")] {
+        // Laid out right to left, so this reads 15 fps, 30 fps, Full.
+        for (fps, label) in [(0u32, "Full"), (30, "30 fps"), (15, "15 fps")] {
             let kind = if app.prefs.viz_fps == fps { widgets::Pill::Active } else { widgets::Pill::Neutral };
             if widgets::pill(ui, &p, label, kind, None).clicked() {
                 app.prefs.viz_fps = fps;
