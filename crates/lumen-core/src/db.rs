@@ -21,7 +21,7 @@ const L_ARTIST: i64 = 2;
 const L_ALBUM: i64 = 4;
 
 const COLS: &str = "id, path, title, artist, albumArtist, album, genre, year, trackNo, discNo, \
-                    duration, hasArt, addedAt, note, isVideo";
+                    duration, hasArt, addedAt, note, isVideo, loudness, peak";
 
 pub(crate) fn now_ms() -> i64 {
     SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis() as i64).unwrap_or(0)
@@ -44,6 +44,8 @@ fn track_from(r: &Row<'_>) -> Result<Track> {
         added_at: r.get(12)?,
         note: r.get(13)?,
         is_video: r.get::<_, i64>(14)? != 0,
+        loudness: r.get(15)?,
+        peak: r.get(16)?,
     })
 }
 
@@ -253,6 +255,12 @@ impl Library {
         add("albumPos", "ALTER TABLE tracks ADD COLUMN albumPos INTEGER")?;
         add("note", "ALTER TABLE tracks ADD COLUMN note TEXT NOT NULL DEFAULT ''")?;
         add("isVideo", "ALTER TABLE tracks ADD COLUMN isVideo INTEGER NOT NULL DEFAULT 0")?;
+        // Balance volume: integrated loudness (LUFS) and sample peak, plus the
+        // file's size and modified time when it was measured, so an edited
+        // file gets measured again.
+        add("loudness", "ALTER TABLE tracks ADD COLUMN loudness REAL")?;
+        add("peak", "ALTER TABLE tracks ADD COLUMN peak REAL")?;
+        add("loudnessKey", "ALTER TABLE tracks ADD COLUMN loudnessKey TEXT")?;
         if !lib.columns("playlists")?.iter().any(|c| c == "position") {
             lib.conn.execute_batch(
                 "ALTER TABLE playlists ADD COLUMN position INTEGER;
@@ -293,6 +301,24 @@ impl Library {
     /// Fill in a length the tags didn't have (mpv works it out on playback).
     pub fn set_duration(&self, id: i64, seconds: f64) -> Result<()> {
         self.conn.execute("UPDATE tracks SET duration = ? WHERE id = ? AND duration <= 0", params![seconds, id])?;
+        Ok(())
+    }
+
+    /// Every track with the key its loudness was measured under (None if it
+    /// never was), for the Balance volume worker to compare with the file.
+    pub fn loudness_keys(&self) -> Result<Vec<(i64, String, Option<String>)>> {
+        let mut st = self.conn.prepare("SELECT id, path, loudnessKey FROM tracks ORDER BY id")?;
+        let rows = st.query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?;
+        Ok(rows.collect::<rusqlite::Result<_>>()?)
+    }
+
+    /// Store a measurement. `None` loudness means "couldn't measure", which
+    /// still records the key so it isn't retried until the file changes.
+    pub fn set_loudness(&self, id: i64, loudness: Option<f64>, peak: Option<f64>, key: &str) -> Result<()> {
+        self.conn.execute(
+            "UPDATE tracks SET loudness = ?, peak = ?, loudnessKey = ? WHERE id = ?",
+            params![loudness, peak, key, id],
+        )?;
         Ok(())
     }
 

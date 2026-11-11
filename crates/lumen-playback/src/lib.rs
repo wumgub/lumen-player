@@ -2,6 +2,7 @@
 //! feeds the visualizers.
 
 pub mod analyzer;
+pub mod loudness;
 pub mod mpv;
 pub mod player;
 pub mod queue;

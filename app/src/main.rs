@@ -4,6 +4,7 @@
 
 mod app;
 mod art;
+mod balance;
 mod fonts;
 mod library;
 mod palette;

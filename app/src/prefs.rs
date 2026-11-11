@@ -29,6 +29,8 @@ pub struct UiPrefs {
     pub video_mode: bool,
     /// The CPU / GPU / memory readout in the corner.
     pub debug_overlay: bool,
+    /// Play every song at about the same loudness.
+    pub balance_volume: bool,
 }
 
 impl Default for UiPrefs {
@@ -43,6 +45,7 @@ impl Default for UiPrefs {
             volume: 0.9,
             video_mode: true,
             debug_overlay: false,
+            balance_volume: true,
         }
     }
 }

@@ -91,6 +91,7 @@ pub struct LumenApp {
     pub spectrum: Spectrum,
     pub viz_state: viz::State,
     pub art: ArtCache,
+    pub balance: crate::balance::Balance,
     pub prefs: UiPrefs,
     prefs_saved: UiPrefs,
     pub settings: AppSettings,
@@ -194,6 +195,14 @@ impl LumenApp {
         // there the controls are made on the first frame instead.
         let media = if cfg!(windows) { None } else { make_media_controls(None, media_tx.clone(), cc.egui_ctx.clone()) };
 
+        // Balance volume: the gains measured so far, and measure the rest.
+        player.set_gains(lib.all_tracks().iter().filter_map(|t| Some((t.id, crate::balance::gain_of(t)?))));
+        player.set_balance(prefs.balance_volume);
+        let balance = crate::balance::Balance::new(db_path.clone(), cc.egui_ctx.clone());
+        if prefs.balance_volume {
+            balance.run();
+        }
+
         let art = ArtCache::new(db_path, cc.egui_ctx.clone());
         let presence = lumen_discord::Presence::new();
         presence.configure(settings.discord_enabled, &settings.discord_client_id, &settings.discord_large_image_key);
@@ -217,6 +226,7 @@ impl LumenApp {
             spectrum: Spectrum::new(),
             viz_state: viz::State::default(),
             art,
+            balance,
             prefs_saved: prefs.clone(),
             prefs,
             settings,
@@ -339,7 +349,12 @@ impl LumenApp {
                         let _ = self.lib.db.record_play(track_id, seconds, counted);
                     }
                 }
-                PlayerEvent::TrackChanged => {}
+                PlayerEvent::TrackChanged => {
+                    // Measure what's playing and what's next first.
+                    let s = self.player.snapshot();
+                    let ids = s.index.map(|i| s.queue.iter().skip(i).take(2).map(|t| t.track_id).collect()).unwrap_or_default();
+                    self.balance.first(ids);
+                }
             }
         }
         self.snap = self.player.snapshot();
@@ -419,6 +434,13 @@ impl LumenApp {
 
         if self.lib.poll_scan() {
             self.art.invalidate();
+            if self.prefs.balance_volume {
+                self.balance.run();
+            }
+        }
+        let gains = self.balance.poll();
+        if !gains.is_empty() {
+            self.player.set_gains(gains);
         }
         if self.art.poll(ctx) {
             self.refresh_theme(ctx);
