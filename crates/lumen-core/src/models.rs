@@ -23,6 +23,10 @@ pub struct Track {
     pub note: String,
     /// Backed by a video container, e.g. an .mp4 music video.
     pub is_video: bool,
+    /// Integrated loudness in LUFS, once Balance volume has measured it.
+    pub loudness: Option<f64>,
+    /// Sample peak, linear (1.0 = full scale), measured with `loudness`.
+    pub peak: Option<f64>,
 }
 
 impl Track {

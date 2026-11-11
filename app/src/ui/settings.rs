@@ -27,6 +27,8 @@ pub fn show(app: &mut LumenApp, ctx: &egui::Context) {
                 egui::Frame::new().inner_margin(egui::Margin { right: 14, ..Default::default() }).show(ui, |ui| {
                     appearance(app, ui);
                     section_line(ui, &p);
+                    balance(app, ui);
+                    section_line(ui, &p);
                     stats(app, ui);
                     section_line(ui, &p);
                     discord(app, ui);
@@ -150,6 +152,23 @@ fn appearance(app: &mut LumenApp, ui: &mut Ui) {
             let kind = if app.prefs.viz_fps == fps { widgets::Pill::Active } else { widgets::Pill::Neutral };
             if widgets::pill(ui, &p, label, kind, None).clicked() {
                 app.prefs.viz_fps = fps;
+            }
+        }
+    });
+}
+
+fn balance(app: &mut LumenApp, ui: &mut Ui) {
+    let p = app.p;
+    let desc = match app.balance.progress {
+        Some((done, total)) if app.prefs.balance_volume => format!("Plays every song at about the same loudness. Measuring your songs… {done} of {total}"),
+        _ => "Plays every song at about the same loudness, so quiet ones are turned up and loud ones down.".to_owned(),
+    };
+    row(ui, &p, "Balance volume", &desc, |ui| {
+        if widgets::switch(ui, &p, app.prefs.balance_volume).clicked() {
+            app.prefs.balance_volume = !app.prefs.balance_volume;
+            app.player.set_balance(app.prefs.balance_volume);
+            if app.prefs.balance_volume {
+                app.balance.run();
             }
         }
     });

@@ -8,6 +8,7 @@
 //! Listening time for the stats is counted here with the Electron app's rule:
 //! it only grows on forward playback, so seeks and pauses don't inflate it.
 
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::thread::JoinHandle;
 use std::time::Instant;
@@ -76,6 +77,10 @@ struct Inner {
     stopped: bool,
     has_video: bool,
     volume: f64,
+    /// Balance volume: per-track volume multipliers, by track id, used
+    /// while `balance` is on. Tracks not in here play as they are.
+    gains: HashMap<i64, f64>,
+    balance: bool,
     listen: Option<Listen>,
 }
 
@@ -96,9 +101,21 @@ const P_PAUSE: u64 = 3;
 const P_VIDEO: u64 = 4;
 
 /// mpv's volume control is cubic (gain = (volume/100)^3); the Electron app's
-/// GainNode was linear. Convert so 0.5 still means half the amplitude.
+/// GainNode was linear. Convert so 0.5 still means half the amplitude. Up to
+/// mpv's `volume-max` of 150, which is 3.375× (150% plus Balance volume's
+/// boost fits under it).
 fn mpv_volume(linear: f64) -> f64 {
-    100.0 * linear.clamp(0.0, 1.5).cbrt()
+    100.0 * linear.clamp(0.0, 3.375).cbrt()
+}
+
+/// The user's volume times the current song's Balance volume gain.
+fn effective_volume(s: &Inner) -> f64 {
+    let gain = if s.balance { s.queue.current().and_then(|c| s.gains.get(&c.track_id)).copied().unwrap_or(1.0) } else { 1.0 };
+    s.volume * gain
+}
+
+fn apply_volume(mpv: &Mpv, s: &Inner) {
+    let _ = mpv.set_f64("volume", mpv_volume(effective_volume(s)));
 }
 
 impl Player {
@@ -148,6 +165,8 @@ impl Player {
             stopped: true,
             has_video: false,
             volume: volume.clamp(0.0, 1.5),
+            gains: HashMap::new(),
+            balance: false,
             listen: None,
         }));
         let on_event: Callback = Arc::new(on_event);
@@ -276,7 +295,22 @@ impl Player {
     pub fn set_volume(&self, v: f64) {
         let mut s = self.inner.lock();
         s.volume = v.clamp(0.0, 1.5);
-        let _ = self.mpv.set_f64("volume", mpv_volume(s.volume));
+        apply_volume(&self.mpv, &s);
+    }
+
+    /// Turn Balance volume on or off; takes effect on the current song at once.
+    pub fn set_balance(&self, on: bool) {
+        let mut s = self.inner.lock();
+        s.balance = on;
+        apply_volume(&self.mpv, &s);
+    }
+
+    /// Set Balance volume gains (multipliers) for some tracks, e.g. all of
+    /// them at startup, or one as soon as it's been measured.
+    pub fn set_gains(&self, gains: impl IntoIterator<Item = (i64, f64)>) {
+        let mut s = self.inner.lock();
+        s.gains.extend(gains);
+        apply_volume(&self.mpv, &s);
     }
 
     pub fn set_shuffle(&self, on: bool) {
@@ -327,6 +361,7 @@ impl Player {
                 s.duration = item.duration;
                 s.has_video = false;
                 s.listen = Some(Listen::new(item.track_id, 0.0));
+                apply_volume(&self.mpv, s);
                 let _ = self.mpv.set_flag("pause", false);
                 if let Err(e) = self.mpv.command(&["loadfile", &item.path, "replace"]) {
                     log::warn!("couldn't play {}: {e}", item.path);
@@ -461,6 +496,9 @@ fn event_loop(mpv: Arc<Mpv>, inner: Arc<Mutex<Inner>>, on_event: Callback, notif
                         s.duration = item.as_ref().map(|t| t.duration).unwrap_or(0.0);
                         s.has_video = false;
                         s.listen = item.map(|t| Listen::new(t.track_id, 0.0));
+                        // mpv's volume acts before its output buffer, so this
+                        // lands on the new song's first samples.
+                        apply_volume(&mpv, &s);
                         // Drop the finished entry so the playlist stays [current, next].
                         let _ = mpv.command(&["playlist-remove", "0"]);
                         replan(&mpv, &mut s);
@@ -569,7 +607,12 @@ mod tests {
         }
         let (tx, rx) = mpsc::channel();
         let player = Player::new(&[("ao", "null")], 1.0, move |e| { let _ = tx.send(e); }, || {}).unwrap();
+        // Balance volume: the first song is turned down, the second up.
+        player.set_gains([(1, 0.5), (2, 2.0)]);
+        player.set_balance(true);
         player.play(items, 0);
+        let volume = || player.mpv().get_f64("volume").unwrap();
+        assert!((volume() - mpv_volume(0.5)).abs() < 0.01, "{}", volume());
         let mut listened = Vec::new();
         let deadline = Instant::now() + Duration::from_secs(20);
         while Instant::now() < deadline {
@@ -585,6 +628,9 @@ mod tests {
         let snap = player.snapshot();
         assert!(snap.stopped, "queue should have finished");
         assert_eq!(snap.index, Some(1), "should have moved to the second song");
+        assert!((volume() - mpv_volume(2.0)).abs() < 0.01, "gain follows the song: {}", volume());
+        player.set_balance(false);
+        assert!((volume() - 100.0).abs() < 0.01, "{}", volume());
         // The 6 s song is banked as a counted play; the 2 s one is too short to save.
         assert_eq!(listened.len(), 1, "{listened:?}");
         assert_eq!(listened[0].0, 1);
