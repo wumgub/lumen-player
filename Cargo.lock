@@ -2214,6 +2214,7 @@ dependencies = [
  "serde",
  "serde_json",
  "souvlaki",
+ "unicode-segmentation",
  "windows-sys 0.61.2",
  "winresource",
 ]

@@ -15,15 +15,59 @@ use crate::fonts;
 use crate::palette::{Palette, mix, with_alpha};
 use crate::ui::{icon, icons};
 
+/// egui shapes each word in its own direction but always lays the words out
+/// left to right, so "עומר אדם" would come out as "אדם עומר". This puts the
+/// words of right-to-left runs (Hebrew, Arabic, ...) in visual order: a cut
+/// down Unicode bidi that works word by word, which is enough for names.
+pub fn visual_order(text: &str) -> std::borrow::Cow<'_, str> {
+    #[derive(Clone, Copy, PartialEq)]
+    enum Dir { L, R }
+    let rtl = |c: char| matches!(c as u32, 0x0590..=0x08FF | 0xFB1D..=0xFDFF | 0xFE70..=0xFEFF | 0x10800..=0x10FFF | 0x1E800..=0x1EFFF);
+    if !text.chars().any(rtl) {
+        return text.into();
+    }
+    let strong = |w: &str| w.chars().find(|c| c.is_alphabetic()).map(|c| if rtl(c) { Dir::R } else { Dir::L });
+    let words: Vec<&str> = text.split(' ').collect();
+    let base = words.iter().find_map(|w| strong(w)).unwrap_or(Dir::L);
+    // Runs of words in one direction; digits and punctuation join the run before.
+    let mut runs: Vec<(Dir, Vec<&str>)> = Vec::new();
+    for w in words {
+        let d = strong(w).or(runs.last().map(|r| r.0)).unwrap_or(base);
+        match runs.last_mut() {
+            Some((rd, ws)) if *rd == d => ws.push(w),
+            _ => runs.push((d, vec![w])),
+        }
+    }
+    for (d, ws) in &mut runs {
+        if *d == Dir::R {
+            ws.reverse();
+        }
+    }
+    if base == Dir::R {
+        runs.reverse();
+    }
+    runs.iter().map(|(_, ws)| ws.join(" ")).collect::<Vec<_>>().join(" ").into()
+}
+
+#[cfg(test)]
+#[test]
+fn right_to_left_words_in_visual_order() {
+    assert_eq!(visual_order("Deftones"), "Deftones");
+    assert_eq!(visual_order("עומר אדם"), "אדם עומר");
+    assert_eq!(visual_order("فيروز"), "فيروز");
+    assert_eq!(visual_order("Live: עומר אדם 2019"), "Live: 2019 אדם עומר");
+    assert_eq!(visual_order("עומר אדם - Live"), "Live - אדם עומר");
+}
+
 pub fn galley(ui: &Ui, text: &str, font: FontId, color: Color32, max_width: f32) -> Arc<Galley> {
-    let mut job = LayoutJob::single_section(text.to_owned(), TextFormat::simple(font, color));
+    let mut job = LayoutJob::single_section(visual_order(text).into_owned(), TextFormat::simple(font, color));
     job.wrap = TextWrapping::truncate_at_width(max_width.max(1.0));
     ui.painter().layout_job(job)
 }
 
 /// Text wrapped to at most `rows` lines, the last ending in "…" if cut.
 pub fn galley_rows(ui: &Ui, text: &str, font: FontId, color: Color32, max_width: f32, rows: usize) -> Arc<Galley> {
-    let mut job = LayoutJob::single_section(text.to_owned(), TextFormat::simple(font, color));
+    let mut job = LayoutJob::single_section(visual_order(text).into_owned(), TextFormat::simple(font, color));
     job.wrap = TextWrapping { max_width: max_width.max(1.0), max_rows: rows, break_anywhere: false, overflow_character: Some('…') };
     ui.painter().layout_job(job)
 }
