@@ -31,6 +31,8 @@ pub struct UiPrefs {
     pub debug_overlay: bool,
     /// Play every song at about the same loudness.
     pub balance_volume: bool,
+    /// Write edits made in Lumen into the songs' files too.
+    pub edit_metadata: bool,
 }
 
 impl Default for UiPrefs {
@@ -46,6 +48,7 @@ impl Default for UiPrefs {
             video_mode: true,
             debug_overlay: false,
             balance_volume: true,
+            edit_metadata: false,
         }
     }
 }

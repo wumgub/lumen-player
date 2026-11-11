@@ -10,6 +10,7 @@ use lumen_core::fold::fold;
 use crate::app::{Dialog, LumenApp, RenameKind, SongEdit};
 use crate::art::ArtKey;
 use crate::library::View;
+use crate::metadata::Target;
 use crate::palette::with_alpha;
 use crate::ui::{TRANSPORT_H, format_time, icon, icons, nowplaying, pluralize, settings, sidebar, theme_editor, widgets};
 
@@ -218,6 +219,7 @@ fn context_menu(app: &mut LumenApp, ctx: &egui::Context) {
             }
             if !track.album.is_empty() && menu_item(ui, &pp, "Remove from album", width, false).clicked() {
                 let _ = app.lib.db.set_track_album(&[track.id], "");
+                app.edited(Target::Tracks(vec![track.id]));
                 app.library_changed();
                 close = true;
             }
@@ -362,6 +364,9 @@ fn save_song_edit(app: &mut LumenApp, e: &SongEdit) {
     if e.note.trim() != t.note {
         let _ = db.set_track_note(t.id, e.note.trim());
     }
+    if (!title.is_empty() && title != t.title) || artist != t.artist || album != t.album {
+        app.edited(Target::Tracks(vec![t.id]));
+    }
     app.library_changed();
 }
 
@@ -391,12 +396,14 @@ fn dialog(app: &mut LumenApp, ctx: &egui::Context) {
                     match kind {
                         RenameKind::Artist(old) => {
                             let _ = app.lib.db.rename_artist(old, &v);
+                            app.edited(Target::Artist(v.clone()));
                             if app.view == View::Artist(old.clone()) {
                                 app.view = View::Artist(v.clone());
                             }
                         }
                         RenameKind::Album(old) => {
                             let _ = app.lib.db.rename_album(old, &v);
+                            app.edited(Target::Album(v.clone()));
                             app.art.invalidate_album(old);
                             app.art.invalidate_album(&v);
                             if app.view == View::Album(old.clone()) {
@@ -445,9 +452,14 @@ fn dialog(app: &mut LumenApp, ctx: &egui::Context) {
             let p = app.p;
             let albums: Vec<String> = app.lib.albums.iter().map(|a| a.album.clone()).collect();
             let mut note_focused = false;
+            let edit_files = app.prefs.edit_metadata;
             let (submit, dismissed) = modal(app.p, ctx, "edit-song", 400.0, |ui| {
                 title(ui, &pp, "Edit song");
-                label(ui, &pp, "Changes only this song, and only in Lumen; the file stays as it is.");
+                label(ui, &pp, if edit_files {
+                    "Changes only this song. Edit Metadata is on, so its file is updated too."
+                } else {
+                    "Changes only this song, and only in Lumen; the file stays as it is."
+                });
                 small_label(ui, &p, "Title");
                 field(ui, &pp, &mut e.title, &e.track.title, "edit-title");
                 small_label(ui, &p, "Artist");
@@ -528,6 +540,7 @@ fn dialog(app: &mut LumenApp, ctx: &egui::Context) {
             }
             if let Some(name) = chosen {
                 let _ = app.lib.db.set_track_album(tracks, &name);
+                app.edited(Target::Tracks(tracks.clone()));
                 app.selected.clear();
                 app.art.invalidate_album(&name);
                 app.library_changed();
@@ -557,6 +570,7 @@ fn dialog(app: &mut LumenApp, ctx: &egui::Context) {
                             _ => "image/jpeg",
                         };
                         let _ = app.lib.db.set_album_cover_custom(&album_name, mime, &bytes);
+                        app.edited(Target::Album(album_name.clone()));
                     }
                     keep = false;
                 }
@@ -623,6 +637,7 @@ fn dialog(app: &mut LumenApp, ctx: &egui::Context) {
             }
             if let Some(id) = chosen {
                 let _ = app.lib.db.set_album_cover_from_track(album, id);
+                app.edited(Target::Album(album.clone()));
                 app.art.invalidate_album(album);
                 keep = false;
             }
