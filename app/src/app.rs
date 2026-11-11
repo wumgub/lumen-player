@@ -92,6 +92,7 @@ pub struct LumenApp {
     pub viz_state: viz::State,
     pub art: ArtCache,
     pub balance: crate::balance::Balance,
+    pub metadata: crate::metadata::Metadata,
     pub prefs: UiPrefs,
     prefs_saved: UiPrefs,
     pub settings: AppSettings,
@@ -203,6 +204,7 @@ impl LumenApp {
             balance.run();
         }
 
+        let metadata = crate::metadata::Metadata::new(db_path.clone(), cc.egui_ctx.clone());
         let art = ArtCache::new(db_path, cc.egui_ctx.clone());
         let presence = lumen_discord::Presence::new();
         presence.configure(settings.discord_enabled, &settings.discord_client_id, &settings.discord_large_image_key);
@@ -227,6 +229,7 @@ impl LumenApp {
             viz_state: viz::State::default(),
             art,
             balance,
+            metadata,
             prefs_saved: prefs.clone(),
             prefs,
             settings,
@@ -324,6 +327,14 @@ impl LumenApp {
     /// Something in the library changed: re-read it and drop stale art.
     pub fn library_changed(&mut self) {
         self.lib.reload();
+    }
+
+    /// An edit touched these songs: with Edit Metadata on, write it into
+    /// their files too.
+    pub fn edited(&self, target: crate::metadata::Target) {
+        if self.prefs.edit_metadata {
+            self.metadata.write(target);
+        }
     }
 
     fn refresh_theme(&mut self, ctx: &egui::Context) {
@@ -438,6 +449,7 @@ impl LumenApp {
                 self.balance.run();
             }
         }
+        self.metadata.poll();
         let gains = self.balance.poll();
         if !gains.is_empty() {
             self.player.set_gains(gains);

@@ -33,6 +33,8 @@ pub fn show(app: &mut LumenApp, ctx: &egui::Context) {
                     section_line(ui, &p);
                     discord(app, ui);
                     section_line(ui, &p);
+                    edit_metadata(app, ui);
+                    ui.add_space(10.0);
                     row(ui, &p, "Debug overlay", "Show how much CPU, GPU and memory Lumen is using, in the title bar.", |ui| {
                         if widgets::switch(ui, &p, app.prefs.debug_overlay).clicked() {
                             app.prefs.debug_overlay = !app.prefs.debug_overlay;
@@ -153,6 +155,19 @@ fn appearance(app: &mut LumenApp, ui: &mut Ui) {
             if widgets::pill(ui, &p, label, kind, None).clicked() {
                 app.prefs.viz_fps = fps;
             }
+        }
+    });
+}
+
+fn edit_metadata(app: &mut LumenApp, ui: &mut Ui) {
+    let p = app.p;
+    let desc = match &app.metadata.problem {
+        Some(problem) if app.prefs.edit_metadata => problem.clone(),
+        _ => "Also write your edits (titles, artists, albums and covers) into the song files, so other players see them. Off means Lumen never changes your files.".to_owned(),
+    };
+    row(ui, &p, "Edit Metadata", &desc, |ui| {
+        if widgets::switch(ui, &p, app.prefs.edit_metadata).clicked() {
+            app.prefs.edit_metadata = !app.prefs.edit_metadata;
         }
     });
 }

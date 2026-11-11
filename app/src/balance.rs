@@ -36,7 +36,7 @@ pub fn gain_of(t: &Track) -> Option<f64> {
 }
 
 /// What a file looked like when it was measured: size and modified time.
-fn key(path: &Path) -> Option<String> {
+pub fn key(path: &Path) -> Option<String> {
     let m = std::fs::metadata(path).ok()?;
     let modified = m.modified().ok()?.duration_since(UNIX_EPOCH).ok()?.as_secs();
     Some(format!("{}:{modified}", m.len()))

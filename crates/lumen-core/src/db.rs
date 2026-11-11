@@ -322,6 +322,16 @@ impl Library {
         Ok(())
     }
 
+    /// A file's tags were rewritten but its sound wasn't: carry the loudness
+    /// over to the file's new size and modified time.
+    pub fn rekey_loudness(&self, id: i64, old: &str, new: &str) -> Result<()> {
+        self.conn.execute(
+            "UPDATE tracks SET loudnessKey = ?3 WHERE id = ?1 AND loudnessKey = ?2",
+            params![id, old, new],
+        )?;
+        Ok(())
+    }
+
     pub fn track(&self, id: i64) -> Result<Option<Track>> {
         self.conn
             .query_row(&format!("SELECT {COLS} FROM tracks WHERE id = ?"), [id], track_from)
@@ -448,7 +458,7 @@ impl Library {
         Ok(removed)
     }
 
-    // ---- edits (database only; files are never touched) ----
+    // ---- edits (database only; Edit Metadata writes them to files separately) ----
 
     pub fn rename_track(&self, id: i64, title: &str) -> Result<()> {
         self.conn.execute(

@@ -6,6 +6,7 @@ pub mod fold;
 pub mod models;
 pub mod scanner;
 pub mod stats;
+pub mod tags;
 pub mod theme;
 
 pub use db::Library;

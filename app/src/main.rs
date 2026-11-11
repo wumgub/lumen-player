@@ -7,6 +7,7 @@ mod art;
 mod balance;
 mod fonts;
 mod library;
+mod metadata;
 mod palette;
 mod perf;
 mod prefs;
