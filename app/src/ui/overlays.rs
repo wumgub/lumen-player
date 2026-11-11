@@ -750,9 +750,10 @@ fn overlay_controls(app: &mut LumenApp, ui: &mut Ui, screen: Rect, with_seek: bo
 }
 
 /// Settings → Debug overlay: CPU, GPU and memory in one line, at the right
-/// end of the title bar (top-left in the full-window views, where the exit
-/// button and visualizer controls have the other corner, past the window
-/// buttons on macOS). Drawn over everything, and clicks pass through.
+/// end of the title bar. In immersive mode it goes bottom right, out of the
+/// way of the window buttons and the visualizer controls; over a full-window
+/// video it's top left (past the window buttons on macOS), clear of the seek
+/// bar. Drawn over everything, and clicks pass through.
 fn debug_overlay(app: &LumenApp, ctx: &egui::Context) {
     let p = app.p;
     let text = match *app.perf.usage.lock() {
@@ -762,9 +763,10 @@ fn debug_overlay(app: &LumenApp, ctx: &egui::Context) {
         }
         None => "CPU -  GPU -  MEM -".to_owned(),
     };
-    let full = app.immersive || app.video_full;
-    let (align, offset) = if full {
+    let (align, offset) = if app.video_full {
         (egui::Align2::LEFT_TOP, vec2(if cfg!(target_os = "macos") { 84.0 } else { 16.0 }, 22.0))
+    } else if app.immersive {
+        (egui::Align2::RIGHT_BOTTOM, vec2(-16.0, -16.0))
     } else {
         (egui::Align2::RIGHT_TOP, vec2(-14.0, (crate::ui::TITLEBAR_H - 24.0) / 2.0))
     };
