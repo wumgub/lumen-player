@@ -15,7 +15,7 @@ use symphonia::core::formats::{FormatOptions, TrackType};
 use symphonia::core::io::MediaSourceStream;
 use symphonia::core::meta::MetadataOptions;
 
-use crate::mpv::{Event, Format, Mpv, Value};
+use crate::mpv::{EndReason, Event, Mpv};
 
 /// Every song is brought to this level, in LUFS.
 pub const TARGET: f64 = -16.0;
@@ -93,40 +93,51 @@ fn measure_decoded(path: &Path) -> Option<Loudness> {
     (lufs.is_finite() && lufs > -70.0).then_some(Loudness { lufs, peak })
 }
 
-/// For what symphonia can't decode (Opus, and the odd MP3 it rejects): play
-/// the file through a silent, unthrottled mpv with FFmpeg's ebur128 filter
-/// and read its result at the end.
+/// For what symphonia can't decode (Opus, and the odd MP3 it rejects): have
+/// a silent second mpv decode it to a temporary WAV as fast as it can, then
+/// measure that. (Reading FFmpeg's ebur128 filter results through
+/// `af-metadata` instead crashes libmpv 0.37, which Ubuntu ships.)
 fn measure_with_mpv(path: &Path) -> Option<Loudness> {
-    let mpv = Mpv::new(&[
+    let nanos = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).ok()?.subsec_nanos();
+    let wav = std::env::temp_dir().join(format!("lumen-loudness-{}-{nanos}.wav", std::process::id()));
+    let decoded = decode_with_mpv(path, &wav);
+    let result = decoded.then(|| measure_decoded(&wav)).flatten();
+    let _ = std::fs::remove_file(&wav);
+    result
+}
+
+fn decode_with_mpv(path: &Path, wav: &Path) -> bool {
+    let Some(out) = wav.to_str() else { return false };
+    let Ok(mpv) = Mpv::new(&[
         ("vo", "null"),
         ("vid", "no"),
-        ("ao", "null"),
-        ("ao-null-untimed", "yes"),
+        ("ao", "pcm"),
+        ("ao-pcm-file", out),
+        ("ao-pcm-waveheader", "yes"),
+        ("audio-format", "floatp"),
         ("audio-display", "no"),
-        ("keep-open", "yes"),
-        ("af", "@r128:lavfi=[ebur128=metadata=1:peak=sample]"),
         ("ytdl", "no"),
         ("load-scripts", "no"),
         ("terminal", "no"),
-    ])
-    .ok()?;
-    mpv.observe(1, "eof-reached", Format::Flag).ok()?;
-    mpv.command(&["loadfile", path.to_str()?]).ok()?;
-    let deadline = Instant::now() + Duration::from_secs(120);
-    loop {
-        if Instant::now() > deadline {
-            return None;
-        }
-        match mpv.wait_event(1.0) {
-            Some(Event::Property { id: 1, value: Value::Flag(true), .. }) => break,
-            Some(Event::EndFile { .. }) => return None,
-            _ => {}
-        }
+    ]) else {
+        return false;
+    };
+    let Some(input) = path.to_str() else { return false };
+    if mpv.command(&["loadfile", input]).is_err() {
+        return false;
     }
-    let read = |key: &str| mpv.get_string(&format!("af-metadata/r128/lavfi.r128.{key}"))?.trim().parse::<f64>().ok();
-    let lufs = read("I")?;
-    let peak = read("sample_peak").unwrap_or(1.0);
-    (lufs.is_finite() && lufs > -70.0).then_some(Loudness { lufs, peak })
+    let deadline = Instant::now() + Duration::from_secs(120);
+    let finished = loop {
+        if Instant::now() > deadline {
+            break false;
+        }
+        if let Some(Event::EndFile { reason, .. }) = mpv.wait_event(1.0) {
+            break reason == EndReason::Eof;
+        }
+    };
+    // The WAV header gets its final sizes when mpv closes the file.
+    drop(mpv);
+    finished
 }
 
 /// The volume multiplier that brings a song to [`TARGET`]: within ±12 dB,
