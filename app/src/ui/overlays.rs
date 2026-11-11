@@ -669,6 +669,7 @@ pub fn immersive(app: &mut LumenApp, ui: &mut Ui) {
     if er.on_hover_text("Exit (Esc)").clicked() {
         app.immersive = false;
     }
+    nowplaying::viz_lights(app, ui, ex.left() - 8.0, ex.top());
 }
 
 /// The music video filling the window; controls fade out while the mouse rests.
@@ -750,7 +751,8 @@ fn overlay_controls(app: &mut LumenApp, ui: &mut Ui, screen: Rect, with_seek: bo
 
 /// Settings → Debug overlay: CPU, GPU and memory in one line, at the right
 /// end of the title bar (top-left in the full-window views, where the exit
-/// button has that corner). Drawn over everything, and clicks pass through.
+/// button and visualizer controls have the other corner, past the window
+/// buttons on macOS). Drawn over everything, and clicks pass through.
 fn debug_overlay(app: &LumenApp, ctx: &egui::Context) {
     let p = app.p;
     let text = match *app.perf.usage.lock() {
@@ -762,7 +764,7 @@ fn debug_overlay(app: &LumenApp, ctx: &egui::Context) {
     };
     let full = app.immersive || app.video_full;
     let (align, offset) = if full {
-        (egui::Align2::LEFT_TOP, vec2(16.0, 22.0))
+        (egui::Align2::LEFT_TOP, vec2(if cfg!(target_os = "macos") { 84.0 } else { 16.0 }, 22.0))
     } else {
         (egui::Align2::RIGHT_TOP, vec2(-14.0, (crate::ui::TITLEBAR_H - 24.0) / 2.0))
     };
