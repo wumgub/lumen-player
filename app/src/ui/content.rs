@@ -431,6 +431,35 @@ fn grid_columns(width: f32) -> (usize, f32) {
     (cols, w)
 }
 
+/// What goes in an artist's circle. Scripts with capitals get up to two
+/// initials ("Molchat Doma" → MD); the rest get the name's first character,
+/// whole, since initials don't mean much there (米津玄師 → 米, 아이유 → 아,
+/// शंकर → शं).
+fn initials(name: &str) -> String {
+    use unicode_segmentation::UnicodeSegmentation;
+    let starts: Vec<&str> = name.split_whitespace().filter_map(|w| w.graphemes(true).find(|g| g.chars().any(char::is_alphanumeric))).collect();
+    let cased = |g: &&str| g.chars().next().is_some_and(|c| c.is_uppercase() || c.is_lowercase());
+    match starts.first() {
+        Some(g) if cased(g) => starts.iter().copied().take(2).take_while(|g| cased(&g)).flat_map(|g| g.chars()).flat_map(char::to_uppercase).collect(),
+        Some(g) => g.to_string(),
+        None => name.chars().next().map(String::from).unwrap_or_default(),
+    }
+}
+
+#[cfg(test)]
+#[test]
+fn initials_in_any_script() {
+    assert_eq!(initials("Molchat Doma"), "MD");
+    assert_eq!(initials("Kino"), "K");
+    assert_eq!(initials("Ελένη Βιτάλη"), "ΕΒ");
+    assert_eq!(initials("米津玄師"), "米");
+    assert_eq!(initials("宇多田 ヒカル"), "宇");
+    assert_eq!(initials("아이유"), "아");
+    assert_eq!(initials("शंकर महादेवन"), "शं");
+    assert_eq!(initials("(hed) p.e."), "HP");
+    assert_eq!(initials("Kenshi 米津"), "K");
+}
+
 fn artist_grid(app: &mut LumenApp, ui: &mut Ui, area: Rect) {
     let p = app.p;
     let inner = area.shrink2(PAD);
@@ -458,8 +487,7 @@ fn artist_grid(app: &mut LumenApp, ui: &mut Ui, area: Rect) {
             let circle = Rect::from_min_size(rect.min + vec2(14.0, 14.0), vec2(w - 28.0, w - 28.0));
             let (c1, c2) = widgets::seeded_gradient(&a.artist);
             widgets::gradient_circle(ui, circle.center(), circle.width() / 2.0, c1, c2);
-            let initials: String = a.artist.split_whitespace().take(2).filter_map(|w| w.chars().next()).flat_map(char::to_uppercase).collect();
-            ui.painter().text(circle.center(), egui::Align2::CENTER_CENTER, initials, crate::fonts::bold(circle.width() * 0.28), Color32::from_white_alpha(217));
+            ui.painter().text(circle.center(), egui::Align2::CENTER_CENTER, initials(&a.artist), crate::fonts::bold(circle.width() * 0.28), Color32::from_white_alpha(217));
             widgets::text(ui, pos2(rect.left() + 14.0, circle.bottom() + 10.0), &a.artist, crate::fonts::medium(14.0), p.fg, w - 28.0);
             widgets::text(ui, pos2(rect.left() + 14.0, circle.bottom() + 30.0), &pluralize(a.count, "song"), FontId::proportional(12.0), p.fg_dim, w - 28.0);
             let edit = Rect::from_min_size(pos2(rect.right() - 36.0, rect.top() + 8.0), vec2(28.0, 28.0));
