@@ -2,10 +2,11 @@
 //! switch, full-screen button and tabs, then the art (or the music video),
 //! and the song's details.
 
-use eframe::egui::{self, Color32, FontId, Id, Rect, Sense, Stroke, StrokeKind, Ui, pos2, vec2};
+use eframe::egui::{self, Align2, Color32, FontId, Id, Rect, Sense, Stroke, StrokeKind, Ui, pos2, vec2};
 
 use crate::app::LumenApp;
 use crate::art::ArtKey;
+use crate::library::View;
 use crate::ui::{icon, icons, widgets};
 use crate::viz;
 
@@ -64,15 +65,32 @@ pub fn show(app: &mut LumenApp, ui: &mut Ui, frame: &mut eframe::Frame) {
         y = seg.bottom() + 10.0;
     }
     let w = area.width();
-    let title = widgets::galley(ui, &t.title, crate::fonts::bold(16.0), p.fg, w);
-    ui.painter().galley(pos2(cx - title.size().x / 2.0, y), title.clone(), p.fg);
-    y += title.size().y + 4.0;
-    let artist = widgets::galley(ui, &t.artist, FontId::proportional(13.0), p.fg_dim, w);
-    ui.painter().galley(pos2(cx - artist.size().x / 2.0, y), artist.clone(), p.fg_dim);
-    y += artist.size().y + 2.0;
+    // The title and album open the album, the artist their page.
+    let mut open = None;
+    if t.album.is_empty() {
+        let title = widgets::galley(ui, &t.title, crate::fonts::bold(16.0), p.fg, w);
+        ui.painter().galley(pos2(cx - title.size().x / 2.0, y), title.clone(), p.fg);
+        y += title.size().y + 4.0;
+    } else {
+        let r = widgets::link(ui, pos2(cx, y), Align2::CENTER_TOP, &t.title, crate::fonts::bold(16.0), p.fg, p.fg, w, Id::unique("np-title"));
+        if r.clicked() {
+            open = Some(View::Album(t.album.clone()));
+        }
+        y += r.rect.height() + 4.0;
+    }
+    let r = widgets::link(ui, pos2(cx, y), Align2::CENTER_TOP, &t.artist, FontId::proportional(13.0), p.fg_dim, p.fg, w, Id::unique("np-artist"));
+    if r.clicked() {
+        open = Some(View::Artist(t.effective_artist().to_owned()));
+    }
+    y += r.rect.height() + 2.0;
     if !t.album.is_empty() {
-        let album = widgets::galley(ui, &t.album, FontId::proportional(12.0), p.fg_dim, w);
-        ui.painter().galley(pos2(cx - album.size().x / 2.0, y), album, crate::palette::with_alpha(p.fg_dim, 0.8));
+        let dim = crate::palette::with_alpha(p.fg_dim, 0.8);
+        if widgets::link(ui, pos2(cx, y), Align2::CENTER_TOP, &t.album, FontId::proportional(12.0), dim, p.fg, w, Id::unique("np-album")).clicked() {
+            open = Some(View::Album(t.album.clone()));
+        }
+    }
+    if let Some(v) = open {
+        app.set_view(v);
     }
 }
 

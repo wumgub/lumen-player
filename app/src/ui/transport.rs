@@ -1,11 +1,12 @@
 //! The transport bar: what's playing, the controls and seek
 //! bar in the middle, the queue button and volume on the right.
 
-use eframe::egui::{self, FontId, Id, Rect, Sense, Ui, pos2, vec2};
+use eframe::egui::{self, Align2, FontId, Id, Rect, Sense, Ui, pos2, vec2};
 use lumen_playback::queue::Repeat;
 
 use crate::app::LumenApp;
 use crate::art::ArtKey;
+use crate::library::View;
 use crate::ui::{format_time, icons, widgets};
 
 pub fn show(app: &mut LumenApp, ui: &mut Ui) {
@@ -21,9 +22,25 @@ pub fn show(app: &mut LumenApp, ui: &mut Ui) {
             widgets::artwork(ui, &p, &mut app.art, &ArtKey::Track(t.id), art, 6.0);
             let x = art.right() + 12.0;
             let w = left_w - 64.0;
-            widgets::text_v(ui, x, cy - 9.0, &t.title, crate::fonts::medium(14.0), p.fg, w);
-            let sub = if t.album.is_empty() { t.artist.clone() } else { format!("{} — {}", t.artist, t.album) };
-            widgets::text_v(ui, x, cy + 10.0, &sub, FontId::proportional(12.0), p.fg_dim, w);
+            // The title opens its album, the artist their page.
+            let title_font = crate::fonts::medium(14.0);
+            if t.album.is_empty() {
+                widgets::text_v(ui, x, cy - 9.0, &t.title, title_font, p.fg, w);
+            } else if widgets::link(ui, pos2(x, cy - 9.0), Align2::LEFT_CENTER, &t.title, title_font, p.fg, p.fg, w, Id::unique("tb-title")).clicked() {
+                app.set_view(View::Album(t.album.clone()));
+            }
+            let font = FontId::proportional(12.0);
+            let a = widgets::link(ui, pos2(x, cy + 10.0), Align2::LEFT_CENTER, &t.artist, font.clone(), p.fg_dim, p.fg, w, Id::unique("tb-artist"));
+            if a.clicked() {
+                app.set_view(View::Artist(t.effective_artist().to_owned()));
+            }
+            let rest = w - a.rect.width();
+            if !t.album.is_empty() && rest > 40.0 {
+                let sep = widgets::text_v(ui, a.rect.right(), cy + 10.0, " — ", font.clone(), p.fg_dim, rest);
+                if widgets::link(ui, pos2(sep.right(), cy + 10.0), Align2::LEFT_CENTER, &t.album, font, p.fg_dim, p.fg, rest - sep.width(), Id::unique("tb-album")).clicked() {
+                    app.set_view(View::Album(t.album.clone()));
+                }
+            }
         }
         None => {
             widgets::text_v(ui, bar.left(), cy - 9.0, "Nothing playing", crate::fonts::medium(14.0), p.fg, left_w);

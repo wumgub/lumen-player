@@ -89,6 +89,23 @@ pub fn text_v(ui: &Ui, x: f32, y: f32, s: &str, font: FontId, color: Color32, ma
     rect
 }
 
+/// One line of text that works as a link: it brightens to `hover` and is
+/// underlined under the pointer, with a hand cursor. `align` says which point
+/// of the text sits at `pos`.
+#[allow(clippy::too_many_arguments)]
+pub fn link(ui: &Ui, pos: Pos2, align: Align2, s: &str, font: FontId, color: Color32, hover: Color32, max_width: f32, id: Id) -> Response {
+    let size = galley(ui, s, font.clone(), color, max_width).size();
+    let rect = align.anchor_size(pos, size);
+    let resp = ui.interact(rect, id, Sense::click());
+    let color = if resp.hovered() { hover } else { color };
+    ui.painter().galley(rect.min, galley(ui, s, font, color, max_width), color);
+    if resp.hovered() {
+        let y = rect.bottom() - 1.0;
+        ui.painter().hline(rect.x_range(), y, Stroke::new(1.0, color));
+    }
+    hover_cursor(resp)
+}
+
 pub fn text_width(ui: &Ui, s: &str, font: FontId) -> f32 {
     ui.painter().layout_no_wrap(s.to_owned(), font, Color32::WHITE).size().x
 }
