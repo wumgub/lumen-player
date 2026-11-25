@@ -50,9 +50,6 @@ There's an Android version too: [lumen-android](https://github.com/wumgub/lumen-
 It's light, too. Compared with the old Electron version it's about a third of the
 size to install and uses roughly a quarter of the memory while playing.
 
-## DISCLAIMER!!
-This was made using the assistance of AI. However, this is not vibe-coded. AI was used as tool during the making of this, not as a 'code-all' god.
-
 ## Discord Rich Presence
 
 Presence is off by default. To turn it on (⚙️ in the top-right → *Discord Rich Presence*):
