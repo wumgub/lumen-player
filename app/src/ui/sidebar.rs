@@ -98,8 +98,11 @@ pub fn show(app: &mut LumenApp, ui: &mut Ui) {
         for (i, pl) in playlists.iter().enumerate() {
             let (rect, resp) = ui.allocate_exact_size(vec2(ui.available_width(), 36.0), Sense::click_and_drag());
             let active = matches!(&app.view, View::Playlist(id, _) if *id == pl.id);
-            widgets::paint_nav_item(ui, &p, &resp, rect, icons::LIST, &pl.name, active, if resp.hovered() { None } else { Some(pl.count) }, 16.0);
-            if resp.hovered() {
+            // Not hovered(): pointing at a button on the row un-hovers the row, which
+            // would hide the button before the click finished.
+            let over = resp.contains_pointer();
+            widgets::paint_nav_item(ui, &p, &resp, rect, icons::LIST, &pl.name, active, if over { None } else { Some(pl.count) }, 16.0);
+            if over {
                 // Rename and delete appear over the right edge on hover.
                 let del = Rect::from_center_size(pos2(rect.right() - 14.0, rect.center().y), vec2(22.0, 22.0));
                 let ren = del.translate(vec2(-24.0, 0.0));
