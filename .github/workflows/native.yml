@@ -123,6 +123,10 @@ jobs:
           mkdir -p shlibs/debian && echo "Source: lumen" > shlibs/debian/control
           DEPENDS=$(cd shlibs && dpkg-shlibdeps -O "../$D/usr/bin/lumen" | sed -n 's/^shlibs:Depends=//p')
           [ -n "$DEPENDS" ] || { echo "dpkg-shlibdeps found no dependencies"; exit 1; }
+          # The window, keyboard and OpenGL libraries are loaded at runtime
+          # (winit, glutin), so dpkg-shlibdeps can't see them.
+          DEPENDS="$DEPENDS, libxkbcommon0, libxkbcommon-x11-0, libx11-6, libx11-xcb1, libxcursor1, libxrandr2, libxi6"
+          DEPENDS="$DEPENDS, libwayland-client0, libwayland-cursor0, libwayland-egl1, libegl1, libgl1"
           echo "Depends: $DEPENDS"
           cat > $D/DEBIAN/control <<CTRL
           Package: lumen
@@ -130,6 +134,7 @@ jobs:
           Architecture: amd64
           Maintainer: wumgub <67914953+wumgub@users.noreply.github.com>
           Depends: $DEPENDS
+          Recommends: xdg-desktop-portal
           Conflicts: lumen-player
           Replaces: lumen-player
           Section: sound
