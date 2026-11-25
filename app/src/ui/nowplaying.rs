@@ -65,27 +65,27 @@ pub fn show(app: &mut LumenApp, ui: &mut Ui, frame: &mut eframe::Frame) {
         y = seg.bottom() + 10.0;
     }
     let w = area.width();
-    // The title and album open the album, the artist their page.
+    // The title and album open the album, the artist their page. All of it
+    // can be selected and copied.
     let mut open = None;
     if t.album.is_empty() {
-        let title = widgets::galley(ui, &t.title, crate::fonts::bold(16.0), p.fg, w);
-        ui.painter().galley(pos2(cx - title.size().x / 2.0, y), title.clone(), p.fg);
-        y += title.size().y + 4.0;
+        let r = widgets::selectable(ui, pos2(cx, y), Align2::CENTER_TOP, &t.title, crate::fonts::bold(16.0), p.fg, None, w);
+        y += r.rect.height() + 4.0;
     } else {
-        let r = widgets::link(ui, pos2(cx, y), Align2::CENTER_TOP, &t.title, crate::fonts::bold(16.0), p.fg, p.fg, w, Id::unique("np-title"));
-        if r.clicked() {
+        let r = widgets::selectable(ui, pos2(cx, y), Align2::CENTER_TOP, &t.title, crate::fonts::bold(16.0), p.fg, Some(p.fg), w);
+        if r.clicked {
             open = Some(View::Album(t.album.clone()));
         }
         y += r.rect.height() + 4.0;
     }
-    let r = widgets::link(ui, pos2(cx, y), Align2::CENTER_TOP, &t.artist, FontId::proportional(13.0), p.fg_dim, p.fg, w, Id::unique("np-artist"));
-    if r.clicked() {
+    let r = widgets::selectable(ui, pos2(cx, y), Align2::CENTER_TOP, &t.artist, FontId::proportional(13.0), p.fg_dim, Some(p.fg), w);
+    if r.clicked {
         open = Some(View::Artist(t.effective_artist().to_owned()));
     }
     y += r.rect.height() + 2.0;
     if !t.album.is_empty() {
         let dim = crate::palette::with_alpha(p.fg_dim, 0.8);
-        if widgets::link(ui, pos2(cx, y), Align2::CENTER_TOP, &t.album, FontId::proportional(12.0), dim, p.fg, w, Id::unique("np-album")).clicked() {
+        if widgets::selectable(ui, pos2(cx, y), Align2::CENTER_TOP, &t.album, FontId::proportional(12.0), dim, Some(p.fg), w).clicked {
             open = Some(View::Album(t.album.clone()));
         }
     }

@@ -22,22 +22,23 @@ pub fn show(app: &mut LumenApp, ui: &mut Ui) {
             widgets::artwork(ui, &p, &mut app.art, &ArtKey::Track(t.id), art, 6.0);
             let x = art.right() + 12.0;
             let w = left_w - 64.0;
-            // The title opens its album, the artist their page.
+            // The title opens its album, the artist their page. All of it
+            // can be selected and copied.
             let title_font = crate::fonts::medium(14.0);
             if t.album.is_empty() {
-                widgets::text_v(ui, x, cy - 9.0, &t.title, title_font, p.fg, w);
-            } else if widgets::link(ui, pos2(x, cy - 9.0), Align2::LEFT_CENTER, &t.title, title_font, p.fg, p.fg, w, Id::unique("tb-title")).clicked() {
+                widgets::selectable(ui, pos2(x, cy - 9.0), Align2::LEFT_CENTER, &t.title, title_font, p.fg, None, w);
+            } else if widgets::selectable(ui, pos2(x, cy - 9.0), Align2::LEFT_CENTER, &t.title, title_font, p.fg, Some(p.fg), w).clicked {
                 app.set_view(View::Album(t.album.clone()));
             }
             let font = FontId::proportional(12.0);
-            let a = widgets::link(ui, pos2(x, cy + 10.0), Align2::LEFT_CENTER, &t.artist, font.clone(), p.fg_dim, p.fg, w, Id::unique("tb-artist"));
-            if a.clicked() {
+            let a = widgets::selectable(ui, pos2(x, cy + 10.0), Align2::LEFT_CENTER, &t.artist, font.clone(), p.fg_dim, Some(p.fg), w);
+            if a.clicked {
                 app.set_view(View::Artist(t.effective_artist().to_owned()));
             }
             let rest = w - a.rect.width();
             if !t.album.is_empty() && rest > 40.0 {
-                let sep = widgets::text_v(ui, a.rect.right(), cy + 10.0, " — ", font.clone(), p.fg_dim, rest);
-                if widgets::link(ui, pos2(sep.right(), cy + 10.0), Align2::LEFT_CENTER, &t.album, font, p.fg_dim, p.fg, rest - sep.width(), Id::unique("tb-album")).clicked() {
+                let sep = widgets::selectable(ui, pos2(a.rect.right(), cy + 10.0), Align2::LEFT_CENTER, " — ", font.clone(), p.fg_dim, None, rest).rect;
+                if widgets::selectable(ui, pos2(sep.right(), cy + 10.0), Align2::LEFT_CENTER, &t.album, font, p.fg_dim, Some(p.fg), rest - sep.width()).clicked {
                     app.set_view(View::Album(t.album.clone()));
                 }
             }

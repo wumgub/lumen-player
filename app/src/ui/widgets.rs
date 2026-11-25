@@ -89,21 +89,40 @@ pub fn text_v(ui: &Ui, x: f32, y: f32, s: &str, font: FontId, color: Color32, ma
     rect
 }
 
-/// One line of text that works as a link: it brightens to `hover` and is
-/// underlined under the pointer, with a hand cursor. `align` says which point
-/// of the text sits at `pos`.
+/// Where `selectable` drew its text, and whether it was clicked.
+pub struct Picked {
+    pub rect: Rect,
+    pub clicked: bool,
+}
+
+/// One line of text you can select and copy: drag across it (or double- or
+/// triple-click), then ⌘C / Ctrl+C. `align` says which point of the text
+/// sits at `pos`. With a `hover` colour it's also a link: it brightens and is
+/// underlined under the pointer, and a click that isn't a drag counts as
+/// `clicked`. Cut-off text shows in full on hover.
 #[allow(clippy::too_many_arguments)]
-pub fn link(ui: &Ui, pos: Pos2, align: Align2, s: &str, font: FontId, color: Color32, hover: Color32, max_width: f32, id: Id) -> Response {
+pub fn selectable(ui: &mut Ui, pos: Pos2, align: Align2, s: &str, font: FontId, color: Color32, hover: Option<Color32>, max_width: f32) -> Picked {
     let size = galley(ui, s, font.clone(), color, max_width).size();
-    let rect = align.anchor_size(pos, size);
-    let resp = ui.interact(rect, id, Sense::click());
-    let color = if resp.hovered() { hover } else { color };
-    ui.painter().galley(rect.min, galley(ui, s, font, color, max_width), color);
-    if resp.hovered() {
-        let y = rect.bottom() - 1.0;
-        ui.painter().hline(rect.x_range(), y, Stroke::new(1.0, color));
+    let text = align.anchor_size(pos, size);
+    // egui only extends a selection while the pointer is over the widget, so
+    // the drag area spans all the room the text has: dragging past the end
+    // then still selects to the end. Clicks only count on the text itself.
+    let room = align.anchor_size(pos, vec2(max_width.max(size.x), size.y));
+    let mut resp = ui.allocate_rect(room, Sense::click_and_drag());
+    let on_text = |p: Option<Pos2>| p.is_some_and(|p| text.contains(p));
+    let link = hover.is_some() && on_text(resp.hover_pos()) && !ui.input(|i| i.pointer.any_down());
+    let color = if link { hover.unwrap_or(color) } else { color };
+    let g = galley(ui, s, font, color, max_width);
+    if g.elided && on_text(resp.hover_pos()) {
+        resp = resp.on_hover_text(s);
     }
-    hover_cursor(resp)
+    egui::text_selection::LabelSelectionState::label_text_selection(ui, &resp, text.min, g, color, Stroke::NONE);
+    if link {
+        ui.painter().hline(text.x_range(), text.bottom() - 1.0, Stroke::new(1.0, color));
+        ui.ctx().set_cursor_icon(CursorIcon::PointingHand);
+    }
+    let clicked = hover.is_some() && resp.clicked() && on_text(resp.interact_pointer_pos());
+    Picked { rect: text, clicked }
 }
 
 pub fn text_width(ui: &Ui, s: &str, font: FontId) -> f32 {
@@ -411,4 +430,52 @@ pub fn gradient_circle(ui: &Ui, center: Pos2, radius: f32, a: Color32, b: Color3
         }
     }
     ui.painter().add(Shape::mesh(mesh));
+}
+
+#[cfg(test)]
+#[test]
+fn selectable_text_clicks_and_copies() {
+    use egui::{Event, PointerButton, RawInput};
+    let ctx = egui::Context::default();
+    let clicked = std::cell::Cell::new(0);
+    let copied = std::cell::RefCell::new(Vec::new());
+    let frame = |events: Vec<Event>| {
+        let input = RawInput { events, screen_rect: Some(Rect::from_min_size(Pos2::ZERO, vec2(400.0, 100.0))), ..Default::default() };
+        let mut out = ctx.run_ui(input, |ui| {
+            let r = selectable(ui, pos2(10.0, 10.0), Align2::LEFT_TOP, "Deftones", FontId::proportional(14.0), Color32::WHITE, Some(Color32::WHITE), 300.0);
+            clicked.set(clicked.get() + r.clicked as u32);
+        });
+        out.textures_delta.clear();
+        for c in out.platform_output.commands {
+            if let egui::OutputCommand::CopyText(t) = c {
+                copied.borrow_mut().push(t);
+            }
+        }
+    };
+    let press = |pos: Pos2, pressed: bool| Event::PointerButton { pos, button: PointerButton::Primary, pressed, modifiers: Default::default() };
+    frame(vec![]);
+    // A click opens it.
+    let at = pos2(20.0, 15.0);
+    frame(vec![Event::PointerMoved(at), press(at, true)]);
+    frame(vec![press(at, false)]);
+    frame(vec![]);
+    assert_eq!(clicked.get(), 1);
+    // A drag across it selects it, without opening it, and copy copies it.
+    let (from, to) = (pos2(9.0, 15.0), pos2(300.0, 15.0));
+    frame(vec![Event::PointerMoved(from), press(from, true)]);
+    for x in [50.0, 120.0, 200.0] {
+        frame(vec![Event::PointerMoved(pos2(x, 15.0))]);
+    }
+    frame(vec![Event::PointerMoved(to)]);
+    frame(vec![press(to, false)]);
+    frame(vec![Event::Copy]);
+    frame(vec![]);
+    assert_eq!(clicked.get(), 1);
+    assert_eq!(*copied.borrow(), vec!["Deftones".to_owned()]);
+    // A click past the end of the text doesn't open it.
+    let past = pos2(250.0, 15.0);
+    frame(vec![Event::PointerMoved(past), press(past, true)]);
+    frame(vec![press(past, false)]);
+    frame(vec![]);
+    assert_eq!(clicked.get(), 1);
 }
