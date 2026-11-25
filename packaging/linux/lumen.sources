@@ -1,0 +1,6 @@
+Types: deb
+URIs: https://wumgub.github.io/lumen-player/apt
+Suites: stable
+Components: main
+Architectures: amd64
+Signed-By: /usr/share/keyrings/lumen-archive-keyring.gpg

@@ -260,7 +260,13 @@ fn about(app: &mut LumenApp, ui: &mut Ui) {
         }
         Some(Ok((latest, false, url))) => {
             ui.label(egui::RichText::new(format!("Update available: version {latest}.")).size(12.5).color(p.accent));
-            if ui.link(egui::RichText::new("Download it from the releases page").size(12.5)).clicked() {
+            if from_apt() {
+                ui.label(
+                    egui::RichText::new("It comes with your other updates: use Software Updater, or run sudo apt update && sudo apt upgrade.")
+                        .size(12.5)
+                        .color(p.fg_dim),
+                );
+            } else if ui.link(egui::RichText::new("Download it from the releases page").size(12.5)).clicked() {
                 let _ = open_url(url);
             }
         }
@@ -269,6 +275,14 @@ fn about(app: &mut LumenApp, ui: &mut Ui) {
         }
         None => {}
     }
+}
+
+/// Installed from the .deb, which also adds Lumen's apt repository, so apt
+/// brings new versions.
+fn from_apt() -> bool {
+    cfg!(target_os = "linux")
+        && std::env::current_exe().is_ok_and(|e| e.starts_with("/usr/bin"))
+        && std::path::Path::new("/etc/apt/sources.list.d/lumen.sources").exists()
 }
 
 /// Compare dotted versions numerically.

@@ -1,0 +1,131 @@
+name: apt repository
+
+# Publishes the .deb from the newest stable releases as a signed apt
+# repository on GitHub Pages (https://wumgub.github.io/lumen-player/apt), so
+# Debian, Ubuntu and Mint users get new versions with their other updates.
+# native.yml runs this after each release; run it by hand to rebuild it.
+#
+# The signing key lives in the APT_SIGNING_KEY secret. Its public half is
+# packaging/linux/lumen-archive-keyring.gpg, which every .deb installs.
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.fetch.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch the newest stable .debs
+        id: fetch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          POOL=site/apt/pool/main/l/lumen
+          mkdir -p $POOL
+          TAGS=$(gh release list -R "$GITHUB_REPOSITORY" --exclude-drafts --exclude-pre-releases --limit 3 --json tagName -q '.[].tagName')
+          for tag in $TAGS; do
+            gh release download "$tag" -R "$GITHUB_REPOSITORY" --pattern '*.deb' -D $POOL
+          done
+          ls -l $POOL
+          echo "version=$(echo "$TAGS" | head -1 | sed 's/^v//')" >> "$GITHUB_OUTPUT"
+      - name: Write the index
+        working-directory: site/apt
+        run: |
+          sudo apt-get install -y apt-utils >/dev/null
+          B=dists/stable/main/binary-amd64
+          mkdir -p $B
+          apt-ftparchive packages pool > $B/Packages
+          gzip -9kn $B/Packages
+          apt-ftparchive \
+            -o APT::FTPArchive::Release::Origin=Lumen \
+            -o APT::FTPArchive::Release::Label=Lumen \
+            -o APT::FTPArchive::Release::Suite=stable \
+            -o APT::FTPArchive::Release::Codename=stable \
+            -o APT::FTPArchive::Release::Architectures=amd64 \
+            -o APT::FTPArchive::Release::Components=main \
+            -o APT::FTPArchive::Release::Description="Lumen music player" \
+            release dists/stable > dists/stable/Release
+          cat dists/stable/Release
+      - name: Sign it
+        working-directory: site/apt/dists/stable
+        env:
+          APT_SIGNING_KEY: ${{ secrets.APT_SIGNING_KEY }}
+        run: |
+          export GNUPGHOME=$(mktemp -d)
+          echo "$APT_SIGNING_KEY" | gpg --batch --import
+          gpg --batch --yes --clearsign -o InRelease Release
+          gpg --batch --yes -abs -o Release.gpg Release
+          gpg --batch --verify InRelease
+          rm -rf "$GNUPGHOME"
+      - name: Add the key and a page explaining it
+        run: |
+          cp packaging/linux/lumen-archive-keyring.gpg site/
+          cp packaging/linux/lumen.sources site/
+          cat > site/index.html <<'HTML'
+          <!doctype html>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Lumen apt repository</title>
+          <style>body{font:16px/1.6 system-ui,sans-serif;max-width:680px;margin:40px auto;padding:0 16px}pre{background:#f2f0f7;padding:12px;border-radius:8px;overflow-x:auto}</style>
+          <h1>Lumen for Debian, Ubuntu and Mint</h1>
+          <p>Installing the <code>.deb</code> from the <a href="https://github.com/wumgub/lumen-player/releases/latest">releases page</a> sets this up for you. Or add it yourself:</p>
+          <pre>sudo curl -fsSLo /usr/share/keyrings/lumen-archive-keyring.gpg https://wumgub.github.io/lumen-player/lumen-archive-keyring.gpg
+          sudo curl -fsSLo /etc/apt/sources.list.d/lumen.sources https://wumgub.github.io/lumen-player/lumen.sources
+          sudo apt update && sudo apt install lumen</pre>
+          <p>After that, new versions come with your other updates.</p>
+          HTML
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
+
+  # Install from the live repository on each distro, the way a user would.
+  check:
+    needs: [build, deploy]
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ['debian:12', 'debian:13', 'ubuntu:24.04']
+    container: ${{ matrix.image }}
+    steps:
+      - name: Add the repository and install Lumen
+        env:
+          WANT: ${{ needs.build.outputs.version }}
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates curl
+          curl -fsSLo /usr/share/keyrings/lumen-archive-keyring.gpg https://wumgub.github.io/lumen-player/lumen-archive-keyring.gpg
+          curl -fsSLo /etc/apt/sources.list.d/lumen.sources https://wumgub.github.io/lumen-player/lumen.sources
+          # Pages can serve the old index for a few minutes after a deploy.
+          for i in $(seq 1 15); do
+            apt-get update
+            [ "$(apt-cache policy lumen | sed -n 's/ *Candidate: //p')" = "$WANT" ] && break
+            sleep 40
+          done
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::=--force-confold lumen
+          dpkg -s lumen | grep -x "Version: $WANT"
+          if ldd /usr/bin/lumen | grep 'not found'; then exit 1; fi
+          echo "Lumen $WANT installs and links on ${{ matrix.image }}"
