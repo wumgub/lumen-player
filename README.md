@@ -138,6 +138,16 @@ play it.
 
 **Or the `.deb`** (Debian/Ubuntu/Mint): double-click it to install through your
 software centre, or `sudo apt install ./Lumen-*.deb`. I also use debian. We are superior.
+You only do this once: the `.deb` adds Lumen's apt repository, so new versions show
+up in Software Updater or `sudo apt upgrade` like everything else.
+
+Or skip the download and add the repository yourself:
+
+```bash
+sudo curl -fsSLo /usr/share/keyrings/lumen-archive-keyring.gpg https://wumgub.github.io/lumen-player/lumen-archive-keyring.gpg
+sudo curl -fsSLo /etc/apt/sources.list.d/lumen.sources https://wumgub.github.io/lumen-player/lumen.sources
+sudo apt update && sudo apt install lumen
+```
 
 </details>
 
