@@ -161,8 +161,34 @@ jobs:
             Lumen-*.deb
             Lumen-*.AppImage
 
+  # Install the .deb on each distro it's meant for, on every build.
+  deb-check:
+    needs: linux
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ['debian:12', 'debian:13', 'ubuntu:24.04']
+    container: ${{ matrix.image }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux
+      - name: Install it
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y ./Lumen-*.deb
+          dpkg -s lumen | grep '^Version'
+          if ldd /usr/bin/lumen | grep 'not found'; then exit 1; fi
+          # The libraries it loads at runtime are there too.
+          for lib in libxkbcommon.so.0 libX11.so.6 libwayland-client.so.0 libEGL.so.1 libGL.so.1 libmpv.so.2; do
+            ldconfig -p | grep -q "$lib" || { echo "missing $lib"; exit 1; }
+          done
+          test -f /etc/apt/sources.list.d/lumen.sources
+          echo "Lumen installs and links on ${{ matrix.image }}"
+
   release:
-    needs: [mac, windows, linux]
+    needs: [mac, windows, linux, deb-check]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
