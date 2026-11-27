@@ -71,6 +71,8 @@ pub struct ContextMenu {
     pub track: Track,
     pub pos: Pos2,
     pub opened: Instant,
+    /// Opened from the playing song's title: only Copy and the playlists.
+    pub now_playing: bool,
 }
 
 #[derive(Default)]

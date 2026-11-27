@@ -93,6 +93,8 @@ pub fn text_v(ui: &Ui, x: f32, y: f32, s: &str, font: FontId, color: Color32, ma
 pub struct Picked {
     pub rect: Rect,
     pub clicked: bool,
+    /// Right-clicked on the text itself.
+    pub secondary_clicked: bool,
 }
 
 /// One line of text you can select and copy: drag across it (or double- or
@@ -122,7 +124,8 @@ pub fn selectable(ui: &mut Ui, pos: Pos2, align: Align2, s: &str, font: FontId, 
         ui.ctx().set_cursor_icon(CursorIcon::PointingHand);
     }
     let clicked = hover.is_some() && resp.clicked() && on_text(resp.interact_pointer_pos());
-    Picked { rect: text, clicked }
+    let secondary_clicked = resp.secondary_clicked() && on_text(resp.interact_pointer_pos());
+    Picked { rect: text, clicked, secondary_clicked }
 }
 
 pub fn text_width(ui: &Ui, s: &str, font: FontId) -> f32 {
@@ -438,12 +441,14 @@ fn selectable_text_clicks_and_copies() {
     use egui::{Event, PointerButton, RawInput};
     let ctx = egui::Context::default();
     let clicked = std::cell::Cell::new(0);
+    let menus = std::cell::Cell::new(0);
     let copied = std::cell::RefCell::new(Vec::new());
     let frame = |events: Vec<Event>| {
         let input = RawInput { events, screen_rect: Some(Rect::from_min_size(Pos2::ZERO, vec2(400.0, 100.0))), ..Default::default() };
         let mut out = ctx.run_ui(input, |ui| {
             let r = selectable(ui, pos2(10.0, 10.0), Align2::LEFT_TOP, "Deftones", FontId::proportional(14.0), Color32::WHITE, Some(Color32::WHITE), 300.0);
             clicked.set(clicked.get() + r.clicked as u32);
+            menus.set(menus.get() + r.secondary_clicked as u32);
         });
         out.textures_delta.clear();
         for c in out.platform_output.commands {
@@ -478,4 +483,10 @@ fn selectable_text_clicks_and_copies() {
     frame(vec![press(past, false)]);
     frame(vec![]);
     assert_eq!(clicked.get(), 1);
+    // A right-click on it asks for the menu, without opening it.
+    let right = |pressed| Event::PointerButton { pos: at, button: PointerButton::Secondary, pressed, modifiers: Default::default() };
+    frame(vec![Event::PointerMoved(at), right(true)]);
+    frame(vec![right(false)]);
+    frame(vec![]);
+    assert_eq!((clicked.get(), menus.get()), (1, 1));
 }

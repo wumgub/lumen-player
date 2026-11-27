@@ -1,10 +1,12 @@
 //! The transport bar: what's playing, the controls and seek
 //! bar in the middle, the queue button and volume on the right.
 
+use std::time::Instant;
+
 use eframe::egui::{self, Align2, FontId, Id, Rect, Sense, Ui, pos2, vec2};
 use lumen_playback::queue::Repeat;
 
-use crate::app::LumenApp;
+use crate::app::{ContextMenu, LumenApp};
 use crate::art::ArtKey;
 use crate::library::View;
 use crate::ui::{format_time, icons, widgets};
@@ -24,11 +26,16 @@ pub fn show(app: &mut LumenApp, ui: &mut Ui) {
             let w = left_w - 64.0;
             // The title opens its album, the artist their page. All of it
             // can be selected and copied.
+            // Right-click it for Copy and Add to playlist.
             let title_font = crate::fonts::medium(14.0);
-            if t.album.is_empty() {
-                widgets::selectable(ui, pos2(x, cy - 9.0), Align2::LEFT_CENTER, &t.title, title_font, p.fg, None, w);
-            } else if widgets::selectable(ui, pos2(x, cy - 9.0), Align2::LEFT_CENTER, &t.title, title_font, p.fg, Some(p.fg), w).clicked {
+            let link = (!t.album.is_empty()).then_some(p.fg);
+            let title = widgets::selectable(ui, pos2(x, cy - 9.0), Align2::LEFT_CENTER, &t.title, title_font, p.fg, link, w);
+            if title.clicked {
                 app.set_view(View::Album(t.album.clone()));
+            }
+            if title.secondary_clicked {
+                let pos = ui.input(|i| i.pointer.interact_pos()).unwrap_or(title.rect.left_top());
+                app.menu = Some(ContextMenu { track: t.clone(), pos, opened: Instant::now(), now_playing: true });
             }
             let font = FontId::proportional(12.0);
             let a = widgets::selectable(ui, pos2(x, cy + 10.0), Align2::LEFT_CENTER, &t.artist, font.clone(), p.fg_dim, Some(p.fg), w);

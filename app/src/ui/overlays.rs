@@ -189,46 +189,33 @@ fn context_menu(app: &mut LumenApp, ctx: &egui::Context) {
     let track = menu.track.clone();
     let pos = menu.pos;
     let opened = menu.opened;
+    let now_playing = menu.now_playing;
     let in_playlist = if let View::Playlist(id, _) = &app.view { Some(*id) } else { None };
     let playlists = app.lib.playlists.clone();
     let width = 210.0;
     let screen = ctx.content_rect();
-    let est_h = 300.0 + playlists.len().min(8) as f32 * 30.0;
-    let at = pos2(pos.x.min(screen.right() - width - 20.0), pos.y.min(screen.bottom() - est_h).max(screen.top() + 8.0));
+    let est_h = if now_playing { 90.0 } else { 300.0 } + playlists.len().min(8) as f32 * 30.0;
+    let x = pos.x.min(screen.right() - width - 20.0);
+    // From the transport bar it opens upwards, above the pointer.
+    let (at, pivot) = if now_playing {
+        (pos2(x, pos.y.max(screen.top() + est_h)), egui::Align2::LEFT_BOTTOM)
+    } else {
+        (pos2(x, pos.y.min(screen.bottom() - est_h).max(screen.top() + 8.0)), egui::Align2::LEFT_TOP)
+    };
     let mut close = false;
     let pp = app.p;
-    let resp = egui::Area::new(Id::unique("ctx-menu")).order(egui::Order::Foreground).fixed_pos(at).show(ctx, |ui| {
+    let resp = egui::Area::new(Id::unique("ctx-menu")).order(egui::Order::Foreground).pivot(pivot).fixed_pos(at).show(ctx, |ui| {
         popup_frame(app).show(ui, |ui| {
             ui.spacing_mut().item_spacing.y = 0.0;
-            if menu_item(ui, &pp, "Play next", width, false).clicked() {
-                app.player.play_next(vec![crate::app::item(&track)]);
-                close = true;
-            }
-            if menu_item(ui, &pp, "Add to queue", width, false).clicked() {
-                app.player.add_to_queue(vec![crate::app::item(&track)]);
-                close = true;
-            }
-            widgets::subtle_separator(ui, &app.p);
-            if menu_item(ui, &pp, "Edit song…", width, false).clicked() {
-                app.dialog = Some(Dialog::EditSong(Box::new(SongEdit::new(&track))));
-                close = true;
-            }
-            if menu_item(ui, &pp, reveal_label(), width, false).clicked() {
-                reveal(&track.path);
-                close = true;
-            }
-            if !track.album.is_empty() && menu_item(ui, &pp, "Remove from album", width, false).clicked() {
-                let _ = app.lib.db.set_track_album(&[track.id], "");
-                app.edited(Target::Tracks(vec![track.id]));
-                app.library_changed();
-                close = true;
-            }
-            if let Some(pl) = in_playlist
-                && menu_item(ui, &pp, "Remove from playlist", width, true).clicked()
-            {
-                let _ = app.lib.db.remove_from_playlist(pl, track.id);
-                app.library_changed();
-                close = true;
+            // Keeps the separators from stretching the menu across the window.
+            ui.set_max_width(width);
+            if now_playing {
+                if menu_item(ui, &pp, "Copy", width, false).clicked() {
+                    ui.ctx().copy_text(track.title.clone());
+                    close = true;
+                }
+            } else {
+                track_items(app, ui, &pp, &track, in_playlist, width, &mut close);
             }
             widgets::subtle_separator(ui, &app.p);
             let (r, _) = ui.allocate_exact_size(vec2(width, 24.0), Sense::hover());
@@ -253,6 +240,41 @@ fn context_menu(app: &mut LumenApp, ctx: &egui::Context) {
         app.menu = None;
     }
     let _ = Instant::now();
+}
+
+/// The song menu's own items, above the playlists.
+#[allow(clippy::too_many_arguments)]
+fn track_items(app: &mut LumenApp, ui: &mut Ui, pp: &crate::palette::Palette, track: &lumen_core::models::Track, in_playlist: Option<i64>, width: f32, close: &mut bool) {
+    if menu_item(ui, pp, "Play next", width, false).clicked() {
+        app.player.play_next(vec![crate::app::item(track)]);
+        *close = true;
+    }
+    if menu_item(ui, pp, "Add to queue", width, false).clicked() {
+        app.player.add_to_queue(vec![crate::app::item(track)]);
+        *close = true;
+    }
+    widgets::subtle_separator(ui, pp);
+    if menu_item(ui, pp, "Edit song…", width, false).clicked() {
+        app.dialog = Some(Dialog::EditSong(Box::new(SongEdit::new(track))));
+        *close = true;
+    }
+    if menu_item(ui, pp, reveal_label(), width, false).clicked() {
+        reveal(&track.path);
+        *close = true;
+    }
+    if !track.album.is_empty() && menu_item(ui, pp, "Remove from album", width, false).clicked() {
+        let _ = app.lib.db.set_track_album(&[track.id], "");
+        app.edited(Target::Tracks(vec![track.id]));
+        app.library_changed();
+        *close = true;
+    }
+    if let Some(pl) = in_playlist
+        && menu_item(ui, pp, "Remove from playlist", width, true).clicked()
+    {
+        let _ = app.lib.db.remove_from_playlist(pl, track.id);
+        app.library_changed();
+        *close = true;
+    }
 }
 
 fn reveal_label() -> &'static str {

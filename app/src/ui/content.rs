@@ -277,7 +277,7 @@ fn track_view(app: &mut LumenApp, ui: &mut Ui, area: Rect) {
             }
         });
     if let Some((track, pos)) = menu {
-        app.menu = Some(ContextMenu { track, pos, opened: Instant::now() });
+        app.menu = Some(ContextMenu { track, pos, opened: Instant::now(), now_playing: false });
     }
     if let Some(i) = clicked {
         if !app.edit_mode {
